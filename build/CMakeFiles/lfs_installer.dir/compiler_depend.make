@@ -768,6 +768,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/QLabel \
   /usr/include/QtWidgets/QLayout \
   /usr/include/QtWidgets/QLineEdit \
+  /usr/include/QtWidgets/QMenuBar \
   /usr/include/QtWidgets/QMessageBox \
   /usr/include/QtWidgets/QPlainTextEdit \
   /usr/include/QtWidgets/QProgressBar \
@@ -779,6 +780,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/QTableWidget \
   /usr/include/QtWidgets/QTextEdit \
   /usr/include/QtWidgets/QToolBar \
+  /usr/include/QtWidgets/QToolButton \
   /usr/include/QtWidgets/QTreeWidget \
   /usr/include/QtWidgets/QTreeWidgetItem \
   /usr/include/QtWidgets/QVBoxLayout \
@@ -804,6 +806,8 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/qlayout.h \
   /usr/include/QtWidgets/qlayoutitem.h \
   /usr/include/QtWidgets/qlineedit.h \
+  /usr/include/QtWidgets/qmenu.h \
+  /usr/include/QtWidgets/qmenubar.h \
   /usr/include/QtWidgets/qmessagebox.h \
   /usr/include/QtWidgets/qplaintextedit.h \
   /usr/include/QtWidgets/qprogressbar.h \
@@ -823,6 +827,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/qtabwidget.h \
   /usr/include/QtWidgets/qtextedit.h \
   /usr/include/QtWidgets/qtoolbar.h \
+  /usr/include/QtWidgets/qtoolbutton.h \
   /usr/include/QtWidgets/qtreeview.h \
   /usr/include/QtWidgets/qtreewidget.h \
   /usr/include/QtWidgets/qtreewidgetitemiterator.h \
@@ -1837,8 +1842,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/lib32/libdbus-1.so.3:
 
-/usr/lib32/libbz2.so.1.0:
-
 /usr/lib32/libXau.so.6:
 
 /usr/lib32/libGLdispatch.so.0:
@@ -1943,6 +1946,12 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtWidgets/qmessagebox.h:
 
+/usr/lib32/libbz2.so.1.0:
+
+/usr/include/QtWidgets/qmenubar.h:
+
+/usr/include/QtWidgets/qmenu.h:
+
 /usr/include/QtWidgets/qlayoutitem.h:
 
 /usr/include/QtWidgets/qlabel.h:
@@ -2001,6 +2010,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtWidgets/QGroupBox:
 
+/usr/include/QtWidgets/QMenuBar:
+
 /usr/include/QtWidgets/QFileDialog:
 
 /usr/include/QtWidgets/QComboBox:
@@ -2057,9 +2068,13 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtCore/qfile.h:
 
+/usr/include/QtWidgets/QToolButton:
+
 /usr/include/QtGui/qtextdocument.h:
 
 /usr/include/QtCore/qeventloop.h:
+
+/usr/include/QtWidgets/qtoolbutton.h:
 
 /usr/include/QtGui/qfontdatabase.h:
 

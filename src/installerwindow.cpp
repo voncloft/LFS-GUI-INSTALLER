@@ -330,9 +330,6 @@ QWidget *InstallerWindow::buildStoragePage()
     editMenu->addAction("Clear All Operations")->setEnabled(false);
     auto *applyMenuAction = editMenu->addAction("Apply All Operations");
     applyMenuAction->setEnabled(false);
-    auto *deviceInfoAction = viewMenu->addAction("Device Information");
-    deviceInfoAction->setCheckable(true);
-    deviceInfoAction->setChecked(true);
     auto *pendingOpsAction = viewMenu->addAction("Pending Operations");
     pendingOpsAction->setCheckable(true);
     pendingOpsAction->setChecked(true);
@@ -350,10 +347,7 @@ QWidget *InstallerWindow::buildStoragePage()
     pasteAction->setEnabled(false);
     applyAction->setEnabled(false);
 
-    auto *splitter = new QSplitter(Qt::Vertical, page);
-    splitter->setChildrenCollapsible(false);
-
-    auto *plannerBox = new QGroupBox("Partitions", splitter);
+    auto *plannerBox = new QGroupBox("Partitions", page);
     auto *plannerLayout = new QVBoxLayout(plannerBox);
     plannerLayout->setSpacing(10);
 
@@ -405,20 +399,7 @@ QWidget *InstallerWindow::buildStoragePage()
     partitionOperationsLabel_ = new QLabel("0 operations pending", plannerStatus);
     plannerStatus->addWidget(partitionOperationsLabel_);
     plannerLayout->addWidget(plannerStatus);
-
-    auto *deviceBox = new QGroupBox("Device Information", splitter);
-    auto *deviceLayout = new QVBoxLayout(deviceBox);
-    deviceTree_ = new QTreeWidget(deviceBox);
-    deviceTree_->setColumnCount(2);
-    deviceTree_->setHeaderLabels({"Device", "Details"});
-    deviceTree_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    deviceTree_->header()->setSectionResizeMode(1, QHeaderView::Stretch);
-    deviceTree_->setAlternatingRowColors(true);
-    deviceLayout->addWidget(deviceTree_);
-
-    splitter->setStretchFactor(0, 3);
-    splitter->setStretchFactor(1, 2);
-    layout->addWidget(splitter, 1);
+    layout->addWidget(plannerBox, 1);
 
     connect(refreshAction, &QAction::triggered, this, &InstallerWindow::refreshDrives);
     connect(refreshMenuAction, &QAction::triggered, this, &InstallerWindow::refreshDrives);
@@ -446,7 +427,6 @@ QWidget *InstallerWindow::buildStoragePage()
             markInstallDirty();
         }
     });
-    connect(deviceInfoAction, &QAction::toggled, deviceBox, &QWidget::setVisible);
     connect(pendingOpsAction, &QAction::toggled, plannerStatus, &QWidget::setVisible);
     connect(partitionTable_, &QTableWidget::itemSelectionChanged, this, &InstallerWindow::refreshPartitionEditorPreview);
 
@@ -905,7 +885,9 @@ void InstallerWindow::refreshDrives()
 {
     drives_.clear();
     driveCombo_->clear();
-    deviceTree_->clear();
+    if (deviceTree_) {
+        deviceTree_->clear();
+    }
 
     QProcess lsblk;
     lsblk.start("lsblk", {"--json", "-b", "-o", "NAME,SIZE,TYPE,MODEL,PATH,MOUNTPOINT,FSTYPE"});
@@ -919,7 +901,9 @@ void InstallerWindow::refreshDrives()
     const QJsonArray blockDevices = document.object().value("blockdevices").toArray();
     for (const QJsonValue &deviceValue : blockDevices) {
         const QJsonObject deviceObject = deviceValue.toObject();
-        appendDeviceNode(deviceTree_->invisibleRootItem(), deviceObject);
+        if (deviceTree_) {
+            appendDeviceNode(deviceTree_->invisibleRootItem(), deviceObject);
+        }
 
         if (deviceObject.value("type").toString() != "disk") {
             continue;
@@ -934,7 +918,9 @@ void InstallerWindow::refreshDrives()
         driveCombo_->addItem(driveLabel(drive), drive.path);
     }
 
-    deviceTree_->expandAll();
+    if (deviceTree_) {
+        deviceTree_->expandAll();
+    }
     updateDriveDetails();
 }
 
