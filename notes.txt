@@ -1,0 +1,57 @@
+Chroot Backend Notes
+
+Question:
+How would a bash script execute in chroot once you chroot? You are in the new system, so how can an external process via script do stuff in chroot from that point on?
+
+Answer:
+`chroot` does not move the whole backend into the new system.
+It starts a new child process whose `/` is the target root.
+
+Example:
+chroot "$LFS" /bin/bash /root/stage2.sh
+
+What that means:
+- the host script is still running outside the chroot
+- it launches a new `bash` process
+- that `bash` sees `$LFS` as `/`
+- `/root/stage2.sh` is resolved inside the chroot, not on the host
+- when the inner script finishes, control returns to the outer host script
+
+So the host script is not directly "reaching into" the chroot.
+It is starting a process inside the chroot and waiting for it to complete.
+
+Typical pattern:
+
+1. Host-side script does setup before chroot:
+- mount --bind /dev "$LFS/dev"
+- mount -t proc proc "$LFS/proc"
+- mount -t sysfs sys "$LFS/sys"
+- mount -t tmpfs tmpfs "$LFS/run"
+
+2. Host-side script places a second script inside the target root:
+- copy `stage2.sh` to `$LFS/root/stage2.sh`
+
+3. Host-side script enters chroot and runs the second script:
+- chroot "$LFS" /usr/bin/env -i HOME=/root TERM="$TERM" PATH=/usr/bin:/usr/sbin:/bin:/sbin /bin/bash /root/stage2.sh
+stag2.sh MUST BE IN CHROOT
+
+4. The second script runs normally inside chroot:
+- build packages
+- configure the system
+- continue the LFS steps
+
+Important details:
+- `stage2.sh` must exist inside the chroot
+- `bash` and any commands used by `stage2.sh` must exist inside the chroot
+- when `stage2.sh` exits, control returns to the host-side script
+
+Recommended design:
+- `stage1.sh` outside chroot
+- `stage2.sh` inside chroot
+- GUI only launches and monitors the host-side process
+
+Conclusion:
+Yes, this is possible.
+The correct model is not "GUI sends commands into chroot."
+The correct model is:
+GUI -> host script -> chroot -> inside-chroot script -> return to host script
