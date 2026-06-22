@@ -1,8 +1,7 @@
 LFS Installer - Steps Taken So Far
 
 Conversation ID:
-The agent cannot read or generate the real chat/conversation ID from this workspace.
-If your chat client shows a conversation/thread ID, paste it here manually.
+This ID was provided by the user from `/status`.
 
 How to get back to this exact conversation:
 You cannot reopen this exact chat from a file in the project folder alone.
@@ -10,16 +9,17 @@ To return to this same conversation later, use the chat program you are using ri
 - open its conversation history and reopen this thread
 - or copy/save the URL for this thread if the client provides one
 - or copy/save the thread/conversation ID if the client shows one
-If you save a URL or ID, paste it in the Conversation ID section above.
+`/status` may show the current conversation/thread ID.
 
 Local Resume Tag:
-lfs-installer-gui-only-v1
+lfs-installer-gui-only-v2
 
 How to resume this later:
 1. Open this folder again: /home/von/qt6 projects/lfs_installer
 2. Start a new chat with Codex
 3. Paste the resume prompt below
-4. If your client shows a conversation/thread ID, also paste that into the "Conversation ID" section above for your own records
+4. Reattach this specific discussion point by saying you want to continue from the stage1/stage2 chroot planning notes
+5. If your client shows a conversation/thread ID, also paste that into the "Conversation ID" section above for your own records
 
 Resume Prompt To Paste:
 Continue work on the project in /home/von/qt6 projects/lfs_installer.
@@ -34,6 +34,13 @@ Current state:
 - page 4: additional features checkboxes and config export
 - build already succeeds
 - binary path: /home/von/qt6 projects/lfs_installer/build/lfs_installer
+- README.md exists and describes the current prototype state
+- notes.txt contains the chroot handoff explanation
+- latest planning understanding is:
+  stage1 = pre-chroot work on the host/live environment
+  stage2 = copy a script into $LFS, then run it via chroot inside the new system
+  optional stage3 = cleanup after chroot exits
+Do not assume backend execution exists yet.
 Wait for my next change request after reviewing the project.
 
 Workspace:
@@ -45,12 +52,15 @@ No install backend was executed.
 No repo was cloned.
 No disk operations were attempted.
 No testing was performed by the agent.
+The backend/chroot plan was discussed conceptually but not implemented.
 
 What was created:
 - CMakeLists.txt
+- README.md
 - src/main.cpp
 - src/installerwindow.h
 - src/installerwindow.cpp
+- notes.txt
 
 GUI flow implemented:
 Page 1:
@@ -104,10 +114,29 @@ Current status:
 - The GUI compiles successfully.
 - The app has not been launched or tested by the agent.
 - Backend install logic was intentionally removed per user instruction.
+- The current project is still a GUI-only prototype.
+
+Backend planning clarified later:
+- Stage 1 should handle all host-side or live-environment work before chroot.
+- Stage 2 should be copied into the target root, such as `$LFS/root/stage2.sh`.
+- The host-side script should then chroot into the target system and run that script, for example:
+  `chroot "$LFS" /bin/bash /root/stage2.sh`
+- Stage 2 then runs entirely inside the new system.
+- When stage 2 exits, control returns to the host-side script.
+- An optional stage 3 can handle cleanup outside chroot, such as unmounting and final host-side teardown.
+
+Important planning conclusion:
+- The GUI does not need to operate inside chroot.
+- The backend script can absolutely execute commands inside chroot by launching a process there.
+- The correct model is:
+  GUI -> stage1 host script -> copy stage2 into `$LFS` -> chroot -> run stage2 inside chroot -> return to host -> optional cleanup
+- This model is currently only documented. It has not been coded or tested here.
 
 Likely next steps later:
 1. Run the GUI in Kubuntu or the host environment.
 2. Test page flow and validation.
 3. Adjust layout and fields as needed.
-4. Decide how page 3 should later hand off to your real LFS automation.
-5. Wire page 4 feature selections into that later backend.
+4. Decide the exact stage1/stage2 split against the LFS chapters you want to automate.
+5. Design how page 3 should hand off config JSON to the host-side stage1 script.
+6. Decide where stage2.sh should be generated or stored before being copied into `$LFS`.
+7. Wire page 4 feature selections into the later backend.
