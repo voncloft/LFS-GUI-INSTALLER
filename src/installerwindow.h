@@ -109,5 +109,6 @@ private:
     QVector<DriveInfo> drives_;
     bool installCompleted_ = false;
     bool installInProgress_ = false;
+    bool refreshingSummaries_ = false;
     QString currentRunDirectory_;
 };

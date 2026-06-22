@@ -517,6 +517,7 @@ QWidget *InstallerWindow::buildInstallPage()
     installLog_->setLineWrapMode(QTextEdit::NoWrap);
     installLog_->setMinimumHeight(351);
     installLog_->setPlaceholderText("Install output will appear here.");
+    installLog_->setFocusPolicy(Qt::NoFocus);
     layout->addWidget(installLog_, 1);
 
     auto *buttonRow = new QHBoxLayout();
@@ -583,6 +584,7 @@ QWidget *InstallerWindow::buildFeaturesPage()
     auto *summaryLayout = new QVBoxLayout(summaryBox);
     summaryPreview_ = new QPlainTextEdit(summaryBox);
     summaryPreview_->setReadOnly(true);
+    summaryPreview_->setFocusPolicy(Qt::NoFocus);
     summaryLayout->addWidget(summaryPreview_);
 
     auto *exportButton = new QPushButton("Export config JSON", summaryBox);
@@ -1136,12 +1138,21 @@ void InstallerWindow::markInstallDirty()
 
 void InstallerWindow::refreshSummaries()
 {
-    if (configPreview_) {
-        configPreview_->setPlainText(QString::fromUtf8(buildConfigJson(true)));
+    if (refreshingSummaries_) {
+        return;
     }
-    if (summaryPreview_) {
-        summaryPreview_->setPlainText(QString::fromUtf8(buildConfigJson(true)));
+
+    refreshingSummaries_ = true;
+    const QString summaryText = QString::fromUtf8(buildConfigJson(true));
+
+    if (configPreview_ && configPreview_->toPlainText() != summaryText) {
+        configPreview_->setPlainText(summaryText);
     }
+    if (summaryPreview_ && summaryPreview_->toPlainText() != summaryText) {
+        summaryPreview_->setPlainText(summaryText);
+    }
+
+    refreshingSummaries_ = false;
 }
 
 void InstallerWindow::updateNavigationState()
