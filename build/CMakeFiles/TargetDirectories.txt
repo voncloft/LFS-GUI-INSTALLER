@@ -1,0 +1,5 @@
+/home/von/qt6 projects/lfs_installer/build/CMakeFiles/lfs_installer.dir
+/home/von/qt6 projects/lfs_installer/build/CMakeFiles/edit_cache.dir
+/home/von/qt6 projects/lfs_installer/build/CMakeFiles/rebuild_cache.dir
+/home/von/qt6 projects/lfs_installer/build/CMakeFiles/lfs_installer_autogen_timestamp_deps.dir
+/home/von/qt6 projects/lfs_installer/build/CMakeFiles/lfs_installer_autogen.dir

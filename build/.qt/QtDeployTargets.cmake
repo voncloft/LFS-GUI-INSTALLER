@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_lfs_installer_FILE /home/von/qt6 projects/lfs_installer/build/lfs_installer)
+set(__QT_DEPLOY_TARGET_lfs_installer_TYPE EXECUTABLE)

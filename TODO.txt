@@ -1,0 +1,36 @@
+Setup Proccess outside of chroot
+Have installer do on step 3 part 1
+
+1) create a bash file with functions
+
+LFS and Variable
+https://www.linuxfromscratch.org/mlfs/view/dev/chapter02/aboutlfs.html
+
+Get Packages: 
+https://www.linuxfromscratch.org/mlfs/view/dev/chapter03/introduction.html
+
+Setting up layout
+https://www.linuxfromscratch.org/mlfs/view/dev/chapter04/creatingminlayout.html
+
+add LFS user
+https://www.linuxfromscratch.org/mlfs/view/dev/chapter04/addinguser.html
+
+setting up environment
+https://www.linuxfromscratch.org/mlfs/view/dev/chapter04/settingenvironment.html
+
+DO all Up until chapter 6 and 7
+https://www.linuxfromscratch.org/mlfs/view/dev/part3.html
+
+Have installer do the changing ownership, virtual kernel file systems
+
+PROBLEM POSSIBLE
+CHROOTING...not sure if installer can do that....will need to investigate
+After chrooting do the steps as needed
+
+Once all done and found a way to chroot, you may need to chroot each time....idk if it can be done once and done
+anyway .... after Package manager have scratchpkg in the chroot install
+
+Once 8 is done....install your "stuff" from step 1
+hopefully use partition file from page 2 for fstab
+grub it
+

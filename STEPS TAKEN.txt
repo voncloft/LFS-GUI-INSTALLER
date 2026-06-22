@@ -1,0 +1,113 @@
+LFS Installer - Steps Taken So Far
+
+Conversation ID:
+The agent cannot read or generate the real chat/conversation ID from this workspace.
+If your chat client shows a conversation/thread ID, paste it here manually.
+
+How to get back to this exact conversation:
+You cannot reopen this exact chat from a file in the project folder alone.
+To return to this same conversation later, use the chat program you are using right now:
+- open its conversation history and reopen this thread
+- or copy/save the URL for this thread if the client provides one
+- or copy/save the thread/conversation ID if the client shows one
+If you save a URL or ID, paste it in the Conversation ID section above.
+
+Local Resume Tag:
+lfs-installer-gui-only-v1
+
+How to resume this later:
+1. Open this folder again: /home/von/qt6 projects/lfs_installer
+2. Start a new chat with Codex
+3. Paste the resume prompt below
+4. If your client shows a conversation/thread ID, also paste that into the "Conversation ID" section above for your own records
+
+Resume Prompt To Paste:
+Continue work on the project in /home/von/qt6 projects/lfs_installer.
+Read STEPS TAKEN.txt first, then inspect the current source files.
+This project is a Qt6 GUI-only LFS installer wizard.
+Important: do not run install actions unless I explicitly ask.
+Current state:
+- 4-page wizard exists
+- page 1: pc name, username, password, time zone
+- page 2: drive selector and partition planning UI
+- page 3: repo/config page with GUI-only Install button
+- page 4: additional features checkboxes and config export
+- build already succeeds
+- binary path: /home/von/qt6 projects/lfs_installer/build/lfs_installer
+Wait for my next change request after reviewing the project.
+
+Workspace:
+/home/von/qt6 projects/lfs_installer
+
+Summary:
+This folder was empty at the start. A new Qt6 GUI installer shell was created and built.
+No install backend was executed.
+No repo was cloned.
+No disk operations were attempted.
+No testing was performed by the agent.
+
+What was created:
+- CMakeLists.txt
+- src/main.cpp
+- src/installerwindow.h
+- src/installerwindow.cpp
+
+GUI flow implemented:
+Page 1:
+- PC name
+- Username
+- Password
+- Time zone
+
+Page 2:
+- Target drive selector
+- Detected disk/partition view from lsblk
+- Editable planned partition table
+- Add partition
+- Remove selected
+- Auto layout
+
+Page 3:
+- Repo URL field
+- Branch field
+- Script path field
+- Working directory field
+- Config preview
+- Install log view
+- Next button replaced by Install on this page
+
+Important:
+The Install button is GUI-only right now.
+It validates inputs and writes install-config.json into a timestamped run folder.
+It does not clone, run scripts, partition disks, format disks, or install anything.
+After this checkpoint, the button changes back to Next and allows moving to page 4.
+
+Page 4:
+- Additional feature checkboxes
+- Summary preview
+- Export config JSON button
+
+Navigation:
+- Back button works between pages
+- Next button moves forward
+- On page 3, Next becomes Install until the GUI-only checkpoint is completed
+- On page 4, the primary button becomes Finish
+
+Build steps already done:
+1. cmake -S . -B build
+2. cmake --build build
+
+Build result:
+- Binary created at: build/lfs_installer
+
+Current status:
+- The GUI compiles successfully.
+- The app has not been launched or tested by the agent.
+- Backend install logic was intentionally removed per user instruction.
+
+Likely next steps later:
+1. Run the GUI in Kubuntu or the host environment.
+2. Test page flow and validation.
+3. Adjust layout and fields as needed.
+4. Decide how page 3 should later hand off to your real LFS automation.
+5. Wire page 4 feature selections into that later backend.
