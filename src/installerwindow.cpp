@@ -371,6 +371,39 @@ QWidget *InstallerWindow::buildStoragePage()
     auto *tableBox = new QGroupBox("Partition List", plannerBox);
     auto *tableLayout = new QVBoxLayout(tableBox);
 
+    auto *createBox = new QGroupBox("New Partition", tableBox);
+    auto *createLayout = new QHBoxLayout(createBox);
+    createLayout->addWidget(new QLabel("Mount point", createBox));
+
+    auto *newMountCombo = new QComboBox(createBox);
+    newMountCombo->setEditable(true);
+    newMountCombo->addItems({"", "/", "/boot", "/boot/efi", "/home", "/var", "swap"});
+    newMountCombo->setMinimumContentsLength(12);
+    createLayout->addWidget(newMountCombo);
+
+    createLayout->addWidget(new QLabel("Filesystem", createBox));
+    auto *newFsCombo = new QComboBox(createBox);
+    newFsCombo->addItems({"ext4", "xfs", "btrfs", "fat32", "swap"});
+    createLayout->addWidget(newFsCombo);
+
+    createLayout->addWidget(new QLabel("Size", createBox));
+    auto *newSizeSpin = new QDoubleSpinBox(createBox);
+    newSizeSpin->setRange(0.1, 102400.0);
+    newSizeSpin->setDecimals(1);
+    newSizeSpin->setSuffix(" GiB");
+    newSizeSpin->setValue(1.0);
+    createLayout->addWidget(newSizeSpin);
+
+    auto *newFormatCheck = new QCheckBox("Format", createBox);
+    newFormatCheck->setChecked(true);
+    createLayout->addWidget(newFormatCheck);
+
+    auto *insertPartitionButton = new QPushButton("Add Partition", createBox);
+    createLayout->addWidget(insertPartitionButton);
+    createLayout->addStretch(1);
+
+    tableLayout->addWidget(createBox);
+
     partitionTable_ = new QTableWidget(0, 8, tableBox);
     partitionTable_->setHorizontalHeaderLabels({"Partition", "File System", "Mount Point", "Label", "Size", "Used", "Unused", "Flags"});
     partitionTable_->setAlternatingRowColors(true);
@@ -400,14 +433,37 @@ QWidget *InstallerWindow::buildStoragePage()
     connect(refreshMenuAction, &QAction::triggered, this, &InstallerWindow::refreshDrives);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::updateDriveDetails);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::markInstallDirty);
-    connect(addAction, &QAction::triggered, this, [this]() {
-        addPartitionRow("", "ext4", 1.0, true);
-        markInstallDirty();
+    connect(newMountCombo, &QComboBox::currentTextChanged, this, [newMountCombo, newFsCombo](const QString &text) {
+        const QString mountPoint = text.trimmed();
+        if (mountPoint == "swap") {
+            const int index = newFsCombo->findText("swap");
+            if (index >= 0) {
+                newFsCombo->setCurrentIndex(index);
+            }
+        } else if (mountPoint == "/boot/efi") {
+            const int index = newFsCombo->findText("fat32");
+            if (index >= 0) {
+                newFsCombo->setCurrentIndex(index);
+            }
+        } else if (newFsCombo->currentText() == "swap") {
+            const int index = newFsCombo->findText("ext4");
+            if (index >= 0) {
+                newFsCombo->setCurrentIndex(index);
+            }
+        }
     });
-    connect(newMenuAction, &QAction::triggered, this, [this]() {
-        addPartitionRow("", "ext4", 1.0, true);
+
+    const auto insertPlannedPartition = [this, newMountCombo, newFsCombo, newSizeSpin, newFormatCheck]() {
+        addPartitionRow(newMountCombo->currentText().trimmed(),
+                        newFsCombo->currentText().trimmed(),
+                        newSizeSpin->value(),
+                        newFormatCheck->isChecked());
         markInstallDirty();
-    });
+    };
+
+    connect(addAction, &QAction::triggered, this, insertPlannedPartition);
+    connect(newMenuAction, &QAction::triggered, this, insertPlannedPartition);
+    connect(insertPartitionButton, &QPushButton::clicked, this, insertPlannedPartition);
     connect(removeAction, &QAction::triggered, this, [this]() {
         const int row = partitionTable_->currentRow();
         if (row >= 0) {
