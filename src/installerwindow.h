@@ -9,6 +9,7 @@ class QComboBox;
 class QLabel;
 class QLineEdit;
 class QPlainTextEdit;
+class QProgressBar;
 class QPushButton;
 class QStackedWidget;
 class QTableWidget;
@@ -47,6 +48,7 @@ private slots:
     void exportConfiguration();
     void markInstallDirty();
     void refreshSummaries();
+    void refreshPartitionEditorPreview();
 
 private:
     void buildUi();
@@ -79,14 +81,20 @@ private:
     QLabel *driveDetailsLabel_ = nullptr;
     QTreeWidget *deviceTree_ = nullptr;
     QTableWidget *partitionTable_ = nullptr;
+    QWidget *partitionMapWidget_ = nullptr;
+    QLabel *partitionCapacityLabel_ = nullptr;
+    QLabel *partitionOperationsLabel_ = nullptr;
 
     QLineEdit *repoUrlEdit_ = nullptr;
     QLineEdit *repoBranchEdit_ = nullptr;
     QLineEdit *scriptPathEdit_ = nullptr;
     QLineEdit *workRootEdit_ = nullptr;
     QLabel *installStatusLabel_ = nullptr;
+    QProgressBar *installProgressBar_ = nullptr;
     QPlainTextEdit *configPreview_ = nullptr;
     QTextEdit *installLog_ = nullptr;
+    QPushButton *pageThreeBackButton_ = nullptr;
+    QPushButton *pageThreeInstallButton_ = nullptr;
 
     QVector<QCheckBox *> featureChecks_;
     QPlainTextEdit *summaryPreview_ = nullptr;

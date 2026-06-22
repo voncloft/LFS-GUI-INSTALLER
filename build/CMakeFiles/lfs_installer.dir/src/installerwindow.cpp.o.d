@@ -395,6 +395,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/QLayout /usr/include/QtWidgets/qlayout.h \
  /usr/include/QtWidgets/qlayoutitem.h /usr/include/QtWidgets/qboxlayout.h \
  /usr/include/QtWidgets/qlayout.h /usr/include/QtWidgets/qgridlayout.h \
+ /usr/include/QtGui/QFontDatabase /usr/include/QtGui/qfontdatabase.h \
  /usr/include/QtWidgets/QFrame /usr/include/QtWidgets/qframe.h \
  /usr/include/QtWidgets/QGroupBox /usr/include/QtWidgets/qgroupbox.h \
  /usr/include/QtWidgets/QHeaderView /usr/include/QtWidgets/qheaderview.h \
@@ -442,14 +443,15 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtGui/qinputmethod.h \
  /usr/include/QtGui/qguiapplication_platform.h \
  /usr/include/QtGui/qglyphrun.h /usr/include/QtGui/qrawfont.h \
- /usr/include/QtGui/qfontdatabase.h \
- /usr/include/QtCore/QProcessEnvironment /usr/include/QtCore/qprocess.h \
- /usr/include/QtWidgets/QPushButton /usr/include/QtWidgets/qpushbutton.h \
- /usr/include/QtCore/QSaveFile /usr/include/QtCore/qsavefile.h \
- /usr/include/QtCore/QSet /usr/include/QtCore/qset.h \
- /usr/include/QtWidgets/QSpinBox /usr/include/QtWidgets/qspinbox.h \
- /usr/include/QtWidgets/QSplitter /usr/include/QtWidgets/qsplitter.h \
- /usr/include/QtWidgets/QStackedWidget \
+ /usr/include/QtGui/qfontdatabase.h /usr/include/QtCore/QProcess \
+ /usr/include/QtCore/qprocess.h /usr/include/QtCore/QProcessEnvironment \
+ /usr/include/QtWidgets/QProgressBar \
+ /usr/include/QtWidgets/qprogressbar.h /usr/include/QtWidgets/QPushButton \
+ /usr/include/QtWidgets/qpushbutton.h /usr/include/QtCore/QSaveFile \
+ /usr/include/QtCore/qsavefile.h /usr/include/QtCore/QSet \
+ /usr/include/QtCore/qset.h /usr/include/QtWidgets/QSpinBox \
+ /usr/include/QtWidgets/qspinbox.h /usr/include/QtWidgets/QSplitter \
+ /usr/include/QtWidgets/qsplitter.h /usr/include/QtWidgets/QStackedWidget \
  /usr/include/QtWidgets/qstackedwidget.h \
  /usr/include/QtWidgets/QTableWidget \
  /usr/include/QtWidgets/qtablewidget.h \

@@ -7,6 +7,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
+#include <QFontDatabase>
 #include <QFrame>
 #include <QGroupBox>
 #include <QHeaderView>
@@ -20,7 +21,9 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPlainTextEdit>
+#include <QProcess>
 #include <QProcessEnvironment>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QSaveFile>
 #include <QSet>
@@ -89,6 +92,100 @@ QJsonArray partitionsToJson(const QVector<PlannedPartition> &partitions)
     }
 
     return result;
+}
+
+double bytesToGiB(quint64 bytes)
+{
+    return static_cast<double>(bytes) / (1024.0 * 1024.0 * 1024.0);
+}
+
+QString partitionNodeName(const QString &drivePath, int row)
+{
+    const QString basePath = drivePath.isEmpty() ? QStringLiteral("/dev/sdX") : drivePath;
+    const QString separator = !basePath.isEmpty() && basePath.back().isDigit() ? QStringLiteral("p") : QString();
+    return QString("%1%2%3").arg(basePath, separator).arg(row + 1);
+}
+
+QString partitionLabelText(const QString &mountPoint)
+{
+    if (mountPoint == "/boot/efi") {
+        return "EFI";
+    }
+    if (mountPoint == "/boot") {
+        return "BOOT";
+    }
+    if (mountPoint == "/") {
+        return "ROOT";
+    }
+    if (mountPoint == "/home") {
+        return "HOME";
+    }
+    if (mountPoint == "/var") {
+        return "VAR";
+    }
+    if (mountPoint == "swap") {
+        return "SWAP";
+    }
+
+    QString label = mountPoint;
+    label.remove('/');
+    return label.isEmpty() ? QStringLiteral("CUSTOM") : label.toUpper();
+}
+
+QColor fileSystemColor(const QString &fileSystem)
+{
+    const QString normalized = fileSystem.toLower();
+    if (normalized == "fat32") {
+        return QColor("#344f74");
+    }
+    if (normalized == "ext4") {
+        return QColor("#f3ef9a");
+    }
+    if (normalized == "xfs") {
+        return QColor("#b7d8f6");
+    }
+    if (normalized == "btrfs") {
+        return QColor("#e58a43");
+    }
+    if (normalized == "swap") {
+        return QColor("#a6a6a6");
+    }
+
+    return QColor("#d1d8e0");
+}
+
+QString flagsText(const PlannedPartition &partition)
+{
+    QStringList flags;
+    if (partition.mountPoint == "/boot/efi") {
+        flags << "boot" << "esp";
+    }
+    if (partition.mountPoint == "swap") {
+        flags << "swap";
+    }
+    flags << (partition.format ? "format" : "keep");
+    return flags.join(", ");
+}
+
+QString usedText(const PlannedPartition &partition)
+{
+    return partition.format ? QStringLiteral("0.00 GiB") : QStringLiteral("---");
+}
+
+QString unusedText(const PlannedPartition &partition)
+{
+    if (!partition.format) {
+        return QStringLiteral("---");
+    }
+
+    return QString("%1 GiB").arg(QString::number(partition.sizeGiB, 'f', 2));
+}
+
+QString comboStyleForFileSystem(const QString &fileSystem)
+{
+    const QColor color = fileSystemColor(fileSystem).lighter(165);
+    return QString("QComboBox { background: %1; border: 1px solid #b9bfc7; padding: 2px 6px; }")
+        .arg(color.name());
 }
 }
 
@@ -197,68 +294,216 @@ QWidget *InstallerWindow::buildDetailsPage()
 QWidget *InstallerWindow::buildStoragePage()
 {
     auto *page = new QWidget(this);
+    page->setObjectName("gpartedPage");
+    page->setStyleSheet(R"(
+        QWidget#gpartedPage {
+            background: #efefef;
+        }
+        QFrame#menuBar,
+        QFrame#toolBar,
+        QFrame#editorShell,
+        QFrame#mapFrame,
+        QFrame#statusFrame,
+        QGroupBox#gpartedDeviceBox {
+            background: #ffffff;
+            border: 1px solid #c7c7c7;
+        }
+        QFrame#menuBar {
+            border-bottom: none;
+        }
+        QFrame#toolBar {
+            border-top: none;
+        }
+        QLabel#menuItem {
+            color: #2f2f2f;
+            padding: 0 8px;
+        }
+        QLabel#sectionTitle {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2b2b2b;
+        }
+        QLabel#driveSummary {
+            color: #444444;
+        }
+        QLabel#partitionStatus {
+            color: #444444;
+        }
+        QGroupBox#gpartedDeviceBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 4px;
+            color: #4a4a4a;
+        }
+        QPushButton#gpartedToolButton {
+            min-width: 92px;
+            padding: 6px 10px;
+            background: #f8f8f8;
+            border: 1px solid #c5c5c5;
+        }
+        QPushButton#gpartedToolButton:disabled {
+            color: #9a9a9a;
+            background: #f2f2f2;
+        }
+        QHeaderView::section {
+            background: #f5f5f5;
+            color: #787878;
+            border: 1px solid #d2d2d2;
+            padding: 4px 6px;
+            font-weight: 600;
+        }
+        QTableWidget,
+        QTreeWidget {
+            background: #ffffff;
+            alternate-background-color: #f8f8f8;
+            border: 1px solid #cfcfcf;
+            gridline-color: #d9d9d9;
+        }
+        QComboBox,
+        QDoubleSpinBox {
+            border: 1px solid #b9bfc7;
+            padding: 2px 6px;
+            background: #ffffff;
+        }
+    )");
     auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(10, 10, 10, 10);
+    layout->setSpacing(0);
 
-    auto *header = new QLabel("Page 2: Disk Layout");
-    header->setStyleSheet("font-size: 18px; font-weight: 600;");
-    layout->addWidget(header);
+    auto *menuBar = new QFrame(page);
+    menuBar->setObjectName("menuBar");
+    auto *menuLayout = new QHBoxLayout(menuBar);
+    menuLayout->setContentsMargins(8, 6, 8, 6);
+    menuLayout->setSpacing(10);
+    const QStringList menuItems = {"GParted", "Edit", "View", "Device", "Partition", "Help"};
+    for (const QString &text : menuItems) {
+        auto *menuItem = new QLabel(text, menuBar);
+        menuItem->setObjectName("menuItem");
+        menuLayout->addWidget(menuItem);
+    }
+    menuLayout->addStretch(1);
+    layout->addWidget(menuBar);
 
-    auto *controls = new QHBoxLayout();
-    controls->addWidget(new QLabel("Target drive", page));
-    driveCombo_ = new QComboBox(page);
-    controls->addWidget(driveCombo_, 1);
+    auto *toolBar = new QFrame(page);
+    toolBar->setObjectName("toolBar");
+    auto *toolLayout = new QHBoxLayout(toolBar);
+    toolLayout->setContentsMargins(8, 8, 8, 8);
+    toolLayout->setSpacing(6);
 
-    auto *refreshButton = new QPushButton("Refresh drives", page);
-    controls->addWidget(refreshButton);
-    layout->addLayout(controls);
+    auto *addButton = new QPushButton("New", toolBar);
+    auto *removeButton = new QPushButton("Delete", toolBar);
+    auto *autoButton = new QPushButton("Default Layout", toolBar);
+    auto *resizeButton = new QPushButton("Resize/Move", toolBar);
+    auto *copyButton = new QPushButton("Copy", toolBar);
+    auto *applyButton = new QPushButton("Apply", toolBar);
+    const QList<QPushButton *> toolButtons = {addButton, removeButton, autoButton, resizeButton, copyButton, applyButton};
+    for (QPushButton *button : toolButtons) {
+        button->setObjectName("gpartedToolButton");
+        toolLayout->addWidget(button);
+    }
+    resizeButton->setEnabled(false);
+    copyButton->setEnabled(false);
+    applyButton->setEnabled(false);
 
-    driveDetailsLabel_ = new QLabel(page);
+    toolLayout->addStretch(1);
+    toolLayout->addWidget(new QLabel("Device", toolBar));
+    driveCombo_ = new QComboBox(toolBar);
+    driveCombo_->setMinimumWidth(260);
+    toolLayout->addWidget(driveCombo_);
+
+    auto *refreshButton = new QPushButton("Refresh", toolBar);
+    refreshButton->setObjectName("gpartedToolButton");
+    toolLayout->addWidget(refreshButton);
+    layout->addWidget(toolBar);
+
+    auto *splitter = new QSplitter(Qt::Vertical, page);
+    splitter->setChildrenCollapsible(false);
+
+    auto *editorShell = new QFrame(splitter);
+    editorShell->setObjectName("editorShell");
+    auto *editorLayout = new QVBoxLayout(editorShell);
+    editorLayout->setContentsMargins(10, 10, 10, 10);
+    editorLayout->setSpacing(8);
+
+    auto *header = new QLabel("Page 2: Partition Editor", editorShell);
+    header->setObjectName("sectionTitle");
+    editorLayout->addWidget(header);
+
+    driveDetailsLabel_ = new QLabel(editorShell);
+    driveDetailsLabel_->setObjectName("driveSummary");
     driveDetailsLabel_->setWordWrap(true);
-    driveDetailsLabel_->setStyleSheet("color: #555;");
-    layout->addWidget(driveDetailsLabel_);
+    editorLayout->addWidget(driveDetailsLabel_);
 
-    auto *splitter = new QSplitter(Qt::Horizontal, page);
+    auto *mapFrame = new QFrame(editorShell);
+    mapFrame->setObjectName("mapFrame");
+    auto *mapLayout = new QVBoxLayout(mapFrame);
+    mapLayout->setContentsMargins(10, 10, 10, 10);
+    mapLayout->setSpacing(8);
 
-    auto *devicePanel = new QWidget(splitter);
-    auto *deviceLayout = new QVBoxLayout(devicePanel);
-    deviceLayout->addWidget(new QLabel("Detected disks and partitions", devicePanel));
-    deviceTree_ = new QTreeWidget(devicePanel);
+    auto *mapHeaderLayout = new QHBoxLayout();
+    mapHeaderLayout->addWidget(new QLabel("Partition layout", mapFrame));
+    mapHeaderLayout->addStretch(1);
+    partitionCapacityLabel_ = new QLabel(mapFrame);
+    partitionCapacityLabel_->setObjectName("partitionStatus");
+    mapHeaderLayout->addWidget(partitionCapacityLabel_);
+    mapLayout->addLayout(mapHeaderLayout);
+
+    partitionMapWidget_ = new QWidget(mapFrame);
+    auto *partitionMapLayout = new QHBoxLayout(partitionMapWidget_);
+    partitionMapLayout->setContentsMargins(0, 0, 0, 0);
+    partitionMapLayout->setSpacing(6);
+    mapLayout->addWidget(partitionMapWidget_);
+
+    partitionTable_ = new QTableWidget(0, 8, editorShell);
+    partitionTable_->setHorizontalHeaderLabels({"Partition", "File System", "Mount Point", "Label", "Size", "Used", "Unused", "Flags / Format"});
+    partitionTable_->setAlternatingRowColors(true);
+    partitionTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
+    partitionTable_->setSelectionMode(QAbstractItemView::SingleSelection);
+    partitionTable_->setShowGrid(true);
+    partitionTable_->verticalHeader()->setVisible(false);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(7, QHeaderView::ResizeToContents);
+    partitionTable_->verticalHeader()->setDefaultSectionSize(34);
+
+    editorLayout->addWidget(mapFrame);
+    editorLayout->addWidget(partitionTable_, 1);
+
+    auto *statusFrame = new QFrame(editorShell);
+    statusFrame->setObjectName("statusFrame");
+    auto *statusLayout = new QHBoxLayout(statusFrame);
+    statusLayout->setContentsMargins(10, 6, 10, 6);
+    partitionOperationsLabel_ = new QLabel("0 operations pending", statusFrame);
+    partitionOperationsLabel_->setObjectName("partitionStatus");
+    statusLayout->addWidget(partitionOperationsLabel_);
+    statusLayout->addStretch(1);
+    editorLayout->addWidget(statusFrame);
+
+    auto *deviceBox = new QGroupBox("Detected Device Details", splitter);
+    deviceBox->setObjectName("gpartedDeviceBox");
+    auto *deviceLayout = new QVBoxLayout(deviceBox);
+    deviceLayout->setContentsMargins(10, 14, 10, 10);
+    deviceLayout->setSpacing(8);
+    deviceTree_ = new QTreeWidget(deviceBox);
     deviceTree_->setColumnCount(2);
     deviceTree_->setHeaderLabels({"Device", "Details"});
     deviceTree_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     deviceTree_->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+    deviceTree_->setAlternatingRowColors(true);
     deviceLayout->addWidget(deviceTree_);
 
-    auto *plannerPanel = new QWidget(splitter);
-    auto *plannerLayout = new QVBoxLayout(plannerPanel);
-    plannerLayout->addWidget(new QLabel("Planned partitions", plannerPanel));
-
-    partitionTable_ = new QTableWidget(0, 4, plannerPanel);
-    partitionTable_->setHorizontalHeaderLabels({"Mount point", "Filesystem", "Size (GiB)", "Format"});
-    partitionTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    partitionTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    partitionTable_->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    partitionTable_->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-    partitionTable_->verticalHeader()->setVisible(false);
-    plannerLayout->addWidget(partitionTable_, 1);
-
-    auto *partitionButtons = new QHBoxLayout();
-    auto *addButton = new QPushButton("Add partition", plannerPanel);
-    auto *removeButton = new QPushButton("Remove selected", plannerPanel);
-    auto *autoButton = new QPushButton("Auto layout", plannerPanel);
-    partitionButtons->addWidget(addButton);
-    partitionButtons->addWidget(removeButton);
-    partitionButtons->addWidget(autoButton);
-    partitionButtons->addStretch(1);
-    plannerLayout->addLayout(partitionButtons);
-
-    splitter->addWidget(devicePanel);
-    splitter->addWidget(plannerPanel);
-    splitter->setStretchFactor(0, 1);
+    splitter->addWidget(editorShell);
+    splitter->addWidget(deviceBox);
+    splitter->setStretchFactor(0, 4);
     splitter->setStretchFactor(1, 1);
     layout->addWidget(splitter, 1);
 
-    auto *note = new QLabel("This is a planner UI, not a full GParted clone. Your repo script receives the selected target disk and partition plan as JSON.");
+    auto *note = new QLabel("This page now mirrors the GParted layout more closely, but it is still a planner only. No disk changes occur in this GUI-only build.");
     note->setWordWrap(true);
     note->setStyleSheet("color: #555;");
     layout->addWidget(note);
@@ -285,6 +530,7 @@ QWidget *InstallerWindow::buildStoragePage()
         addPartitionRow("swap", "swap", 4.0, true);
         markInstallDirty();
     });
+    connect(partitionTable_, &QTableWidget::itemSelectionChanged, this, &InstallerWindow::refreshPartitionEditorPreview);
 
     addPartitionRow("/", "ext4", 40.0, true);
     addPartitionRow("swap", "swap", 4.0, true);
@@ -295,72 +541,129 @@ QWidget *InstallerWindow::buildStoragePage()
 QWidget *InstallerWindow::buildInstallPage()
 {
     auto *page = new QWidget(this);
+    page->setObjectName("stagePage");
+    page->setStyleSheet(R"(
+        QWidget#stagePage {
+            background: #ffffff;
+        }
+        QFrame#stageFrame {
+            background: #ffffff;
+            border: 4px solid #111111;
+        }
+        QLabel#stageHeader {
+            color: #101010;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        QLabel#stageSection {
+            color: #101010;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        QFrame#progressFrame {
+            background: #ffffff;
+            border: 4px solid #111111;
+        }
+        QProgressBar#stageProgress {
+            background: #ffffff;
+            border: none;
+            text-align: center;
+        }
+        QProgressBar#stageProgress::chunk {
+            background: #1d1d1d;
+        }
+        QTextEdit#stageLog {
+            background: #000000;
+            color: #efefef;
+            border: 4px solid #111111;
+            selection-background-color: #2f6bff;
+        }
+        QPushButton#stageButton {
+            min-width: 110px;
+            min-height: 34px;
+            background: #ffffff;
+            border: 4px solid #111111;
+            color: #111111;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        QPushButton#stageButton:disabled {
+            color: #7c7c7c;
+            border-color: #7c7c7c;
+        }
+    )");
+
     auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(28, 22, 28, 22);
+    layout->setSpacing(0);
 
-    auto *header = new QLabel("Page 3: Repo-Driven Install");
-    header->setStyleSheet("font-size: 18px; font-weight: 600;");
-    layout->addWidget(header);
+    auto *stageFrame = new QFrame(page);
+    stageFrame->setObjectName("stageFrame");
+    stageFrame->setMaximumWidth(760);
+    auto *stageLayout = new QVBoxLayout(stageFrame);
+    stageLayout->setContentsMargins(14, 12, 14, 12);
+    stageLayout->setSpacing(10);
 
-    auto *formCard = new QGroupBox("Install source", page);
-    auto *form = new QFormLayout(formCard);
-    form->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    installStatusLabel_ = new QLabel("Current Step: Ready to start installation", stageFrame);
+    installStatusLabel_->setObjectName("stageHeader");
+    installStatusLabel_->setWordWrap(true);
+    stageLayout->addWidget(installStatusLabel_);
 
-    repoUrlEdit_ = new QLineEdit(formCard);
-    repoUrlEdit_->setPlaceholderText("https://github.com/you/your-lfs-repo.git");
+    auto *progressFrame = new QFrame(stageFrame);
+    progressFrame->setObjectName("progressFrame");
+    auto *progressLayout = new QVBoxLayout(progressFrame);
+    progressLayout->setContentsMargins(8, 8, 8, 8);
+    progressLayout->setSpacing(6);
 
-    repoBranchEdit_ = new QLineEdit(formCard);
-    repoBranchEdit_->setPlaceholderText("main");
+    auto *progressLabel = new QLabel("Progress bar", progressFrame);
+    progressLabel->setObjectName("stageSection");
+    progressLayout->addWidget(progressLabel);
+
+    installProgressBar_ = new QProgressBar(progressFrame);
+    installProgressBar_->setObjectName("stageProgress");
+    installProgressBar_->setRange(0, 100);
+    installProgressBar_->setValue(0);
+    installProgressBar_->setTextVisible(false);
+    installProgressBar_->setFixedHeight(24);
+    progressLayout->addWidget(installProgressBar_);
+    stageLayout->addWidget(progressFrame);
+
+    auto *logLabel = new QLabel("OUTPUT OF BASH", stageFrame);
+    logLabel->setObjectName("stageSection");
+    stageLayout->addWidget(logLabel);
+
+    installLog_ = new QTextEdit(stageFrame);
+    installLog_->setObjectName("stageLog");
+    installLog_->setReadOnly(true);
+    installLog_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    installLog_->setMinimumHeight(320);
+    stageLayout->addWidget(installLog_, 1);
+
+    auto *buttonRow = new QHBoxLayout();
+    buttonRow->setContentsMargins(0, 0, 0, 0);
+    pageThreeBackButton_ = new QPushButton("Previous", stageFrame);
+    pageThreeBackButton_->setObjectName("stageButton");
+    pageThreeInstallButton_ = new QPushButton("Install", stageFrame);
+    pageThreeInstallButton_->setObjectName("stageButton");
+    buttonRow->addWidget(pageThreeBackButton_, 0, Qt::AlignLeft);
+    buttonRow->addStretch(1);
+    buttonRow->addWidget(pageThreeInstallButton_, 0, Qt::AlignRight);
+    stageLayout->addLayout(buttonRow);
+
+    layout->addWidget(stageFrame, 0, Qt::AlignTop | Qt::AlignLeft);
+    layout->addStretch(1);
+
+    repoUrlEdit_ = new QLineEdit(page);
+    repoUrlEdit_->setText("local-install-script");
+    repoBranchEdit_ = new QLineEdit(page);
     repoBranchEdit_->setText("main");
-
-    scriptPathEdit_ = new QLineEdit(formCard);
-    scriptPathEdit_->setPlaceholderText("install.sh");
+    scriptPathEdit_ = new QLineEdit(page);
     scriptPathEdit_->setText("install.sh");
-
-    workRootEdit_ = new QLineEdit(formCard);
+    workRootEdit_ = new QLineEdit(page);
     workRootEdit_->setText("/tmp/lfs-installer");
 
-    form->addRow("Repo URL", repoUrlEdit_);
-    form->addRow("Branch", repoBranchEdit_);
-    form->addRow("Install script", scriptPathEdit_);
-    form->addRow("Working directory", workRootEdit_);
-
-    layout->addWidget(formCard);
-
-    installStatusLabel_ = new QLabel("Ready to install.");
-    installStatusLabel_->setStyleSheet("font-weight: 600; color: #1b5e20;");
-    layout->addWidget(installStatusLabel_);
-
-    auto *splitter = new QSplitter(Qt::Horizontal, page);
-
-    auto *previewPanel = new QWidget(splitter);
-    auto *previewLayout = new QVBoxLayout(previewPanel);
-    previewLayout->addWidget(new QLabel("Generated install configuration", previewPanel));
-    configPreview_ = new QPlainTextEdit(previewPanel);
-    configPreview_->setReadOnly(true);
-    previewLayout->addWidget(configPreview_);
-
-    auto *logPanel = new QWidget(splitter);
-    auto *logLayout = new QVBoxLayout(logPanel);
-    logLayout->addWidget(new QLabel("Install log", logPanel));
-    installLog_ = new QTextEdit(logPanel);
-    installLog_->setReadOnly(true);
-    logLayout->addWidget(installLog_);
-
-    splitter->addWidget(previewPanel);
-    splitter->addWidget(logPanel);
-    splitter->setStretchFactor(0, 1);
-    splitter->setStretchFactor(1, 1);
-    layout->addWidget(splitter, 1);
-
-    auto *note = new QLabel("On this page, `Next` is replaced by `Install`. In this GUI-only build, pressing `Install` validates the inputs, writes the generated config, and unlocks the next page without running external commands.");
-    note->setWordWrap(true);
-    note->setStyleSheet("color: #555;");
-    layout->addWidget(note);
-
-    connect(repoUrlEdit_, &QLineEdit::textChanged, this, &InstallerWindow::markInstallDirty);
-    connect(repoBranchEdit_, &QLineEdit::textChanged, this, &InstallerWindow::markInstallDirty);
-    connect(scriptPathEdit_, &QLineEdit::textChanged, this, &InstallerWindow::markInstallDirty);
-    connect(workRootEdit_, &QLineEdit::textChanged, this, &InstallerWindow::markInstallDirty);
+    connect(pageThreeBackButton_, &QPushButton::clicked, this, &InstallerWindow::handleBackAction);
+    connect(pageThreeInstallButton_, &QPushButton::clicked, this, &InstallerWindow::handlePrimaryAction);
 
     return page;
 }
@@ -420,43 +723,65 @@ void InstallerWindow::addPartitionRow(const QString &mountPoint, const QString &
     const int row = partitionTable_->rowCount();
     partitionTable_->insertRow(row);
 
+    auto *partitionItem = new QTableWidgetItem();
+    partitionItem->setFlags(partitionItem->flags() & ~Qt::ItemIsEditable);
+    partitionTable_->setItem(row, 0, partitionItem);
+
     auto *mountCombo = new QComboBox(partitionTable_);
     mountCombo->setEditable(true);
     mountCombo->addItems({"/boot/efi", "/boot", "/", "/home", "/var", "swap"});
     mountCombo->setCurrentText(mountPoint);
     connect(mountCombo, &QComboBox::currentTextChanged, this, &InstallerWindow::markInstallDirty);
-    partitionTable_->setCellWidget(row, 0, mountCombo);
+    partitionTable_->setCellWidget(row, 2, mountCombo);
 
     auto *fsCombo = new QComboBox(partitionTable_);
     fsCombo->addItems({"ext4", "xfs", "btrfs", "fat32", "swap"});
     const int fsIndex = fsCombo->findText(fileSystem);
     fsCombo->setCurrentIndex(fsIndex >= 0 ? fsIndex : 0);
-    connect(fsCombo, &QComboBox::currentTextChanged, this, &InstallerWindow::markInstallDirty);
+    fsCombo->setStyleSheet(comboStyleForFileSystem(fsCombo->currentText()));
+    connect(fsCombo, &QComboBox::currentTextChanged, this, [this, fsCombo](const QString &) {
+        fsCombo->setStyleSheet(comboStyleForFileSystem(fsCombo->currentText()));
+        markInstallDirty();
+    });
     partitionTable_->setCellWidget(row, 1, fsCombo);
+
+    auto *labelItem = new QTableWidgetItem();
+    labelItem->setFlags(labelItem->flags() & ~Qt::ItemIsEditable);
+    partitionTable_->setItem(row, 3, labelItem);
 
     auto *sizeSpin = new QDoubleSpinBox(partitionTable_);
     sizeSpin->setRange(0.1, 102400.0);
     sizeSpin->setDecimals(1);
+    sizeSpin->setSuffix(" GiB");
     sizeSpin->setValue(sizeGiB);
     connect(sizeSpin, &QDoubleSpinBox::valueChanged, this, [this](double) {
         markInstallDirty();
     });
-    partitionTable_->setCellWidget(row, 2, sizeSpin);
+    partitionTable_->setCellWidget(row, 4, sizeSpin);
+
+    auto *usedItem = new QTableWidgetItem();
+    usedItem->setFlags(usedItem->flags() & ~Qt::ItemIsEditable);
+    partitionTable_->setItem(row, 5, usedItem);
+
+    auto *unusedItem = new QTableWidgetItem();
+    unusedItem->setFlags(unusedItem->flags() & ~Qt::ItemIsEditable);
+    partitionTable_->setItem(row, 6, unusedItem);
 
     auto *formatCheck = new QCheckBox(partitionTable_);
     formatCheck->setChecked(format);
+    formatCheck->setText(flagsText({mountPoint, fileSystem, sizeGiB, format}));
     connect(formatCheck, &QCheckBox::checkStateChanged, this, &InstallerWindow::markInstallDirty);
-    partitionTable_->setCellWidget(row, 3, formatCheck);
+    partitionTable_->setCellWidget(row, 7, formatCheck);
 }
 
 QVector<PlannedPartition> InstallerWindow::collectPartitions() const
 {
     QVector<PlannedPartition> partitions;
     for (int row = 0; row < partitionTable_->rowCount(); ++row) {
-        auto *mountCombo = qobject_cast<QComboBox *>(partitionTable_->cellWidget(row, 0));
+        auto *mountCombo = qobject_cast<QComboBox *>(partitionTable_->cellWidget(row, 2));
         auto *fsCombo = qobject_cast<QComboBox *>(partitionTable_->cellWidget(row, 1));
-        auto *sizeSpin = qobject_cast<QDoubleSpinBox *>(partitionTable_->cellWidget(row, 2));
-        auto *formatCheck = qobject_cast<QCheckBox *>(partitionTable_->cellWidget(row, 3));
+        auto *sizeSpin = qobject_cast<QDoubleSpinBox *>(partitionTable_->cellWidget(row, 4));
+        auto *formatCheck = qobject_cast<QCheckBox *>(partitionTable_->cellWidget(row, 7));
 
         if (!mountCombo || !fsCombo || !sizeSpin || !formatCheck) {
             continue;
@@ -471,6 +796,130 @@ QVector<PlannedPartition> InstallerWindow::collectPartitions() const
     }
 
     return partitions;
+}
+
+void InstallerWindow::refreshPartitionEditorPreview()
+{
+    if (!partitionTable_ || !partitionMapWidget_ || !partitionCapacityLabel_ || !partitionOperationsLabel_) {
+        return;
+    }
+
+    const QVector<PlannedPartition> partitions = collectPartitions();
+    const DriveInfo drive = currentDrive();
+    const double driveGiB = bytesToGiB(drive.sizeBytes);
+    double plannedGiB = 0.0;
+    for (const PlannedPartition &partition : partitions) {
+        plannedGiB += partition.sizeGiB;
+    }
+    const double unallocatedGiB = driveGiB > plannedGiB ? driveGiB - plannedGiB : 0.0;
+
+    for (int row = 0; row < partitions.size(); ++row) {
+        if (auto *partitionItem = partitionTable_->item(row, 0)) {
+            partitionItem->setText(partitionNodeName(drive.path, row));
+        }
+        if (auto *labelItem = partitionTable_->item(row, 3)) {
+            labelItem->setText(partitionLabelText(partitions.at(row).mountPoint));
+        }
+        if (auto *usedItem = partitionTable_->item(row, 5)) {
+            usedItem->setText(usedText(partitions.at(row)));
+        }
+        if (auto *unusedItem = partitionTable_->item(row, 6)) {
+            unusedItem->setText(unusedText(partitions.at(row)));
+        }
+        if (auto *formatCheck = qobject_cast<QCheckBox *>(partitionTable_->cellWidget(row, 7))) {
+            formatCheck->setText(flagsText(partitions.at(row)));
+        }
+    }
+
+    if (drive.path.isEmpty()) {
+        partitionCapacityLabel_->setText(QString("Planned %1 GiB").arg(QString::number(plannedGiB, 'f', 2)));
+    } else {
+        partitionCapacityLabel_->setText(
+            QString("Planned %1 of %2 GiB   Unallocated %3 GiB")
+                .arg(QString::number(plannedGiB, 'f', 2),
+                     QString::number(driveGiB, 'f', 2),
+                     QString::number(unallocatedGiB, 'f', 2)));
+    }
+
+    QStringList operations;
+    for (int row = 0; row < partitions.size(); ++row) {
+        operations.append(QString("%1 %2 (%3)")
+                              .arg(partitionNodeName(drive.path, row),
+                                   partitions.at(row).mountPoint,
+                                   flagsText(partitions.at(row))));
+    }
+    partitionOperationsLabel_->setText(QString("%1 operation%2 pending")
+                                           .arg(partitions.size())
+                                           .arg(partitions.size() == 1 ? "" : "s"));
+    partitionOperationsLabel_->setToolTip(operations.join("\n"));
+
+    auto *mapLayout = qobject_cast<QHBoxLayout *>(partitionMapWidget_->layout());
+    while (QLayoutItem *item = mapLayout->takeAt(0)) {
+        delete item->widget();
+        delete item;
+    }
+
+    if (partitions.isEmpty()) {
+        auto *emptyLabel = new QLabel("No partitions planned", partitionMapWidget_);
+        emptyLabel->setAlignment(Qt::AlignCenter);
+        emptyLabel->setStyleSheet("color: #666; background: #fafafa; border: 1px dashed #c9c9c9; padding: 18px;");
+        mapLayout->addWidget(emptyLabel);
+        return;
+    }
+
+    const int selectedRow = partitionTable_->currentRow();
+    for (int row = 0; row < partitions.size(); ++row) {
+        const PlannedPartition &partition = partitions.at(row);
+        const QColor color = fileSystemColor(partition.fileSystem);
+        const QString borderColor = row == selectedRow ? QStringLiteral("#e67e22") : color.darker(145).name();
+
+        auto *segment = new QFrame(partitionMapWidget_);
+        segment->setMinimumWidth(88);
+        segment->setStyleSheet(
+            QString("QFrame { background: %1; border: 3px solid %2; } QLabel { color: #222; background: transparent; }")
+                .arg(color.name(), borderColor));
+
+        auto *segmentLayout = new QVBoxLayout(segment);
+        segmentLayout->setContentsMargins(10, 10, 10, 10);
+        segmentLayout->setSpacing(4);
+
+        auto *topLabel = new QLabel(partitionNodeName(drive.path, row), segment);
+        topLabel->setAlignment(Qt::AlignCenter);
+        segmentLayout->addWidget(topLabel);
+
+        auto *bottomLabel = new QLabel(QString("%1\n%2 GiB").arg(partitionLabelText(partition.mountPoint),
+                                                                  QString::number(partition.sizeGiB, 'f', 2)),
+                                       segment);
+        bottomLabel->setAlignment(Qt::AlignCenter);
+        bottomLabel->setStyleSheet("font-size: 16px; font-weight: 600;");
+        segmentLayout->addWidget(bottomLabel, 1);
+
+        int stretch = static_cast<int>(partition.sizeGiB * 10.0);
+        if (stretch < 1) {
+            stretch = 1;
+        }
+        mapLayout->addWidget(segment, stretch);
+    }
+
+    if (unallocatedGiB > 0.05) {
+        auto *segment = new QFrame(partitionMapWidget_);
+        segment->setMinimumWidth(88);
+        segment->setStyleSheet("QFrame { background: #a9a9a9; border: 2px dashed #d9cf75; } QLabel { color: #ffffff; background: transparent; }");
+        auto *segmentLayout = new QVBoxLayout(segment);
+        segmentLayout->setContentsMargins(10, 10, 10, 10);
+        segmentLayout->setSpacing(4);
+
+        auto *label = new QLabel(QString("unallocated\n%1 GiB").arg(QString::number(unallocatedGiB, 'f', 2)), segment);
+        label->setAlignment(Qt::AlignCenter);
+        label->setStyleSheet("font-size: 16px; font-weight: 600;");
+        segmentLayout->addWidget(label, 1);
+
+        int stretch = static_cast<int>(unallocatedGiB * 10.0);
+        if (stretch < 1) {
+            stretch = 1;
+        }
+        mapLayout->addWidget(segment, stretch);
+    }
 }
 
 QStringList InstallerWindow::collectSelectedFeatures() const
@@ -566,18 +1015,6 @@ bool InstallerWindow::validatePageTwo()
 
 bool InstallerWindow::validatePageThreeInputs()
 {
-    if (repoUrlEdit_->text().trimmed().isEmpty()) {
-        QMessageBox::warning(this, "Missing repo URL", "Enter the repository URL that contains your install logic.");
-        repoUrlEdit_->setFocus();
-        return false;
-    }
-
-    if (scriptPathEdit_->text().trimmed().isEmpty()) {
-        QMessageBox::warning(this, "Missing script path", "Enter the install script path inside the repository.");
-        scriptPathEdit_->setFocus();
-        return false;
-    }
-
     if (workRootEdit_->text().trimmed().isEmpty()) {
         QMessageBox::warning(this, "Missing working directory", "Enter a working directory for repo checkout and logs.");
         workRootEdit_->setFocus();
@@ -638,6 +1075,7 @@ void InstallerWindow::refreshDrives()
     lsblk.start("lsblk", {"--json", "-b", "-o", "NAME,SIZE,TYPE,MODEL,PATH,MOUNTPOINT,FSTYPE"});
     if (!lsblk.waitForFinished(4000) || lsblk.exitStatus() != QProcess::NormalExit || lsblk.exitCode() != 0) {
         driveDetailsLabel_->setText("Unable to query drives with `lsblk`.");
+        refreshPartitionEditorPreview();
         return;
     }
 
@@ -668,11 +1106,13 @@ void InstallerWindow::updateDriveDetails()
 {
     const DriveInfo drive = currentDrive();
     if (drive.path.isEmpty()) {
-        driveDetailsLabel_->setText("Select a target drive. The installer will pass this drive path to your repo script.");
+        driveDetailsLabel_->setText("Select a target disk to update the device entry, partition map, and planner table.");
+        refreshPartitionEditorPreview();
         return;
     }
 
-    driveDetailsLabel_->setText(QString("Selected: %1").arg(driveLabel(drive)));
+    driveDetailsLabel_->setText(QString("Current device: %1").arg(driveLabel(drive)));
+    refreshPartitionEditorPreview();
 }
 
 void InstallerWindow::startInstall()
@@ -710,12 +1150,18 @@ void InstallerWindow::startInstall()
     }
 
     installLog_->clear();
+    if (installProgressBar_) {
+        installProgressBar_->setValue(15);
+    }
     installLog_->append(QString("Run directory: %1").arg(currentRunDirectory_));
     installCompleted_ = false;
     installCompleted_ = true;
     installLog_->append("GUI-only mode: no clone, no script execution, no disk changes were attempted.");
     installLog_->append("The generated configuration has been written to install-config.json for review.");
-    setInstallStatus("GUI-only checkpoint complete. No install command was executed.", QColor("#1b5e20"));
+    if (installProgressBar_) {
+        installProgressBar_->setValue(100);
+    }
+    setInstallStatus("Current Step: GUI-only checkpoint complete. No install command was executed.", QColor("#1b5e20"));
     updateNavigationState();
 }
 
@@ -745,6 +1191,8 @@ void InstallerWindow::exportConfiguration()
 
 void InstallerWindow::markInstallDirty()
 {
+    refreshPartitionEditorPreview();
+
     if (installInProgress_) {
         refreshSummaries();
         return;
@@ -772,8 +1220,10 @@ void InstallerWindow::updateNavigationState()
 {
     const int pageIndex = pages_->currentIndex();
     backButton_->setEnabled(pageIndex > 0 && !installInProgress_);
+    backButton_->setVisible(pageIndex != 2);
 
     primaryButton_->setEnabled(!installInProgress_);
+    primaryButton_->setVisible(pageIndex != 2);
 
     if (pageIndex == 2) {
         primaryButton_->setText(installCompleted_ ? "Next" : "Install");
@@ -786,19 +1236,36 @@ void InstallerWindow::updateNavigationState()
     if (installInProgress_) {
         primaryButton_->setText("Installing...");
     }
+
+    if (pageThreeBackButton_) {
+        pageThreeBackButton_->setEnabled(pageIndex > 0 && !installInProgress_);
+        pageThreeBackButton_->setVisible(pageIndex == 2);
+    }
+    if (pageThreeInstallButton_) {
+        pageThreeInstallButton_->setEnabled(!installInProgress_);
+        pageThreeInstallButton_->setVisible(pageIndex == 2);
+        if (pageIndex == 2) {
+            pageThreeInstallButton_->setText(installInProgress_ ? "Installing..." : (installCompleted_ ? "Next" : "Install"));
+        }
+    }
 }
 
 void InstallerWindow::setInstallStatus(const QString &message, const QColor &color)
 {
     installStatusLabel_->setText(message);
-    installStatusLabel_->setStyleSheet(QString("font-weight: 600; color: %1;").arg(color.name()));
+    installStatusLabel_->setStyleSheet(QString("color: %1; font-family: monospace; font-size: 14px;").arg(color.name()));
 }
 
 void InstallerWindow::resetInstallState(const QString &reason)
 {
     installCompleted_ = false;
+    if (installProgressBar_) {
+        installProgressBar_->setValue(0);
+    }
     if (!reason.isEmpty()) {
-        setInstallStatus(reason, QColor("#ef6c00"));
+        setInstallStatus(QString("Current Step: %1").arg(reason), QColor("#111111"));
+    } else if (installStatusLabel_) {
+        setInstallStatus("Current Step: Ready to start installation", QColor("#111111"));
     }
 }
 
