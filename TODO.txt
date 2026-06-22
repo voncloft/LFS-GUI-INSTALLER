@@ -34,3 +34,4 @@ Once 8 is done....install your "stuff" from step 1
 hopefully use partition file from page 2 for fstab
 grub it
 
+Add a "last left off" for the installer when in chroot so if it crashes it can start from there
