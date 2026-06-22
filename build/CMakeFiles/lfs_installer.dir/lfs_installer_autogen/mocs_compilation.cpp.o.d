@@ -3,8 +3,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/stdc-predef.h \
  /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp \
  /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/../../../src/installerwindow.h \
- /usr/include/QtGui/QColor /usr/include/QtGui/qcolor.h \
- /usr/include/QtGui/qtguiglobal.h /usr/include/QtCore/qglobal.h \
+ /usr/include/QtCore/QProcess /usr/include/QtCore/qprocess.h \
+ /usr/include/QtCore/qcompare.h /usr/include/QtCore/qglobal.h \
  /usr/include/c++/15.1.0/type_traits \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/c++config.h \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/os_defines.h \
@@ -179,9 +179,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/QtCore/qoverload.h /usr/include/QtCore/qswap.h \
  /usr/include/QtCore/qtenvironmentvariables.h \
  /usr/include/QtCore/qtresource.h /usr/include/QtCore/qttranslation.h \
- /usr/include/QtCore/qversiontagging.h /usr/include/QtGui/qtgui-config.h \
- /usr/include/QtGui/qtguiexports.h /usr/include/QtGui/qrgb.h \
- /usr/include/QtCore/qnamespace.h /usr/include/QtCore/qcompare.h \
+ /usr/include/QtCore/qversiontagging.h \
  /usr/include/QtCore/qstdlibdetection.h \
  /usr/include/QtCore/qcomparehelpers.h \
  /usr/include/QtCore/q20type_traits.h /usr/include/c++/15.1.0/functional \
@@ -210,14 +208,16 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/c++/15.1.0/bits/stl_vector.h \
  /usr/include/c++/15.1.0/bits/stl_bvector.h \
  /usr/include/c++/15.1.0/bits/vector.tcc /usr/include/c++/15.1.0/array \
- /usr/include/QtCore/qtmetamacros.h /usr/include/QtCore/qstringlist.h \
- /usr/include/QtCore/qlist.h /usr/include/QtCore/qarraydatapointer.h \
- /usr/include/QtCore/qarraydataops.h /usr/include/QtCore/qarraydata.h \
- /usr/include/QtCore/qpair.h /usr/include/string.h /usr/include/strings.h \
- /usr/include/QtCore/qcontainertools_impl.h \
- /usr/include/QtCore/qxptype_traits.h /usr/include/c++/15.1.0/cstring \
- /usr/include/c++/15.1.0/iterator \
- /usr/include/c++/15.1.0/bits/stream_iterator.h \
+ /usr/include/QtCore/qiodevice.h /usr/include/QtCore/qiodevicebase.h \
+ /usr/include/QtCore/qobject.h /usr/include/QtCore/qobjectdefs.h \
+ /usr/include/QtCore/qnamespace.h /usr/include/QtCore/qtmetamacros.h \
+ /usr/include/QtCore/qobjectdefs_impl.h \
+ /usr/include/QtCore/qfunctionaltools_impl.h \
+ /usr/include/c++/15.1.0/memory \
+ /usr/include/c++/15.1.0/bits/stl_raw_storage_iter.h \
+ /usr/include/c++/15.1.0/bits/align.h \
+ /usr/include/c++/15.1.0/bits/unique_ptr.h \
+ /usr/include/c++/15.1.0/bits/ostream.h /usr/include/c++/15.1.0/ios \
  /usr/include/c++/15.1.0/iosfwd /usr/include/c++/15.1.0/bits/stringfwd.h \
  /usr/include/c++/15.1.0/bits/postypes.h /usr/include/c++/15.1.0/cwchar \
  /usr/include/wchar.h \
@@ -225,8 +225,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/bits/types/wint_t.h /usr/include/bits/types/mbstate_t.h \
  /usr/include/bits/types/__mbstate_t.h /usr/include/bits/types/__FILE.h \
  /usr/include/bits/types/FILE.h \
- /usr/include/c++/15.1.0/bits/streambuf_iterator.h \
- /usr/include/c++/15.1.0/streambuf \
+ /usr/include/c++/15.1.0/bits/char_traits.h \
  /usr/include/c++/15.1.0/bits/localefwd.h \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/c++locale.h \
  /usr/include/c++/15.1.0/clocale /usr/include/locale.h \
@@ -237,7 +236,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/sys/single_threaded.h \
  /usr/include/c++/15.1.0/bits/locale_classes.h \
  /usr/include/c++/15.1.0/string \
- /usr/include/c++/15.1.0/bits/char_traits.h \
  /usr/include/c++/15.1.0/bits/ostream_insert.h \
  /usr/include/c++/15.1.0/bits/cxxabi_forced.h \
  /usr/include/c++/15.1.0/bits/basic_string.h \
@@ -253,18 +251,14 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/c++/15.1.0/bits/locale_classes.tcc \
  /usr/include/c++/15.1.0/system_error \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/error_constants.h \
- /usr/include/c++/15.1.0/stdexcept \
+ /usr/include/c++/15.1.0/stdexcept /usr/include/c++/15.1.0/streambuf \
  /usr/include/c++/15.1.0/bits/streambuf.tcc \
- /usr/include/c++/15.1.0/memory \
- /usr/include/c++/15.1.0/bits/stl_raw_storage_iter.h \
- /usr/include/c++/15.1.0/bits/align.h \
- /usr/include/c++/15.1.0/bits/unique_ptr.h \
- /usr/include/c++/15.1.0/bits/ostream.h /usr/include/c++/15.1.0/ios \
  /usr/include/c++/15.1.0/bits/basic_ios.h \
  /usr/include/c++/15.1.0/bits/locale_facets.h \
  /usr/include/c++/15.1.0/cwctype /usr/include/wctype.h \
  /usr/include/bits/wctype-wchar.h \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/ctype_base.h \
+ /usr/include/c++/15.1.0/bits/streambuf_iterator.h \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/ctype_inline.h \
  /usr/include/c++/15.1.0/bits/locale_facets.tcc \
  /usr/include/c++/15.1.0/bits/basic_ios.tcc \
@@ -276,11 +270,18 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/c++/15.1.0/backward/auto_ptr.h \
  /usr/include/c++/15.1.0/bits/ranges_uninitialized.h \
  /usr/include/c++/15.1.0/pstl/glue_memory_defs.h \
- /usr/include/QtCore/q20functional.h /usr/include/QtCore/q20memory.h \
- /usr/include/QtCore/q17memory.h /usr/include/QtCore/qhashfunctions.h \
  /usr/include/QtCore/qstring.h /usr/include/QtCore/qchar.h \
  /usr/include/QtCore/qstringview.h /usr/include/QtCore/qbytearray.h \
- /usr/include/QtCore/qrefcount.h \
+ /usr/include/QtCore/qrefcount.h /usr/include/QtCore/qarraydata.h \
+ /usr/include/QtCore/qpair.h /usr/include/string.h /usr/include/strings.h \
+ /usr/include/QtCore/qarraydatapointer.h \
+ /usr/include/QtCore/qarraydataops.h \
+ /usr/include/QtCore/qcontainertools_impl.h \
+ /usr/include/QtCore/qxptype_traits.h /usr/include/c++/15.1.0/cstring \
+ /usr/include/c++/15.1.0/iterator \
+ /usr/include/c++/15.1.0/bits/stream_iterator.h \
+ /usr/include/QtCore/q20functional.h /usr/include/QtCore/q20memory.h \
+ /usr/include/QtCore/q17memory.h \
  /usr/include/QtCore/qbytearrayalgorithms.h \
  /usr/include/QtCore/qbytearrayview.h /usr/include/QtCore/qstringfwd.h \
  /usr/include/c++/15.1.0/stdlib.h /usr/include/QtCore/qstringliteral.h \
@@ -291,24 +292,15 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/QtCore/qstringtokenizer.h \
  /usr/include/QtCore/qstringbuilder.h \
  /usr/include/QtCore/qstringconverter.h \
- /usr/include/QtCore/qstringconverter_base.h \
- /usr/include/c++/15.1.0/numeric \
+ /usr/include/QtCore/qstringconverter_base.h /usr/include/QtCore/qlist.h \
+ /usr/include/QtCore/qhashfunctions.h /usr/include/c++/15.1.0/numeric \
  /usr/include/c++/15.1.0/bits/stl_numeric.h \
  /usr/include/c++/15.1.0/pstl/glue_numeric_defs.h \
  /usr/include/QtCore/qiterator.h /usr/include/QtCore/qbytearraylist.h \
- /usr/include/QtCore/qalgorithms.h /usr/include/QtCore/qstringmatcher.h \
- /usr/include/QtGui/qrgba64.h /usr/include/QtCore/QVector \
- /usr/include/QtCore/qvector.h /usr/include/QtWidgets/QWidget \
- /usr/include/QtWidgets/qwidget.h \
- /usr/include/QtWidgets/qtwidgetsglobal.h \
- /usr/include/QtWidgets/qtwidgets-config.h \
- /usr/include/QtWidgets/qtwidgetsexports.h \
- /usr/include/QtGui/qwindowdefs.h /usr/include/QtCore/qobjectdefs.h \
- /usr/include/QtCore/qobjectdefs_impl.h \
- /usr/include/QtCore/qfunctionaltools_impl.h \
- /usr/include/QtCore/qobject.h /usr/include/QtCore/qscopedpointer.h \
- /usr/include/QtCore/qmetatype.h /usr/include/QtCore/qdatastream.h \
- /usr/include/QtCore/qiodevicebase.h /usr/include/QtCore/qfloat16.h \
+ /usr/include/QtCore/qstringlist.h /usr/include/QtCore/qalgorithms.h \
+ /usr/include/QtCore/qstringmatcher.h \
+ /usr/include/QtCore/qscopedpointer.h /usr/include/QtCore/qmetatype.h \
+ /usr/include/QtCore/qdatastream.h /usr/include/QtCore/qfloat16.h \
  /usr/include/QtCore/qmath.h /usr/include/QtCore/qtformat_impl.h \
  /usr/include/c++/15.1.0/format /usr/include/c++/15.1.0/charconv \
  /usr/include/c++/15.1.0/locale \
@@ -338,20 +330,29 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/c++/15.1.0/bits/istream.tcc \
  /usr/include/c++/15.1.0/bits/sstream.tcc \
  /usr/include/c++/15.1.0/bits/chrono_io.h /usr/include/c++/15.1.0/iomanip \
- /usr/include/c++/15.1.0/bits/quoted_string.h \
- /usr/include/QtCore/qmargins.h /usr/include/QtCore/q23utility.h \
- /usr/include/QtCore/q20utility.h /usr/include/QtGui/qaction.h \
- /usr/include/QtGui/qkeysequence.h /usr/include/QtGui/qicon.h \
- /usr/include/QtCore/qsize.h /usr/include/QtGui/qpixmap.h \
- /usr/include/QtGui/qpaintdevice.h /usr/include/QtCore/qrect.h \
- /usr/include/QtCore/qpoint.h /usr/include/QtGui/qcolor.h \
- /usr/include/QtCore/qshareddata.h /usr/include/QtGui/qimage.h \
+ /usr/include/c++/15.1.0/bits/quoted_string.h /usr/include/QtCore/qspan.h \
+ /usr/include/c++/15.1.0/cassert /usr/include/QtCore/q20iterator.h \
+ /usr/include/QtCore/qshareddata.h /usr/include/QtGui/QColor \
+ /usr/include/QtGui/qcolor.h /usr/include/QtGui/qtguiglobal.h \
+ /usr/include/QtGui/qtgui-config.h /usr/include/QtGui/qtguiexports.h \
+ /usr/include/QtGui/qrgb.h /usr/include/QtGui/qrgba64.h \
+ /usr/include/QtCore/QVector /usr/include/QtCore/qvector.h \
+ /usr/include/QtWidgets/QWidget /usr/include/QtWidgets/qwidget.h \
+ /usr/include/QtWidgets/qtwidgetsglobal.h \
+ /usr/include/QtWidgets/qtwidgets-config.h \
+ /usr/include/QtWidgets/qtwidgetsexports.h \
+ /usr/include/QtGui/qwindowdefs.h /usr/include/QtCore/qmargins.h \
+ /usr/include/QtCore/q23utility.h /usr/include/QtCore/q20utility.h \
+ /usr/include/QtGui/qaction.h /usr/include/QtGui/qkeysequence.h \
+ /usr/include/QtGui/qicon.h /usr/include/QtCore/qsize.h \
+ /usr/include/QtGui/qpixmap.h /usr/include/QtGui/qpaintdevice.h \
+ /usr/include/QtCore/qrect.h /usr/include/QtCore/qpoint.h \
+ /usr/include/QtGui/qcolor.h /usr/include/QtGui/qimage.h \
  /usr/include/QtGui/qpixelformat.h /usr/include/QtGui/qtransform.h \
  /usr/include/QtGui/qpolygon.h /usr/include/QtGui/qregion.h \
- /usr/include/QtCore/qspan.h /usr/include/c++/15.1.0/cassert \
- /usr/include/QtCore/q20iterator.h /usr/include/QtCore/qline.h \
- /usr/include/QtCore/qvariant.h /usr/include/QtCore/qdebug.h \
- /usr/include/QtCore/qtextstream.h /usr/include/QtCore/qcontiguouscache.h \
+ /usr/include/QtCore/qline.h /usr/include/QtCore/qvariant.h \
+ /usr/include/QtCore/qdebug.h /usr/include/QtCore/qtextstream.h \
+ /usr/include/QtCore/qcontiguouscache.h \
  /usr/include/QtCore/qsharedpointer.h \
  /usr/include/QtCore/qsharedpointer_impl.h /usr/include/c++/15.1.0/set \
  /usr/include/c++/15.1.0/bits/stl_set.h \

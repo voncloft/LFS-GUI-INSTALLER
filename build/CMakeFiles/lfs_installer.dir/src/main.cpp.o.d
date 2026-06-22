@@ -366,12 +366,14 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o: \
  /usr/include/QtCore/qhash.h /usr/include/QtCore/qvarlengtharray.h \
  /usr/include/QtGui/qguiapplication_platform.h \
  /home/von/qt6\ projects/lfs_installer/src/installerwindow.h \
- /usr/include/QtGui/QColor /usr/include/QtGui/qcolor.h \
- /usr/include/QtCore/QVector /usr/include/QtCore/qvector.h \
- /usr/include/QtWidgets/QWidget /usr/include/QtWidgets/qwidget.h \
- /usr/include/QtGui/qaction.h /usr/include/QtGui/qkeysequence.h \
- /usr/include/QtGui/qicon.h /usr/include/QtGui/qpalette.h \
- /usr/include/QtGui/qbrush.h /usr/include/QtGui/qfont.h \
- /usr/include/QtCore/qendian.h /usr/include/QtGui/qfontmetrics.h \
- /usr/include/QtGui/qfontinfo.h /usr/include/QtGui/qfontvariableaxis.h \
+ /usr/include/QtCore/QProcess /usr/include/QtCore/qprocess.h \
+ /usr/include/QtCore/qiodevice.h /usr/include/QtGui/QColor \
+ /usr/include/QtGui/qcolor.h /usr/include/QtCore/QVector \
+ /usr/include/QtCore/qvector.h /usr/include/QtWidgets/QWidget \
+ /usr/include/QtWidgets/qwidget.h /usr/include/QtGui/qaction.h \
+ /usr/include/QtGui/qkeysequence.h /usr/include/QtGui/qicon.h \
+ /usr/include/QtGui/qpalette.h /usr/include/QtGui/qbrush.h \
+ /usr/include/QtGui/qfont.h /usr/include/QtCore/qendian.h \
+ /usr/include/QtGui/qfontmetrics.h /usr/include/QtGui/qfontinfo.h \
+ /usr/include/QtGui/qfontvariableaxis.h \
  /usr/include/QtWidgets/qsizepolicy.h

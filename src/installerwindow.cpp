@@ -2,9 +2,11 @@
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QFileDialog>
+#include <QFile>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QFontDatabase>
@@ -26,7 +28,9 @@
 #include <QProcessEnvironment>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QStatusBar>
+#include <QStandardPaths>
 #include <QToolBar>
 #include <QToolButton>
 #include <QSaveFile>
@@ -35,7 +39,6 @@
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QTableWidget>
-#include <QTextEdit>
 #include <QTextCursor>
 #include <QTimeZone>
 #include <QTreeWidget>
@@ -511,13 +514,22 @@ QWidget *InstallerWindow::buildInstallPage()
     installProgressBar_->setMinimumHeight(35);
     layout->addWidget(installProgressBar_);
 
-    installLog_ = new QTextEdit(page);
+    installLog_ = new QPlainTextEdit(page);
     installLog_->setReadOnly(true);
     installLog_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-    installLog_->setLineWrapMode(QTextEdit::NoWrap);
+    installLog_->setLineWrapMode(QPlainTextEdit::NoWrap);
     installLog_->setMinimumHeight(351);
     installLog_->setPlaceholderText("Install output will appear here.");
     installLog_->setFocusPolicy(Qt::NoFocus);
+    installLog_->setStyleSheet(
+        "QPlainTextEdit {"
+        " background-color: #000000;"
+        " color: #ffffff;"
+        " border: 1px solid #1f1f1f;"
+        " selection-background-color: #1e5aa8;"
+        " selection-color: #ffffff;"
+        " }"
+    );
     layout->addWidget(installLog_, 1);
 
     auto *buttonRow = new QHBoxLayout();
@@ -1053,13 +1065,14 @@ void InstallerWindow::startInstall()
     }
 
     const QString workRoot = workRootEdit_->text().trimmed();
+    const QString runStamp = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss");
     QDir directory;
     if (!directory.mkpath(workRoot)) {
         QMessageBox::critical(this, "Working directory error", QString("Unable to create `%1`.").arg(workRoot));
         return;
     }
 
-    currentRunDirectory_ = QDir(workRoot).filePath("run-" + QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
+    currentRunDirectory_ = QDir(workRoot).filePath("run-" + runStamp);
     if (!directory.mkpath(currentRunDirectory_)) {
         QMessageBox::critical(this, "Working directory error", QString("Unable to create `%1`.").arg(currentRunDirectory_));
         return;
@@ -1076,23 +1089,74 @@ void InstallerWindow::startInstall()
         return;
     }
 
+    const QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    if (desktopPath.isEmpty()) {
+        QMessageBox::critical(this, "Desktop path error", "Unable to locate the Desktop directory.");
+        return;
+    }
+
+    const QString desktopSummaryPath = QDir(desktopPath).filePath("lfs-installer-setup-" + runStamp + ".txt");
+    QSaveFile summaryFile(desktopSummaryPath);
+    if (!summaryFile.open(QIODevice::WriteOnly)) {
+        QMessageBox::critical(this, "Summary write failed", QString("Unable to write `%1`.").arg(desktopSummaryPath));
+        return;
+    }
+    summaryFile.write(buildConfigText().toUtf8());
+    if (!summaryFile.commit()) {
+        QMessageBox::critical(this, "Summary write failed", QString("Failed to finalize `%1`.").arg(desktopSummaryPath));
+        return;
+    }
+
+    const QString scriptsDirectory = findScriptsDirectory();
+    if (scriptsDirectory.isEmpty()) {
+        QMessageBox::critical(this, "Scripts folder missing", "Unable to locate the project's `scripts` folder.");
+        return;
+    }
+
+    installScriptPaths_ = collectScriptPaths(scriptsDirectory);
+    if (installScriptPaths_.isEmpty()) {
+        QMessageBox::critical(this, "Install list empty", "No scripts were listed in `scripts/install.sh`.");
+        return;
+    }
+
+    if (!installProcess_) {
+        installProcess_ = new QProcess(this);
+        installProcess_->setProcessChannelMode(QProcess::MergedChannels);
+        connect(installProcess_, &QProcess::readyRead, this, &InstallerWindow::handleInstallProcessOutput);
+        connect(installProcess_, &QProcess::finished, this, &InstallerWindow::handleInstallProcessFinished);
+        connect(installProcess_, &QProcess::errorOccurred, this, &InstallerWindow::handleInstallProcessError);
+    }
+
+    installOutputBuffer_.clear();
+    pendingInstallStepText_.clear();
+    currentInstallScriptIndex_ = 0;
+    completedInstallSteps_ = 0;
+    totalInstallSteps_ = countScriptSteps(installScriptPaths_);
+    installInProgress_ = true;
+    installCompleted_ = false;
+
     installLog_->clear();
     if (installProgressBar_) {
-        installProgressBar_->setValue(20);
+        if (totalInstallSteps_ > 0) {
+            installProgressBar_->setRange(0, totalInstallSteps_);
+            installProgressBar_->setValue(0);
+        } else {
+            installProgressBar_->setRange(0, 0);
+        }
     }
-    installLog_->append("$ prepare run directory");
-    installLog_->append(QString("> %1").arg(currentRunDirectory_));
-    installLog_->append("$ write install-config.json");
-    installCompleted_ = false;
-    installCompleted_ = true;
-    installLog_->append("> ok");
-    installLog_->append("$ install command hook");
-    installLog_->append("> not wired yet");
-    if (installProgressBar_) {
-        installProgressBar_->setValue(100);
+    appendInstallLogLine("$ prepare run directory");
+    appendInstallLogLine(QString("> %1").arg(currentRunDirectory_));
+    appendInstallLogLine("$ write install-config.json");
+    appendInstallLogLine("$ write desktop setup summary");
+    appendInstallLogLine(QString("> %1").arg(desktopSummaryPath));
+    appendInstallLogLine("$ read scripts/install.sh");
+    appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("install.sh")));
+    for (const QString &scriptPath : installScriptPaths_) {
+        appendInstallLogLine(QString("> queued %1").arg(QFileInfo(scriptPath).fileName()));
     }
-    setInstallStatus("Current Step: Config prepared. Waiting for install command wiring.", QColor("#1b5e20"));
+    setInstallStatus("Current Step: Starting", QColor("#1b5e20"));
     updateNavigationState();
+    startNextInstallScript();
 }
 
 void InstallerWindow::exportConfiguration()
@@ -1198,6 +1262,7 @@ void InstallerWindow::setInstallStatus(const QString &message, const QColor &col
 void InstallerWindow::resetInstallState(const QString &reason)
 {
     installCompleted_ = false;
+    pendingInstallStepText_.clear();
     if (installProgressBar_) {
         installProgressBar_->setValue(0);
     }
@@ -1206,6 +1271,271 @@ void InstallerWindow::resetInstallState(const QString &reason)
     } else if (installStatusLabel_) {
         setInstallStatus("Current Step: Ready to start installation", QColor("#111111"));
     }
+}
+
+QString InstallerWindow::findScriptsDirectory() const
+{
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QStringList candidates = {
+        QDir::current().filePath("scripts"),
+        QDir(appDir).filePath("scripts"),
+        QDir(appDir).filePath("../scripts")
+    };
+
+    for (const QString &candidate : candidates) {
+        if (QFileInfo(candidate).isDir()) {
+            return QDir(candidate).absolutePath();
+        }
+    }
+
+    return {};
+}
+
+QStringList InstallerWindow::collectScriptPaths(const QString &scriptsDirectory) const
+{
+    const QString installListPath = QDir(scriptsDirectory).filePath("install.sh");
+    QFile installListFile(installListPath);
+    if (!installListFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return {};
+    }
+
+    QStringList scriptPaths;
+    while (!installListFile.atEnd()) {
+        QString line = QString::fromUtf8(installListFile.readLine()).trimmed();
+        if (line.isEmpty() || line.startsWith('#')) {
+            continue;
+        }
+
+        if ((line.startsWith('"') && line.endsWith('"')) || (line.startsWith('\'') && line.endsWith('\''))) {
+            line = line.mid(1, line.size() - 2);
+        }
+
+        if (!line.endsWith(".sh")) {
+            continue;
+        }
+
+        const QString scriptPath = QDir(scriptsDirectory).filePath(line);
+        if (QFileInfo(scriptPath).isFile()) {
+            scriptPaths.append(QFileInfo(scriptPath).absoluteFilePath());
+        }
+    }
+
+    return scriptPaths;
+}
+
+int InstallerWindow::countScriptSteps(const QStringList &scriptPaths) const
+{
+    const QRegularExpression stepPattern(R"(^\s*echo\s+['"]?step:.*?['"]?\s*$)", QRegularExpression::MultilineOption);
+    int stepCount = 0;
+
+    for (const QString &scriptPath : scriptPaths) {
+        QFile scriptFile(scriptPath);
+        if (!scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            continue;
+        }
+
+        const QString scriptContents = QString::fromUtf8(scriptFile.readAll());
+        auto matchIterator = stepPattern.globalMatch(scriptContents);
+        while (matchIterator.hasNext()) {
+            matchIterator.next();
+            ++stepCount;
+        }
+    }
+
+    return stepCount;
+}
+
+void InstallerWindow::startNextInstallScript()
+{
+    if (!installProcess_) {
+        return;
+    }
+
+    if (currentInstallScriptIndex_ < 0 || currentInstallScriptIndex_ >= installScriptPaths_.size()) {
+        installInProgress_ = false;
+        installCompleted_ = true;
+        if (installProgressBar_) {
+            if (totalInstallSteps_ > 0) {
+                installProgressBar_->setValue(totalInstallSteps_);
+            } else {
+                installProgressBar_->setRange(0, 1);
+                installProgressBar_->setValue(1);
+            }
+        }
+        setInstallStatus("Current Step: Complete", QColor("#1b5e20"));
+        appendInstallLogLine("> all scripts complete");
+        updateNavigationState();
+        return;
+    }
+
+    const QString scriptPath = installScriptPaths_.at(currentInstallScriptIndex_);
+    installOutputBuffer_.clear();
+    pendingInstallStepText_.clear();
+    installProcess_->setWorkingDirectory(QFileInfo(scriptPath).absolutePath());
+    appendInstallLogLine(QString("$ bash -x \"%1\"").arg(QFileInfo(scriptPath).fileName()));
+    installProcess_->start("bash", {"-x", scriptPath});
+}
+
+void InstallerWindow::handleInstallProcessOutput()
+{
+    if (!installProcess_) {
+        return;
+    }
+
+    installOutputBuffer_ += QString::fromLocal8Bit(installProcess_->readAll());
+    int newlineIndex = installOutputBuffer_.indexOf('\n');
+    while (newlineIndex >= 0) {
+        QString line = installOutputBuffer_.left(newlineIndex);
+        installOutputBuffer_.remove(0, newlineIndex + 1);
+        if (line.endsWith('\r')) {
+            line.chop(1);
+        }
+        processInstallOutputLine(line);
+        newlineIndex = installOutputBuffer_.indexOf('\n');
+    }
+}
+
+void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    if (!installOutputBuffer_.isEmpty()) {
+        processInstallOutputLine(installOutputBuffer_);
+        installOutputBuffer_.clear();
+    }
+
+    if (!installInProgress_) {
+        return;
+    }
+
+    if (exitStatus != QProcess::NormalExit || exitCode != 0) {
+        installInProgress_ = false;
+        installCompleted_ = false;
+        appendInstallLogLine(QString("> script failed with exit code %1").arg(exitCode));
+        setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+        updateNavigationState();
+        return;
+    }
+
+    ++currentInstallScriptIndex_;
+    startNextInstallScript();
+}
+
+void InstallerWindow::handleInstallProcessError(QProcess::ProcessError error)
+{
+    if (!installInProgress_ || !installProcess_) {
+        return;
+    }
+
+    Q_UNUSED(error);
+    installInProgress_ = false;
+    installCompleted_ = false;
+    appendInstallLogLine(QString("> process error: %1").arg(installProcess_->errorString()));
+    setInstallStatus("Current Step: Failed to start script", QColor("#b71c1c"));
+    updateNavigationState();
+}
+
+void InstallerWindow::appendInstallLogLine(const QString &line)
+{
+    if (!installLog_) {
+        return;
+    }
+
+    installLog_->appendPlainText(line);
+    installLog_->centerCursor();
+}
+
+void InstallerWindow::processInstallOutputLine(const QString &line)
+{
+    if (line.isEmpty()) {
+        return;
+    }
+
+    appendInstallLogLine(line);
+
+    static const QRegularExpression tracedStepPattern(R"(^\+\s+echo\s+['"]?step:(.*?)['"]?\s*$)");
+
+    QString stepText;
+    bool tracedStep = false;
+    if (line.startsWith("step:")) {
+        stepText = line.mid(5).trimmed();
+    } else {
+        const QRegularExpressionMatch match = tracedStepPattern.match(line);
+        if (match.hasMatch()) {
+            tracedStep = true;
+            stepText = match.captured(1).trimmed();
+        }
+    }
+
+    if (stepText.isEmpty()) {
+        return;
+    }
+
+    if (!tracedStep && pendingInstallStepText_ == stepText) {
+        pendingInstallStepText_.clear();
+        return;
+    }
+
+    pendingInstallStepText_ = tracedStep ? stepText : QString();
+    setInstallStatus(QString("Current Step: %1").arg(stepText), QColor("#1b5e20"));
+
+    if (installProgressBar_ && totalInstallSteps_ > 0) {
+        ++completedInstallSteps_;
+        installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
+    }
+}
+
+QString InstallerWindow::buildConfigText() const
+{
+    QStringList lines;
+    lines << "LFS Installer Setup Summary";
+    lines << "";
+    lines << "System";
+    lines << QString("Hostname: %1").arg(hostnameEdit_->text().trimmed());
+    lines << QString("Username: %1").arg(usernameEdit_->text().trimmed());
+    lines << QString("Time zone: %1").arg(timeZoneCombo_->currentText());
+    lines << "";
+
+    const DriveInfo drive = currentDrive();
+    lines << "Storage";
+    lines << QString("Target drive: %1").arg(drive.path.isEmpty() ? QStringLiteral("(not selected)") : driveLabel(drive));
+
+    const QVector<PlannedPartition> partitions = collectPartitions();
+    if (partitions.isEmpty()) {
+        lines << "Partitions: none";
+    } else {
+        lines << "Partitions:";
+        for (const PlannedPartition &partition : partitions) {
+            lines << QString("  - mount=%1 fs=%2 size=%3 GiB format=%4")
+                         .arg(partition.mountPoint,
+                              partition.fileSystem,
+                              QString::number(partition.sizeGiB, 'f', 1),
+                              partition.format ? "yes" : "no");
+        }
+    }
+
+    lines << "";
+    lines << "Install";
+    lines << QString("Script source: %1").arg(repoUrlEdit_->text().trimmed());
+    lines << QString("Branch: %1").arg(repoBranchEdit_->text().trimmed());
+    lines << QString("Script path: %1").arg(scriptPathEdit_->text().trimmed());
+    lines << QString("Working root: %1").arg(workRootEdit_->text().trimmed());
+    lines << QString("Run directory: %1").arg(currentRunDirectory_);
+
+    const QStringList features = collectSelectedFeatures();
+    lines << "";
+    lines << "Features";
+    if (features.isEmpty()) {
+        lines << "None selected yet";
+    } else {
+        for (const QString &feature : features) {
+            lines << QString("  - %1").arg(feature);
+        }
+    }
+
+    lines << "";
+    lines << "Generated by GUI-only install checkpoint.";
+    lines << "No real install command has been executed yet.";
+
+    return lines.join('\n') + '\n';
 }
 
 QByteArray InstallerWindow::buildConfigJson(bool pretty) const

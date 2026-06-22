@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QProcess>
 #include <QColor>
 #include <QVector>
 #include <QWidget>
@@ -14,7 +15,6 @@ class QProgressBar;
 class QPushButton;
 class QStackedWidget;
 class QTableWidget;
-class QTextEdit;
 class QTreeWidget;
 
 struct PlannedPartition
@@ -50,6 +50,9 @@ private slots:
     void markInstallDirty();
     void refreshSummaries();
     void refreshPartitionEditorPreview();
+    void handleInstallProcessOutput();
+    void handleInstallProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void handleInstallProcessError(QProcess::ProcessError error);
 
 private:
     void buildUi();
@@ -67,6 +70,13 @@ private:
     void updateNavigationState();
     void setInstallStatus(const QString &message, const QColor &color);
     void resetInstallState(const QString &reason);
+    QString findScriptsDirectory() const;
+    QStringList collectScriptPaths(const QString &scriptsDirectory) const;
+    int countScriptSteps(const QStringList &scriptPaths) const;
+    void startNextInstallScript();
+    void appendInstallLogLine(const QString &line);
+    void processInstallOutputLine(const QString &line);
+    QString buildConfigText() const;
     QByteArray buildConfigJson(bool pretty) const;
 
     QStackedWidget *pages_ = nullptr;
@@ -99,7 +109,7 @@ private:
     QLabel *installStatusLabel_ = nullptr;
     QProgressBar *installProgressBar_ = nullptr;
     QPlainTextEdit *configPreview_ = nullptr;
-    QTextEdit *installLog_ = nullptr;
+    QPlainTextEdit *installLog_ = nullptr;
     QPushButton *pageThreeBackButton_ = nullptr;
     QPushButton *pageThreeInstallButton_ = nullptr;
 
@@ -107,6 +117,13 @@ private:
     QPlainTextEdit *summaryPreview_ = nullptr;
 
     QVector<DriveInfo> drives_;
+    QProcess *installProcess_ = nullptr;
+    QStringList installScriptPaths_;
+    QString installOutputBuffer_;
+    QString pendingInstallStepText_;
+    int currentInstallScriptIndex_ = -1;
+    int totalInstallSteps_ = 0;
+    int completedInstallSteps_ = 0;
     bool installCompleted_ = false;
     bool installInProgress_ = false;
     bool refreshingSummaries_ = false;

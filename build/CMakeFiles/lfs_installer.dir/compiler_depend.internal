@@ -5,6 +5,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /home/von/qt6 projects/lfs_installer/build/lfs_installer_autogen/mocs_compilation.cpp
  /home/von/qt6 projects/lfs_installer/src/installerwindow.h
  /home/von/qt6 projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp
+ /usr/include/QtCore/QProcess
  /usr/include/QtCore/QVector
  /usr/include/QtCore/q17memory.h
  /usr/include/QtCore/q20algorithm.h
@@ -55,6 +56,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /usr/include/QtCore/qglobalstatic.h
  /usr/include/QtCore/qhash.h
  /usr/include/QtCore/qhashfunctions.h
+ /usr/include/QtCore/qiodevice.h
  /usr/include/QtCore/qiodevicebase.h
  /usr/include/QtCore/qiterable.h
  /usr/include/QtCore/qiterator.h
@@ -78,6 +80,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /usr/include/QtCore/qoverload.h
  /usr/include/QtCore/qpair.h
  /usr/include/QtCore/qpoint.h
+ /usr/include/QtCore/qprocess.h
  /usr/include/QtCore/qprocessordetection.h
  /usr/include/QtCore/qrect.h
  /usr/include/QtCore/qrefcount.h
@@ -529,8 +532,10 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
 CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /home/von/qt6 projects/lfs_installer/src/installerwindow.cpp
  /home/von/qt6 projects/lfs_installer/src/installerwindow.h
+ /usr/include/QtCore/QCoreApplication
  /usr/include/QtCore/QDateTime
  /usr/include/QtCore/QDir
+ /usr/include/QtCore/QFile
  /usr/include/QtCore/QFileInfo
  /usr/include/QtCore/QJsonArray
  /usr/include/QtCore/QJsonDocument
@@ -541,10 +546,12 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/QProcess
  /usr/include/QtCore/QProcessEnvironment
  /usr/include/QtCore/QRect
+ /usr/include/QtCore/QRegularExpression
  /usr/include/QtCore/QSaveFile
  /usr/include/QtCore/QSet
  /usr/include/QtCore/QSize
  /usr/include/QtCore/QSizeF
+ /usr/include/QtCore/QStandardPaths
  /usr/include/QtCore/QTimeZone
  /usr/include/QtCore/QVector
  /usr/include/QtCore/q17memory.h
@@ -659,6 +666,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/qsharedpointer_impl.h
  /usr/include/QtCore/qsize.h
  /usr/include/QtCore/qspan.h
+ /usr/include/QtCore/qstandardpaths.h
  /usr/include/QtCore/qstdlibdetection.h
  /usr/include/QtCore/qstring.h
  /usr/include/QtCore/qstringalgorithms.h
@@ -708,6 +716,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/qyieldcpu.h
  /usr/include/QtGui/QColor
  /usr/include/QtGui/QFontDatabase
+ /usr/include/QtGui/QPalette
  /usr/include/QtGui/QTextCursor
  /usr/include/QtGui/QTransform
  /usr/include/QtGui/qabstracttextdocumentlayout.h
@@ -1204,6 +1213,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
 CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /home/von/qt6 projects/lfs_installer/src/main.cpp
  /home/von/qt6 projects/lfs_installer/src/installerwindow.h
+ /usr/include/QtCore/QProcess
  /usr/include/QtCore/QVector
  /usr/include/QtCore/q17memory.h
  /usr/include/QtCore/q20functional.h
@@ -1260,6 +1270,7 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /usr/include/QtCore/qglobalstatic.h
  /usr/include/QtCore/qhash.h
  /usr/include/QtCore/qhashfunctions.h
+ /usr/include/QtCore/qiodevice.h
  /usr/include/QtCore/qiodevicebase.h
  /usr/include/QtCore/qiterable.h
  /usr/include/QtCore/qiterator.h
@@ -1285,6 +1296,7 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /usr/include/QtCore/qoverload.h
  /usr/include/QtCore/qpair.h
  /usr/include/QtCore/qpoint.h
+ /usr/include/QtCore/qprocess.h
  /usr/include/QtCore/qprocessordetection.h
  /usr/include/QtCore/qrect.h
  /usr/include/QtCore/qrefcount.h

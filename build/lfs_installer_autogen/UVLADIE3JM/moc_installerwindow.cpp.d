@@ -1,5 +1,6 @@
 /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp: /home/von/qt6\ projects/lfs_installer/src/installerwindow.h \
   /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/moc_predefs.h \
+  /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QVector \
   /usr/include/QtCore/q17memory.h \
   /usr/include/QtCore/q20functional.h \
@@ -48,6 +49,7 @@
   /usr/include/QtCore/qglobalstatic.h \
   /usr/include/QtCore/qhash.h \
   /usr/include/QtCore/qhashfunctions.h \
+  /usr/include/QtCore/qiodevice.h \
   /usr/include/QtCore/qiodevicebase.h \
   /usr/include/QtCore/qiterable.h \
   /usr/include/QtCore/qiterator.h \
@@ -71,6 +73,7 @@
   /usr/include/QtCore/qoverload.h \
   /usr/include/QtCore/qpair.h \
   /usr/include/QtCore/qpoint.h \
+  /usr/include/QtCore/qprocess.h \
   /usr/include/QtCore/qprocessordetection.h \
   /usr/include/QtCore/qrect.h \
   /usr/include/QtCore/qrefcount.h \

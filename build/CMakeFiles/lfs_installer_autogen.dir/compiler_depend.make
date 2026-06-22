@@ -277,6 +277,7 @@ lfs_installer_autogen/timestamp: /bin/cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets-release.cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets.cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsVersionlessTargets.cmake \
+  /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QVector \
   /usr/include/QtCore/q17memory.h \
   /usr/include/QtCore/q20functional.h \
@@ -325,6 +326,7 @@ lfs_installer_autogen/timestamp: /bin/cmake \
   /usr/include/QtCore/qglobalstatic.h \
   /usr/include/QtCore/qhash.h \
   /usr/include/QtCore/qhashfunctions.h \
+  /usr/include/QtCore/qiodevice.h \
   /usr/include/QtCore/qiodevicebase.h \
   /usr/include/QtCore/qiterable.h \
   /usr/include/QtCore/qiterator.h \
@@ -348,6 +350,7 @@ lfs_installer_autogen/timestamp: /bin/cmake \
   /usr/include/QtCore/qoverload.h \
   /usr/include/QtCore/qpair.h \
   /usr/include/QtCore/qpoint.h \
+  /usr/include/QtCore/qprocess.h \
   /usr/include/QtCore/qprocessordetection.h \
   /usr/include/QtCore/qrect.h \
   /usr/include/QtCore/qrefcount.h \
@@ -1007,8 +1010,6 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /usr/share/cmake-4.0/Modules/CMakeCXXCompilerABI.cpp:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.0/include/stdbool.h:
-
 /usr/lib/cmake/Qt6/QtPublicWindowsHelpers.cmake:
 
 /usr/lib/cmake/Qt6/QtPublicTargetHelpers.cmake:
@@ -1354,6 +1355,10 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 /usr/include/c++/15.1.0/bits/codecvt.h:
 
 /usr/include/c++/15.1.0/bits/chrono.h:
+
+/usr/include/c++/15.1.0/bits/stl_bvector.h:
+
+/usr/include/c++/15.1.0/bits/char_traits.h:
 
 /lib/cmake/Qt6Widgets/Qt6WidgetsMacros.cmake:
 
@@ -1891,6 +1896,10 @@ lfs_installer_autogen/moc_predefs.h:
 
 /lib/cmake/Qt6Gui/Qt6GuiConfig.cmake:
 
+/usr/include/c++/15.1.0/bits/basic_string.tcc:
+
+/lib/cmake/Qt6Gui/Qt6QWaylandIntegrationPluginConfig.cmake:
+
 /lib/cmake/Qt6Gui/Qt6QVkKhrDisplayIntegrationPluginTargets-release.cmake:
 
 /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsVersionlessTargets.cmake:
@@ -2141,6 +2150,10 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 
 /usr/include/bits/types/struct_timeval.h:
 
+/usr/include/QtCore/QProcess:
+
+/usr/include/QtGui/qcursor.h:
+
 /usr/include/QtCore/qobject_impl.h:
 
 /usr/include/QtCore/QVector:
@@ -2201,10 +2214,6 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 
 /usr/include/asm-generic/errno-base.h:
 
-/lib/cmake/Qt6Gui/Qt6QICOPluginConfig.cmake:
-
-/usr/include/QtCore/qcomparehelpers.h:
-
 /usr/include/QtCore/qconfig.h:
 
 /usr/include/c++/15.1.0/atomic:
@@ -2255,6 +2264,12 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 
 /usr/include/QtCore/qhash.h:
 
+/lib/cmake/Qt6Gui/Qt6QICOPluginConfig.cmake:
+
+/usr/include/QtCore/qcomparehelpers.h:
+
+/usr/include/QtCore/qiodevice.h:
+
 /usr/include/c++/15.1.0/bits/charconv.h:
 
 /usr/include/QtCore/qiterator.h:
@@ -2298,6 +2313,10 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 /lib/cmake/Qt6Gui/Qt6QLibInputPluginConfig.cmake:
 
 /usr/include/QtCore/qpoint.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.0/include/stdbool.h:
+
+/usr/include/QtCore/qprocess.h:
 
 /usr/include/QtCore/qrect.h:
 
@@ -2423,10 +2442,6 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 
 /usr/include/QtCore/qutf8stringview.h:
 
-/usr/include/c++/15.1.0/bits/stl_bvector.h:
-
-/usr/include/c++/15.1.0/bits/char_traits.h:
-
 /usr/include/QtCore/qxptype_traits.h:
 
 /usr/share/cmake-4.0/Modules/Internal/CheckSourceCompiles.cmake:
@@ -2462,8 +2477,6 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 /usr/include/c++/15.1.0/bits/atomic_lockfree_defines.h:
 
 /usr/include/QtGui/qcolor.h:
-
-/usr/include/QtGui/qcursor.h:
 
 /usr/include/QtGui/qfont.h:
 
@@ -2686,7 +2699,3 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 /lib/cmake/Qt6GuiPrivate/Qt6GuiPrivateTargets.cmake:
 
 /usr/include/c++/15.1.0/bits/basic_ios.tcc:
-
-/lib/cmake/Qt6Gui/Qt6QWaylandIntegrationPluginConfig.cmake:
-
-/usr/include/c++/15.1.0/bits/basic_string.tcc:
