@@ -223,13 +223,12 @@ void InstallerWindow::buildUi()
     mainLayout->addWidget(pages_, 1);
 
     auto *buttonRow = new QHBoxLayout();
-    buttonRow->addStretch(1);
-
     backButton_ = new QPushButton("Back", this);
     primaryButton_ = new QPushButton("Next", this);
     primaryButton_->setMinimumWidth(160);
 
     buttonRow->addWidget(backButton_);
+    buttonRow->addStretch(1);
     buttonRow->addWidget(primaryButton_);
     mainLayout->addLayout(buttonRow);
 
@@ -316,7 +315,6 @@ QWidget *InstallerWindow::buildStoragePage()
     auto *resizeAction = toolbar->addAction("Resize/Move");
     auto *copyAction = toolbar->addAction("Copy");
     auto *pasteAction = toolbar->addAction("Paste");
-    auto *applyAction = toolbar->addAction("Apply");
     toolbar->addSeparator();
     toolbar->addWidget(new QLabel("Device:", toolbar));
     driveCombo_ = new QComboBox(toolbar);
@@ -328,8 +326,6 @@ QWidget *InstallerWindow::buildStoragePage()
     auto *refreshMenuAction = storageMenu->addAction("Refresh Devices");
     editMenu->addAction("Undo Last Operation")->setEnabled(false);
     editMenu->addAction("Clear All Operations")->setEnabled(false);
-    auto *applyMenuAction = editMenu->addAction("Apply All Operations");
-    applyMenuAction->setEnabled(false);
     auto *pendingOpsAction = viewMenu->addAction("Pending Operations");
     pendingOpsAction->setCheckable(true);
     pendingOpsAction->setChecked(true);
@@ -345,7 +341,6 @@ QWidget *InstallerWindow::buildStoragePage()
     resizeAction->setEnabled(false);
     copyAction->setEnabled(false);
     pasteAction->setEnabled(false);
-    applyAction->setEnabled(false);
 
     auto *plannerBox = new QGroupBox("Partitions", page);
     auto *plannerLayout = new QVBoxLayout(plannerBox);
@@ -406,11 +401,11 @@ QWidget *InstallerWindow::buildStoragePage()
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::updateDriveDetails);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::markInstallDirty);
     connect(addAction, &QAction::triggered, this, [this]() {
-        addPartitionRow("/", "ext4", 40.0, true);
+        addPartitionRow("", "ext4", 1.0, true);
         markInstallDirty();
     });
     connect(newMenuAction, &QAction::triggered, this, [this]() {
-        addPartitionRow("/", "ext4", 40.0, true);
+        addPartitionRow("", "ext4", 1.0, true);
         markInstallDirty();
     });
     connect(removeAction, &QAction::triggered, this, [this]() {
@@ -429,9 +424,6 @@ QWidget *InstallerWindow::buildStoragePage()
     });
     connect(pendingOpsAction, &QAction::toggled, plannerStatus, &QWidget::setVisible);
     connect(partitionTable_, &QTableWidget::itemSelectionChanged, this, &InstallerWindow::refreshPartitionEditorPreview);
-
-    addPartitionRow("/", "ext4", 40.0, true);
-    addPartitionRow("swap", "swap", 4.0, true);
 
     return page;
 }
@@ -657,13 +649,19 @@ void InstallerWindow::refreshPartitionEditorPreview()
     }
 
     if (drive.path.isEmpty()) {
-        partitionCapacityLabel_->setText(QString("Planned %1 GiB").arg(QString::number(plannedGiB, 'f', 2)));
+        partitionCapacityLabel_->setText(QString("Planned: %1 GiB").arg(QString::number(plannedGiB, 'f', 2)));
+    } else if (plannedGiB <= driveGiB) {
+        partitionCapacityLabel_->setText(
+            QString("Drive: %1 GiB   Planned: %2 GiB   Remaining: %3 GiB")
+                .arg(QString::number(driveGiB, 'f', 2),
+                     QString::number(plannedGiB, 'f', 2),
+                     QString::number(unallocatedGiB, 'f', 2)));
     } else {
         partitionCapacityLabel_->setText(
-            QString("Planned %1 of %2 GiB   Unallocated %3 GiB")
-                .arg(QString::number(plannedGiB, 'f', 2),
-                     QString::number(driveGiB, 'f', 2),
-                     QString::number(unallocatedGiB, 'f', 2)));
+            QString("Drive: %1 GiB   Planned: %2 GiB   Over by: %3 GiB")
+                .arg(QString::number(driveGiB, 'f', 2),
+                     QString::number(plannedGiB, 'f', 2),
+                     QString::number(plannedGiB - driveGiB, 'f', 2)));
     }
 
     QStringList operations;
@@ -928,12 +926,13 @@ void InstallerWindow::updateDriveDetails()
 {
     const DriveInfo drive = currentDrive();
     if (drive.path.isEmpty()) {
-        driveDetailsLabel_->setText("Select a target disk to update the device entry, partition map, and planner table.");
+        driveDetailsLabel_->setText("Select a target disk, then create partitions manually. Remaining space updates as you size each entry.");
         refreshPartitionEditorPreview();
         return;
     }
 
-    driveDetailsLabel_->setText(QString("Current device: %1").arg(driveLabel(drive)));
+    driveDetailsLabel_->setText(QString("Current device: %1. Define your partitions manually; remaining space is calculated automatically.")
+                                    .arg(driveLabel(drive)));
     refreshPartitionEditorPreview();
 }
 
