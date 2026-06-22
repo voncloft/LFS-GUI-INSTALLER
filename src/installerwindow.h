@@ -6,6 +6,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QDoubleSpinBox;
 class QLabel;
 class QLineEdit;
 class QPlainTextEdit;
@@ -80,6 +81,12 @@ private:
     QComboBox *driveCombo_ = nullptr;
     QLabel *driveDetailsLabel_ = nullptr;
     QTreeWidget *deviceTree_ = nullptr;
+    QComboBox *newPartitionMountCombo_ = nullptr;
+    QComboBox *newPartitionFsCombo_ = nullptr;
+    QDoubleSpinBox *newPartitionSizeSpin_ = nullptr;
+    QCheckBox *newPartitionFormatCheck_ = nullptr;
+    QLabel *newPartitionRemainingLabel_ = nullptr;
+    QPushButton *newPartitionAddButton_ = nullptr;
     QTableWidget *partitionTable_ = nullptr;
     QWidget *partitionMapWidget_ = nullptr;
     QLabel *partitionCapacityLabel_ = nullptr;

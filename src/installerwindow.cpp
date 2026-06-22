@@ -375,31 +375,34 @@ QWidget *InstallerWindow::buildStoragePage()
     auto *createLayout = new QHBoxLayout(createBox);
     createLayout->addWidget(new QLabel("Mount point", createBox));
 
-    auto *newMountCombo = new QComboBox(createBox);
-    newMountCombo->setEditable(true);
-    newMountCombo->addItems({"", "/", "/boot", "/boot/efi", "/home", "/var", "swap"});
-    newMountCombo->setMinimumContentsLength(12);
-    createLayout->addWidget(newMountCombo);
+    newPartitionMountCombo_ = new QComboBox(createBox);
+    newPartitionMountCombo_->setEditable(true);
+    newPartitionMountCombo_->addItems({"", "/", "/boot", "/boot/efi", "/home", "/var", "swap"});
+    newPartitionMountCombo_->setMinimumContentsLength(12);
+    createLayout->addWidget(newPartitionMountCombo_);
 
     createLayout->addWidget(new QLabel("Filesystem", createBox));
-    auto *newFsCombo = new QComboBox(createBox);
-    newFsCombo->addItems({"ext4", "xfs", "btrfs", "fat32", "swap"});
-    createLayout->addWidget(newFsCombo);
+    newPartitionFsCombo_ = new QComboBox(createBox);
+    newPartitionFsCombo_->addItems({"ext4", "xfs", "btrfs", "fat32", "swap"});
+    createLayout->addWidget(newPartitionFsCombo_);
 
     createLayout->addWidget(new QLabel("Size", createBox));
-    auto *newSizeSpin = new QDoubleSpinBox(createBox);
-    newSizeSpin->setRange(0.1, 102400.0);
-    newSizeSpin->setDecimals(1);
-    newSizeSpin->setSuffix(" GiB");
-    newSizeSpin->setValue(1.0);
-    createLayout->addWidget(newSizeSpin);
+    newPartitionSizeSpin_ = new QDoubleSpinBox(createBox);
+    newPartitionSizeSpin_->setRange(0.1, 102400.0);
+    newPartitionSizeSpin_->setDecimals(1);
+    newPartitionSizeSpin_->setSuffix(" GiB");
+    newPartitionSizeSpin_->setValue(1.0);
+    createLayout->addWidget(newPartitionSizeSpin_);
 
-    auto *newFormatCheck = new QCheckBox("Format", createBox);
-    newFormatCheck->setChecked(true);
-    createLayout->addWidget(newFormatCheck);
+    newPartitionFormatCheck_ = new QCheckBox("Format", createBox);
+    newPartitionFormatCheck_->setChecked(true);
+    createLayout->addWidget(newPartitionFormatCheck_);
 
-    auto *insertPartitionButton = new QPushButton("Add Partition", createBox);
-    createLayout->addWidget(insertPartitionButton);
+    newPartitionRemainingLabel_ = new QLabel("Remaining: select a drive", createBox);
+    createLayout->addWidget(newPartitionRemainingLabel_);
+
+    newPartitionAddButton_ = new QPushButton("Add Partition", createBox);
+    createLayout->addWidget(newPartitionAddButton_);
     createLayout->addStretch(1);
 
     tableLayout->addWidget(createBox);
@@ -433,37 +436,40 @@ QWidget *InstallerWindow::buildStoragePage()
     connect(refreshMenuAction, &QAction::triggered, this, &InstallerWindow::refreshDrives);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::updateDriveDetails);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::markInstallDirty);
-    connect(newMountCombo, &QComboBox::currentTextChanged, this, [newMountCombo, newFsCombo](const QString &text) {
+    connect(newPartitionMountCombo_, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         const QString mountPoint = text.trimmed();
         if (mountPoint == "swap") {
-            const int index = newFsCombo->findText("swap");
+            const int index = newPartitionFsCombo_->findText("swap");
             if (index >= 0) {
-                newFsCombo->setCurrentIndex(index);
+                newPartitionFsCombo_->setCurrentIndex(index);
             }
         } else if (mountPoint == "/boot/efi") {
-            const int index = newFsCombo->findText("fat32");
+            const int index = newPartitionFsCombo_->findText("fat32");
             if (index >= 0) {
-                newFsCombo->setCurrentIndex(index);
+                newPartitionFsCombo_->setCurrentIndex(index);
             }
-        } else if (newFsCombo->currentText() == "swap") {
-            const int index = newFsCombo->findText("ext4");
+        } else if (newPartitionFsCombo_->currentText() == "swap") {
+            const int index = newPartitionFsCombo_->findText("ext4");
             if (index >= 0) {
-                newFsCombo->setCurrentIndex(index);
+                newPartitionFsCombo_->setCurrentIndex(index);
             }
         }
     });
 
-    const auto insertPlannedPartition = [this, newMountCombo, newFsCombo, newSizeSpin, newFormatCheck]() {
-        addPartitionRow(newMountCombo->currentText().trimmed(),
-                        newFsCombo->currentText().trimmed(),
-                        newSizeSpin->value(),
-                        newFormatCheck->isChecked());
+    const auto insertPlannedPartition = [this]() {
+        if (!newPartitionAddButton_ || !newPartitionAddButton_->isEnabled()) {
+            return;
+        }
+        addPartitionRow(newPartitionMountCombo_->currentText().trimmed(),
+                        newPartitionFsCombo_->currentText().trimmed(),
+                        newPartitionSizeSpin_->value(),
+                        newPartitionFormatCheck_->isChecked());
         markInstallDirty();
     };
 
     connect(addAction, &QAction::triggered, this, insertPlannedPartition);
     connect(newMenuAction, &QAction::triggered, this, insertPlannedPartition);
-    connect(insertPartitionButton, &QPushButton::clicked, this, insertPlannedPartition);
+    connect(newPartitionAddButton_, &QPushButton::clicked, this, insertPlannedPartition);
     connect(removeAction, &QAction::triggered, this, [this]() {
         const int row = partitionTable_->currentRow();
         if (row >= 0) {
@@ -685,6 +691,48 @@ void InstallerWindow::refreshPartitionEditorPreview()
         plannedGiB += partition.sizeGiB;
     }
     const double unallocatedGiB = driveGiB > plannedGiB ? driveGiB - plannedGiB : 0.0;
+
+    for (int row = 0; row < partitionTable_->rowCount(); ++row) {
+        auto *sizeSpin = qobject_cast<QDoubleSpinBox *>(partitionTable_->cellWidget(row, 4));
+        if (!sizeSpin) {
+            continue;
+        }
+
+        if (drive.path.isEmpty()) {
+            sizeSpin->setMaximum(102400.0);
+            continue;
+        }
+
+        const double currentSize = sizeSpin->value();
+        const double otherPlannedGiB = plannedGiB - currentSize;
+        const double rowMaxGiB = qMax(currentSize, driveGiB - otherPlannedGiB);
+        sizeSpin->setMaximum(qMax(0.1, rowMaxGiB));
+    }
+
+    if (newPartitionSizeSpin_) {
+        if (drive.path.isEmpty()) {
+            newPartitionSizeSpin_->setMaximum(102400.0);
+            if (newPartitionRemainingLabel_) {
+                newPartitionRemainingLabel_->setText("Remaining: select a drive");
+            }
+            if (newPartitionAddButton_) {
+                newPartitionAddButton_->setEnabled(false);
+            }
+        } else {
+            const double availableGiB = qMax(0.0, unallocatedGiB);
+            newPartitionSizeSpin_->setMaximum(qMax(0.1, availableGiB));
+            if (newPartitionSizeSpin_->value() > availableGiB && availableGiB >= 0.1) {
+                newPartitionSizeSpin_->setValue(availableGiB);
+            }
+            if (newPartitionRemainingLabel_) {
+                newPartitionRemainingLabel_->setText(
+                    QString("Remaining: %1 GiB").arg(QString::number(availableGiB, 'f', 2)));
+            }
+            if (newPartitionAddButton_) {
+                newPartitionAddButton_->setEnabled(availableGiB >= 0.1);
+            }
+        }
+    }
 
     for (int row = 0; row < partitions.size(); ++row) {
         if (auto *partitionItem = partitionTable_->item(row, 0)) {
