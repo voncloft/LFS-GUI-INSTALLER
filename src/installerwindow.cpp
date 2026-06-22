@@ -294,138 +294,103 @@ QWidget *InstallerWindow::buildDetailsPage()
 QWidget *InstallerWindow::buildStoragePage()
 {
     auto *page = new QWidget(this);
-    page->setObjectName("gpartedPage");
+    page->setObjectName("partitionPage");
     page->setStyleSheet(R"(
-        QWidget#gpartedPage {
-            background: #efefef;
+        QWidget#partitionPage {
+            background: #d8d8d8;
         }
-        QFrame#menuBar,
-        QFrame#toolBar,
-        QFrame#editorShell,
-        QFrame#mapFrame,
-        QFrame#statusFrame,
-        QGroupBox#gpartedDeviceBox {
-            background: #ffffff;
-            border: 1px solid #c7c7c7;
-        }
-        QFrame#menuBar {
-            border-bottom: none;
-        }
-        QFrame#toolBar {
-            border-top: none;
-        }
-        QLabel#menuItem {
-            color: #2f2f2f;
-            padding: 0 8px;
+        QFrame#partitionToolbar,
+        QFrame#partitionShell,
+        QFrame#partitionMapFrame,
+        QFrame#partitionStatusFrame,
+        QGroupBox#partitionDeviceBox {
+            background: #f5f5f5;
+            border: 3px solid #111111;
         }
         QLabel#sectionTitle {
             font-size: 18px;
-            font-weight: 600;
-            color: #2b2b2b;
+            font-weight: 700;
+            color: #1f1f1f;
         }
-        QLabel#driveSummary {
-            color: #444444;
-        }
+        QLabel#driveSummary,
         QLabel#partitionStatus {
-            color: #444444;
+            color: #2f2f2f;
         }
-        QGroupBox#gpartedDeviceBox::title {
+        QGroupBox#partitionDeviceBox::title {
             subcontrol-origin: margin;
-            left: 10px;
-            padding: 0 4px;
-            color: #4a4a4a;
+            left: 12px;
+            padding: 0 6px;
+            color: #1f1f1f;
+            font-weight: 600;
         }
-        QPushButton#gpartedToolButton {
-            min-width: 92px;
-            padding: 6px 10px;
-            background: #f8f8f8;
-            border: 1px solid #c5c5c5;
+        QPushButton#partitionButton {
+            min-width: 96px;
+            min-height: 30px;
+            padding: 4px 10px;
+            background: #ffffff;
+            border: 3px solid #111111;
+            color: #111111;
         }
-        QPushButton#gpartedToolButton:disabled {
-            color: #9a9a9a;
-            background: #f2f2f2;
+        QPushButton#partitionButton:disabled {
+            color: #808080;
+            border-color: #808080;
         }
         QHeaderView::section {
-            background: #f5f5f5;
-            color: #787878;
-            border: 1px solid #d2d2d2;
+            background: #dcdcdc;
+            color: #111111;
+            border: 2px solid #111111;
             padding: 4px 6px;
             font-weight: 600;
         }
         QTableWidget,
         QTreeWidget {
             background: #ffffff;
-            alternate-background-color: #f8f8f8;
-            border: 1px solid #cfcfcf;
-            gridline-color: #d9d9d9;
+            alternate-background-color: #f0f0f0;
+            border: 3px solid #111111;
+            gridline-color: #111111;
+            color: #111111;
         }
         QComboBox,
         QDoubleSpinBox {
-            border: 1px solid #b9bfc7;
+            border: 2px solid #111111;
             padding: 2px 6px;
             background: #ffffff;
         }
     )");
     auto *layout = new QVBoxLayout(page);
-    layout->setContentsMargins(10, 10, 10, 10);
-    layout->setSpacing(0);
+    layout->setContentsMargins(16, 16, 16, 16);
+    layout->setSpacing(10);
 
-    auto *menuBar = new QFrame(page);
-    menuBar->setObjectName("menuBar");
-    auto *menuLayout = new QHBoxLayout(menuBar);
-    menuLayout->setContentsMargins(8, 6, 8, 6);
-    menuLayout->setSpacing(10);
-    const QStringList menuItems = {"GParted", "Edit", "View", "Device", "Partition", "Help"};
-    for (const QString &text : menuItems) {
-        auto *menuItem = new QLabel(text, menuBar);
-        menuItem->setObjectName("menuItem");
-        menuLayout->addWidget(menuItem);
-    }
-    menuLayout->addStretch(1);
-    layout->addWidget(menuBar);
+    auto *toolbar = new QFrame(page);
+    toolbar->setObjectName("partitionToolbar");
+    auto *toolLayout = new QHBoxLayout(toolbar);
+    toolLayout->setContentsMargins(10, 10, 10, 10);
+    toolLayout->setSpacing(8);
 
-    auto *toolBar = new QFrame(page);
-    toolBar->setObjectName("toolBar");
-    auto *toolLayout = new QHBoxLayout(toolBar);
-    toolLayout->setContentsMargins(8, 8, 8, 8);
-    toolLayout->setSpacing(6);
-
-    auto *addButton = new QPushButton("New", toolBar);
-    auto *removeButton = new QPushButton("Delete", toolBar);
-    auto *autoButton = new QPushButton("Default Layout", toolBar);
-    auto *resizeButton = new QPushButton("Resize/Move", toolBar);
-    auto *copyButton = new QPushButton("Copy", toolBar);
-    auto *applyButton = new QPushButton("Apply", toolBar);
-    const QList<QPushButton *> toolButtons = {addButton, removeButton, autoButton, resizeButton, copyButton, applyButton};
-    for (QPushButton *button : toolButtons) {
-        button->setObjectName("gpartedToolButton");
-        toolLayout->addWidget(button);
-    }
-    resizeButton->setEnabled(false);
-    copyButton->setEnabled(false);
-    applyButton->setEnabled(false);
-
-    toolLayout->addStretch(1);
-    toolLayout->addWidget(new QLabel("Device", toolBar));
-    driveCombo_ = new QComboBox(toolBar);
+    toolLayout->addWidget(new QLabel("Device", toolbar));
+    driveCombo_ = new QComboBox(toolbar);
     driveCombo_->setMinimumWidth(260);
     toolLayout->addWidget(driveCombo_);
 
-    auto *refreshButton = new QPushButton("Refresh", toolBar);
-    refreshButton->setObjectName("gpartedToolButton");
-    toolLayout->addWidget(refreshButton);
-    layout->addWidget(toolBar);
+    auto *refreshButton = new QPushButton("Refresh", toolbar);
+    auto *addButton = new QPushButton("Add", toolbar);
+    auto *removeButton = new QPushButton("Delete", toolbar);
+    auto *autoButton = new QPushButton("Auto Layout", toolbar);
+    const QList<QPushButton *> toolButtons = {refreshButton, addButton, removeButton, autoButton};
+    for (QPushButton *button : toolButtons) {
+        button->setObjectName("partitionButton");
+        toolLayout->addWidget(button);
+    }
+    toolLayout->addStretch(1);
+    layout->addWidget(toolbar);
 
-    auto *splitter = new QSplitter(Qt::Vertical, page);
-    splitter->setChildrenCollapsible(false);
-
-    auto *editorShell = new QFrame(splitter);
-    editorShell->setObjectName("editorShell");
+    auto *editorShell = new QFrame(page);
+    editorShell->setObjectName("partitionShell");
     auto *editorLayout = new QVBoxLayout(editorShell);
     editorLayout->setContentsMargins(10, 10, 10, 10);
     editorLayout->setSpacing(8);
 
-    auto *header = new QLabel("Page 2: Partition Editor", editorShell);
+    auto *header = new QLabel("Page 2: Partition Layout", editorShell);
     header->setObjectName("sectionTitle");
     editorLayout->addWidget(header);
 
@@ -435,13 +400,13 @@ QWidget *InstallerWindow::buildStoragePage()
     editorLayout->addWidget(driveDetailsLabel_);
 
     auto *mapFrame = new QFrame(editorShell);
-    mapFrame->setObjectName("mapFrame");
+    mapFrame->setObjectName("partitionMapFrame");
     auto *mapLayout = new QVBoxLayout(mapFrame);
     mapLayout->setContentsMargins(10, 10, 10, 10);
     mapLayout->setSpacing(8);
 
     auto *mapHeaderLayout = new QHBoxLayout();
-    mapHeaderLayout->addWidget(new QLabel("Partition layout", mapFrame));
+    mapHeaderLayout->addWidget(new QLabel("Partition Map", mapFrame));
     mapHeaderLayout->addStretch(1);
     partitionCapacityLabel_ = new QLabel(mapFrame);
     partitionCapacityLabel_->setObjectName("partitionStatus");
@@ -455,7 +420,7 @@ QWidget *InstallerWindow::buildStoragePage()
     mapLayout->addWidget(partitionMapWidget_);
 
     partitionTable_ = new QTableWidget(0, 8, editorShell);
-    partitionTable_->setHorizontalHeaderLabels({"Partition", "File System", "Mount Point", "Label", "Size", "Used", "Unused", "Flags / Format"});
+    partitionTable_->setHorizontalHeaderLabels({"Partition", "File System", "Mount Point", "Label", "Size", "Used", "Unused", "Flags"});
     partitionTable_->setAlternatingRowColors(true);
     partitionTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
     partitionTable_->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -475,7 +440,7 @@ QWidget *InstallerWindow::buildStoragePage()
     editorLayout->addWidget(partitionTable_, 1);
 
     auto *statusFrame = new QFrame(editorShell);
-    statusFrame->setObjectName("statusFrame");
+    statusFrame->setObjectName("partitionStatusFrame");
     auto *statusLayout = new QHBoxLayout(statusFrame);
     statusLayout->setContentsMargins(10, 6, 10, 6);
     partitionOperationsLabel_ = new QLabel("0 operations pending", statusFrame);
@@ -484,8 +449,10 @@ QWidget *InstallerWindow::buildStoragePage()
     statusLayout->addStretch(1);
     editorLayout->addWidget(statusFrame);
 
-    auto *deviceBox = new QGroupBox("Detected Device Details", splitter);
-    deviceBox->setObjectName("gpartedDeviceBox");
+    layout->addWidget(editorShell, 1);
+
+    auto *deviceBox = new QGroupBox("Detected Devices", page);
+    deviceBox->setObjectName("partitionDeviceBox");
     auto *deviceLayout = new QVBoxLayout(deviceBox);
     deviceLayout->setContentsMargins(10, 14, 10, 10);
     deviceLayout->setSpacing(8);
@@ -496,17 +463,8 @@ QWidget *InstallerWindow::buildStoragePage()
     deviceTree_->header()->setSectionResizeMode(1, QHeaderView::Stretch);
     deviceTree_->setAlternatingRowColors(true);
     deviceLayout->addWidget(deviceTree_);
-
-    splitter->addWidget(editorShell);
-    splitter->addWidget(deviceBox);
-    splitter->setStretchFactor(0, 4);
-    splitter->setStretchFactor(1, 1);
-    layout->addWidget(splitter, 1);
-
-    auto *note = new QLabel("This page now mirrors the GParted layout more closely, but it is still a planner only. No disk changes occur in this GUI-only build.");
-    note->setWordWrap(true);
-    note->setStyleSheet("color: #555;");
-    layout->addWidget(note);
+    deviceBox->setMaximumHeight(220);
+    layout->addWidget(deviceBox);
 
     connect(refreshButton, &QPushButton::clicked, this, &InstallerWindow::refreshDrives);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::updateDriveDetails);
@@ -544,48 +502,53 @@ QWidget *InstallerWindow::buildInstallPage()
     page->setObjectName("stagePage");
     page->setStyleSheet(R"(
         QWidget#stagePage {
-            background: #ffffff;
+            background: #e2e2e2;
         }
         QFrame#stageFrame {
-            background: #ffffff;
-            border: 4px solid #111111;
+            background: #f7f7f7;
+            border: 3px solid #111111;
         }
         QLabel#stageHeader {
             color: #101010;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 600;
         }
         QLabel#stageSection {
             color: #101010;
             font-family: monospace;
             font-size: 13px;
         }
-        QFrame#progressFrame {
+        QFrame#progressFrame,
+        QFrame#terminalFrame {
             background: #ffffff;
-            border: 4px solid #111111;
+            border: 3px solid #111111;
         }
         QProgressBar#stageProgress {
             background: #ffffff;
-            border: none;
+            border: 2px solid #111111;
             text-align: center;
+            font-weight: 600;
+            min-height: 28px;
         }
         QProgressBar#stageProgress::chunk {
-            background: #1d1d1d;
+            background: #2f6fed;
         }
         QTextEdit#stageLog {
-            background: #000000;
-            color: #efefef;
-            border: 4px solid #111111;
+            background: #0f1115;
+            color: #d7e3ff;
+            border: none;
             selection-background-color: #2f6bff;
         }
         QPushButton#stageButton {
             min-width: 110px;
-            min-height: 34px;
+            min-height: 36px;
             background: #ffffff;
-            border: 4px solid #111111;
+            border: 3px solid #111111;
             color: #111111;
             font-family: monospace;
             font-size: 13px;
+            font-weight: 600;
         }
         QPushButton#stageButton:disabled {
             color: #7c7c7c;
@@ -601,8 +564,8 @@ QWidget *InstallerWindow::buildInstallPage()
     stageFrame->setObjectName("stageFrame");
     stageFrame->setMaximumWidth(760);
     auto *stageLayout = new QVBoxLayout(stageFrame);
-    stageLayout->setContentsMargins(14, 12, 14, 12);
-    stageLayout->setSpacing(10);
+    stageLayout->setContentsMargins(16, 16, 16, 16);
+    stageLayout->setSpacing(12);
 
     installStatusLabel_ = new QLabel("Current Step: Ready to start installation", stageFrame);
     installStatusLabel_->setObjectName("stageHeader");
@@ -612,10 +575,10 @@ QWidget *InstallerWindow::buildInstallPage()
     auto *progressFrame = new QFrame(stageFrame);
     progressFrame->setObjectName("progressFrame");
     auto *progressLayout = new QVBoxLayout(progressFrame);
-    progressLayout->setContentsMargins(8, 8, 8, 8);
+    progressLayout->setContentsMargins(10, 10, 10, 10);
     progressLayout->setSpacing(6);
 
-    auto *progressLabel = new QLabel("Progress bar", progressFrame);
+    auto *progressLabel = new QLabel("Install Progress", progressFrame);
     progressLabel->setObjectName("stageSection");
     progressLayout->addWidget(progressLabel);
 
@@ -623,21 +586,30 @@ QWidget *InstallerWindow::buildInstallPage()
     installProgressBar_->setObjectName("stageProgress");
     installProgressBar_->setRange(0, 100);
     installProgressBar_->setValue(0);
-    installProgressBar_->setTextVisible(false);
-    installProgressBar_->setFixedHeight(24);
+    installProgressBar_->setFormat("%p%");
+    installProgressBar_->setTextVisible(true);
     progressLayout->addWidget(installProgressBar_);
     stageLayout->addWidget(progressFrame);
 
-    auto *logLabel = new QLabel("OUTPUT OF BASH", stageFrame);
-    logLabel->setObjectName("stageSection");
-    stageLayout->addWidget(logLabel);
+    auto *terminalFrame = new QFrame(stageFrame);
+    terminalFrame->setObjectName("terminalFrame");
+    auto *terminalLayout = new QVBoxLayout(terminalFrame);
+    terminalLayout->setContentsMargins(10, 10, 10, 10);
+    terminalLayout->setSpacing(6);
 
-    installLog_ = new QTextEdit(stageFrame);
+    auto *logLabel = new QLabel("Install Output", terminalFrame);
+    logLabel->setObjectName("stageSection");
+    terminalLayout->addWidget(logLabel);
+
+    installLog_ = new QTextEdit(terminalFrame);
     installLog_->setObjectName("stageLog");
     installLog_->setReadOnly(true);
     installLog_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    installLog_->setLineWrapMode(QTextEdit::NoWrap);
     installLog_->setMinimumHeight(320);
-    stageLayout->addWidget(installLog_, 1);
+    installLog_->setPlainText("$ installer idle\n$ output will appear here when the install hook is wired up");
+    terminalLayout->addWidget(installLog_, 1);
+    stageLayout->addWidget(terminalFrame, 1);
 
     auto *buttonRow = new QHBoxLayout();
     buttonRow->setContentsMargins(0, 0, 0, 0);
@@ -862,7 +834,7 @@ void InstallerWindow::refreshPartitionEditorPreview()
     if (partitions.isEmpty()) {
         auto *emptyLabel = new QLabel("No partitions planned", partitionMapWidget_);
         emptyLabel->setAlignment(Qt::AlignCenter);
-        emptyLabel->setStyleSheet("color: #666; background: #fafafa; border: 1px dashed #c9c9c9; padding: 18px;");
+        emptyLabel->setStyleSheet("color: #444444; background: #ffffff; border: 3px solid #111111; padding: 18px;");
         mapLayout->addWidget(emptyLabel);
         return;
     }
@@ -871,12 +843,12 @@ void InstallerWindow::refreshPartitionEditorPreview()
     for (int row = 0; row < partitions.size(); ++row) {
         const PlannedPartition &partition = partitions.at(row);
         const QColor color = fileSystemColor(partition.fileSystem);
-        const QString borderColor = row == selectedRow ? QStringLiteral("#e67e22") : color.darker(145).name();
+        const QString borderColor = row == selectedRow ? QStringLiteral("#245dcb") : QStringLiteral("#111111");
 
         auto *segment = new QFrame(partitionMapWidget_);
         segment->setMinimumWidth(88);
         segment->setStyleSheet(
-            QString("QFrame { background: %1; border: 3px solid %2; } QLabel { color: #222; background: transparent; }")
+            QString("QFrame { background: %1; border: 3px solid %2; } QLabel { color: #111111; background: transparent; }")
                 .arg(color.name(), borderColor));
 
         auto *segmentLayout = new QVBoxLayout(segment);
@@ -904,7 +876,7 @@ void InstallerWindow::refreshPartitionEditorPreview()
     if (unallocatedGiB > 0.05) {
         auto *segment = new QFrame(partitionMapWidget_);
         segment->setMinimumWidth(88);
-        segment->setStyleSheet("QFrame { background: #a9a9a9; border: 2px dashed #d9cf75; } QLabel { color: #ffffff; background: transparent; }");
+        segment->setStyleSheet("QFrame { background: #c2c2c2; border: 3px solid #111111; } QLabel { color: #111111; background: transparent; }");
         auto *segmentLayout = new QVBoxLayout(segment);
         segmentLayout->setContentsMargins(10, 10, 10, 10);
         segmentLayout->setSpacing(4);
@@ -1151,17 +1123,20 @@ void InstallerWindow::startInstall()
 
     installLog_->clear();
     if (installProgressBar_) {
-        installProgressBar_->setValue(15);
+        installProgressBar_->setValue(20);
     }
-    installLog_->append(QString("Run directory: %1").arg(currentRunDirectory_));
+    installLog_->append("$ prepare run directory");
+    installLog_->append(QString("> %1").arg(currentRunDirectory_));
+    installLog_->append("$ write install-config.json");
     installCompleted_ = false;
     installCompleted_ = true;
-    installLog_->append("GUI-only mode: no clone, no script execution, no disk changes were attempted.");
-    installLog_->append("The generated configuration has been written to install-config.json for review.");
+    installLog_->append("> ok");
+    installLog_->append("$ install command hook");
+    installLog_->append("> not wired yet");
     if (installProgressBar_) {
         installProgressBar_->setValue(100);
     }
-    setInstallStatus("Current Step: GUI-only checkpoint complete. No install command was executed.", QColor("#1b5e20"));
+    setInstallStatus("Current Step: Config prepared. Waiting for install command wiring.", QColor("#1b5e20"));
     updateNavigationState();
 }
 
