@@ -447,7 +447,9 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtCore/qprocess.h /usr/include/QtCore/QProcessEnvironment \
  /usr/include/QtWidgets/QProgressBar \
  /usr/include/QtWidgets/qprogressbar.h /usr/include/QtWidgets/QPushButton \
- /usr/include/QtWidgets/qpushbutton.h /usr/include/QtCore/QSaveFile \
+ /usr/include/QtWidgets/qpushbutton.h /usr/include/QtWidgets/QStatusBar \
+ /usr/include/QtWidgets/qstatusbar.h /usr/include/QtWidgets/QToolBar \
+ /usr/include/QtWidgets/qtoolbar.h /usr/include/QtCore/QSaveFile \
  /usr/include/QtCore/qsavefile.h /usr/include/QtCore/QSet \
  /usr/include/QtCore/qset.h /usr/include/QtWidgets/QSpinBox \
  /usr/include/QtWidgets/qspinbox.h /usr/include/QtWidgets/QSplitter \
