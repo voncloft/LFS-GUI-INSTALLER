@@ -19,6 +19,7 @@
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QProcess>
@@ -27,6 +28,7 @@
 #include <QPushButton>
 #include <QStatusBar>
 #include <QToolBar>
+#include <QToolButton>
 #include <QSaveFile>
 #include <QSet>
 #include <QSpinBox>
@@ -183,12 +185,6 @@ QString unusedText(const PlannedPartition &partition)
     return QString("%1 GiB").arg(QString::number(partition.sizeGiB, 'f', 2));
 }
 
-QString comboStyleForFileSystem(const QString &fileSystem)
-{
-    const QColor color = fileSystemColor(fileSystem).lighter(165);
-    return QString("QComboBox { background: %1; border: 1px solid #b9bfc7; padding: 2px 6px; }")
-        .arg(color.name());
-}
 }
 
 InstallerWindow::InstallerWindow(QWidget *parent)
@@ -298,33 +294,66 @@ QWidget *InstallerWindow::buildStoragePage()
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
     layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(10);
+    layout->setSpacing(6);
 
-    auto *header = new QLabel("Page 2: Partition Layout", page);
-    header->setStyleSheet("font-size: 18px; font-weight: 600;");
-    layout->addWidget(header);
+    auto *menuBar = new QMenuBar(page);
+    auto *storageMenu = menuBar->addMenu("Storage");
+    auto *editMenu = menuBar->addMenu("Edit");
+    auto *viewMenu = menuBar->addMenu("View");
+    auto *deviceMenu = menuBar->addMenu("Device");
+    auto *partitionMenu = menuBar->addMenu("Partition");
+    auto *helpMenu = menuBar->addMenu("Help");
+    layout->addWidget(menuBar);
 
     auto *toolbar = new QToolBar(page);
     toolbar->setMovable(false);
     toolbar->setFloatable(false);
-    toolbar->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
-    auto *refreshAction = toolbar->addAction("Refresh");
-    auto *addAction = toolbar->addAction("Add");
+    auto *refreshAction = toolbar->addAction("Refresh Devices");
+    auto *addAction = toolbar->addAction("New");
     auto *removeAction = toolbar->addAction("Delete");
-    auto *autoAction = toolbar->addAction("Auto Layout");
+    auto *resizeAction = toolbar->addAction("Resize/Move");
+    auto *copyAction = toolbar->addAction("Copy");
+    auto *pasteAction = toolbar->addAction("Paste");
+    auto *applyAction = toolbar->addAction("Apply");
     toolbar->addSeparator();
-    toolbar->addWidget(new QLabel("Target drive:", toolbar));
+    toolbar->addWidget(new QLabel("Device:", toolbar));
     driveCombo_ = new QComboBox(toolbar);
     driveCombo_->setMinimumContentsLength(28);
     driveCombo_->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     toolbar->addWidget(driveCombo_);
     layout->addWidget(toolbar);
 
+    auto *refreshMenuAction = storageMenu->addAction("Refresh Devices");
+    editMenu->addAction("Undo Last Operation")->setEnabled(false);
+    editMenu->addAction("Clear All Operations")->setEnabled(false);
+    auto *applyMenuAction = editMenu->addAction("Apply All Operations");
+    applyMenuAction->setEnabled(false);
+    auto *deviceInfoAction = viewMenu->addAction("Device Information");
+    deviceInfoAction->setCheckable(true);
+    deviceInfoAction->setChecked(true);
+    auto *pendingOpsAction = viewMenu->addAction("Pending Operations");
+    pendingOpsAction->setCheckable(true);
+    pendingOpsAction->setChecked(true);
+    deviceMenu->addAction("Create Partition Table")->setEnabled(false);
+    auto *newMenuAction = partitionMenu->addAction("New");
+    auto *deleteMenuAction = partitionMenu->addAction("Delete");
+    partitionMenu->addSeparator();
+    partitionMenu->addAction("Resize/Move")->setEnabled(false);
+    partitionMenu->addAction("Copy")->setEnabled(false);
+    partitionMenu->addAction("Paste")->setEnabled(false);
+    helpMenu->addAction("About Partition Editor")->setEnabled(false);
+
+    resizeAction->setEnabled(false);
+    copyAction->setEnabled(false);
+    pasteAction->setEnabled(false);
+    applyAction->setEnabled(false);
+
     auto *splitter = new QSplitter(Qt::Vertical, page);
     splitter->setChildrenCollapsible(false);
 
-    auto *plannerBox = new QGroupBox("Partition Planner", splitter);
+    auto *plannerBox = new QGroupBox("Partitions", splitter);
     auto *plannerLayout = new QVBoxLayout(plannerBox);
     plannerLayout->setSpacing(10);
 
@@ -332,7 +361,7 @@ QWidget *InstallerWindow::buildStoragePage()
     driveDetailsLabel_->setWordWrap(true);
     plannerLayout->addWidget(driveDetailsLabel_);
 
-    auto *mapBox = new QGroupBox("Partition Map", plannerBox);
+    auto *mapBox = new QGroupBox("Visual Disk Layout", plannerBox);
     auto *mapLayout = new QVBoxLayout(mapBox);
 
     auto *mapHeaderLayout = new QHBoxLayout();
@@ -350,7 +379,7 @@ QWidget *InstallerWindow::buildStoragePage()
 
     plannerLayout->addWidget(mapBox);
 
-    auto *tableBox = new QGroupBox("Partitions", plannerBox);
+    auto *tableBox = new QGroupBox("Partition List", plannerBox);
     auto *tableLayout = new QVBoxLayout(tableBox);
 
     partitionTable_ = new QTableWidget(0, 8, tableBox);
@@ -377,7 +406,7 @@ QWidget *InstallerWindow::buildStoragePage()
     plannerStatus->addWidget(partitionOperationsLabel_);
     plannerLayout->addWidget(plannerStatus);
 
-    auto *deviceBox = new QGroupBox("Detected Devices", splitter);
+    auto *deviceBox = new QGroupBox("Device Information", splitter);
     auto *deviceLayout = new QVBoxLayout(deviceBox);
     deviceTree_ = new QTreeWidget(deviceBox);
     deviceTree_->setColumnCount(2);
@@ -392,9 +421,14 @@ QWidget *InstallerWindow::buildStoragePage()
     layout->addWidget(splitter, 1);
 
     connect(refreshAction, &QAction::triggered, this, &InstallerWindow::refreshDrives);
+    connect(refreshMenuAction, &QAction::triggered, this, &InstallerWindow::refreshDrives);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::updateDriveDetails);
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::markInstallDirty);
     connect(addAction, &QAction::triggered, this, [this]() {
+        addPartitionRow("/", "ext4", 40.0, true);
+        markInstallDirty();
+    });
+    connect(newMenuAction, &QAction::triggered, this, [this]() {
         addPartitionRow("/", "ext4", 40.0, true);
         markInstallDirty();
     });
@@ -405,14 +439,15 @@ QWidget *InstallerWindow::buildStoragePage()
             markInstallDirty();
         }
     });
-    connect(autoAction, &QAction::triggered, this, [this]() {
-        partitionTable_->setRowCount(0);
-        addPartitionRow("/boot/efi", "fat32", 0.5, true);
-        addPartitionRow("/", "ext4", 40.0, true);
-        addPartitionRow("/home", "ext4", 20.0, true);
-        addPartitionRow("swap", "swap", 4.0, true);
-        markInstallDirty();
+    connect(deleteMenuAction, &QAction::triggered, this, [this]() {
+        const int row = partitionTable_->currentRow();
+        if (row >= 0) {
+            partitionTable_->removeRow(row);
+            markInstallDirty();
+        }
     });
+    connect(deviceInfoAction, &QAction::toggled, deviceBox, &QWidget::setVisible);
+    connect(pendingOpsAction, &QAction::toggled, plannerStatus, &QWidget::setVisible);
     connect(partitionTable_, &QTableWidget::itemSelectionChanged, this, &InstallerWindow::refreshPartitionEditorPreview);
 
     addPartitionRow("/", "ext4", 40.0, true);
@@ -463,12 +498,16 @@ QWidget *InstallerWindow::buildInstallPage()
 
     repoUrlEdit_ = new QLineEdit(page);
     repoUrlEdit_->setText("local-install-script");
+    repoUrlEdit_->hide();
     repoBranchEdit_ = new QLineEdit(page);
     repoBranchEdit_->setText("main");
+    repoBranchEdit_->hide();
     scriptPathEdit_ = new QLineEdit(page);
     scriptPathEdit_->setText("install.sh");
+    scriptPathEdit_->hide();
     workRootEdit_ = new QLineEdit(page);
     workRootEdit_->setText("/tmp/lfs-installer");
+    workRootEdit_->hide();
 
     connect(pageThreeBackButton_, &QPushButton::clicked, this, &InstallerWindow::handleBackAction);
     connect(pageThreeInstallButton_, &QPushButton::clicked, this, &InstallerWindow::handlePrimaryAction);
@@ -546,9 +585,7 @@ void InstallerWindow::addPartitionRow(const QString &mountPoint, const QString &
     fsCombo->addItems({"ext4", "xfs", "btrfs", "fat32", "swap"});
     const int fsIndex = fsCombo->findText(fileSystem);
     fsCombo->setCurrentIndex(fsIndex >= 0 ? fsIndex : 0);
-    fsCombo->setStyleSheet(comboStyleForFileSystem(fsCombo->currentText()));
-    connect(fsCombo, &QComboBox::currentTextChanged, this, [this, fsCombo](const QString &) {
-        fsCombo->setStyleSheet(comboStyleForFileSystem(fsCombo->currentText()));
+    connect(fsCombo, &QComboBox::currentTextChanged, this, [this](const QString &) {
         markInstallDirty();
     });
     partitionTable_->setCellWidget(row, 1, fsCombo);
@@ -670,7 +707,8 @@ void InstallerWindow::refreshPartitionEditorPreview()
     if (partitions.isEmpty()) {
         auto *emptyLabel = new QLabel("No partitions planned", partitionMapWidget_);
         emptyLabel->setAlignment(Qt::AlignCenter);
-        emptyLabel->setStyleSheet("color: #444444; background: #ffffff; border: 3px solid #111111; padding: 18px;");
+        emptyLabel->setFrameShape(QFrame::StyledPanel);
+        emptyLabel->setMinimumHeight(56);
         mapLayout->addWidget(emptyLabel);
         return;
     }
@@ -678,29 +716,24 @@ void InstallerWindow::refreshPartitionEditorPreview()
     const int selectedRow = partitionTable_->currentRow();
     for (int row = 0; row < partitions.size(); ++row) {
         const PlannedPartition &partition = partitions.at(row);
-        const QColor color = fileSystemColor(partition.fileSystem);
-        const QString borderColor = row == selectedRow ? QStringLiteral("#245dcb") : QStringLiteral("#111111");
-
-        auto *segment = new QFrame(partitionMapWidget_);
+        auto *segment = new QToolButton(partitionMapWidget_);
+        segment->setToolButtonStyle(Qt::ToolButtonTextOnly);
+        segment->setCheckable(true);
+        segment->setChecked(row == selectedRow);
+        segment->setAutoRaise(false);
+        segment->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         segment->setMinimumWidth(88);
-        segment->setStyleSheet(
-            QString("QFrame { background: %1; border: 3px solid %2; } QLabel { color: #111111; background: transparent; }")
-                .arg(color.name(), borderColor));
-
-        auto *segmentLayout = new QVBoxLayout(segment);
-        segmentLayout->setContentsMargins(10, 10, 10, 10);
-        segmentLayout->setSpacing(4);
-
-        auto *topLabel = new QLabel(partitionNodeName(drive.path, row), segment);
-        topLabel->setAlignment(Qt::AlignCenter);
-        segmentLayout->addWidget(topLabel);
-
-        auto *bottomLabel = new QLabel(QString("%1\n%2 GiB").arg(partitionLabelText(partition.mountPoint),
-                                                                  QString::number(partition.sizeGiB, 'f', 2)),
-                                       segment);
-        bottomLabel->setAlignment(Qt::AlignCenter);
-        bottomLabel->setStyleSheet("font-size: 16px; font-weight: 600;");
-        segmentLayout->addWidget(bottomLabel, 1);
+        segment->setMinimumHeight(56);
+        segment->setText(QString("%1\n%2 GiB").arg(partitionLabelText(partition.mountPoint),
+                                                   QString::number(partition.sizeGiB, 'f', 2)));
+        segment->setToolTip(QString("%1\n%2\n%3\n%4")
+                                .arg(partitionNodeName(drive.path, row),
+                                     partition.fileSystem,
+                                     partition.mountPoint,
+                                     flagsText(partition)));
+        connect(segment, &QToolButton::clicked, this, [this, row]() {
+            partitionTable_->selectRow(row);
+        });
 
         int stretch = static_cast<int>(partition.sizeGiB * 10.0);
         if (stretch < 1) {
@@ -710,17 +743,12 @@ void InstallerWindow::refreshPartitionEditorPreview()
     }
 
     if (unallocatedGiB > 0.05) {
-        auto *segment = new QFrame(partitionMapWidget_);
+        auto *segment = new QToolButton(partitionMapWidget_);
+        segment->setToolButtonStyle(Qt::ToolButtonTextOnly);
+        segment->setEnabled(false);
         segment->setMinimumWidth(88);
-        segment->setStyleSheet("QFrame { background: #c2c2c2; border: 3px solid #111111; } QLabel { color: #111111; background: transparent; }");
-        auto *segmentLayout = new QVBoxLayout(segment);
-        segmentLayout->setContentsMargins(10, 10, 10, 10);
-        segmentLayout->setSpacing(4);
-
-        auto *label = new QLabel(QString("unallocated\n%1 GiB").arg(QString::number(unallocatedGiB, 'f', 2)), segment);
-        label->setAlignment(Qt::AlignCenter);
-        label->setStyleSheet("font-size: 16px; font-weight: 600;");
-        segmentLayout->addWidget(label, 1);
+        segment->setMinimumHeight(56);
+        segment->setText(QString("Unallocated\n%1 GiB").arg(QString::number(unallocatedGiB, 'f', 2)));
 
         int stretch = static_cast<int>(unallocatedGiB * 10.0);
         if (stretch < 1) {

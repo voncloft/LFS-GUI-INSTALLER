@@ -775,8 +775,10 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/QSpinBox \
   /usr/include/QtWidgets/QSplitter \
   /usr/include/QtWidgets/QStackedWidget \
+  /usr/include/QtWidgets/QStatusBar \
   /usr/include/QtWidgets/QTableWidget \
   /usr/include/QtWidgets/QTextEdit \
+  /usr/include/QtWidgets/QToolBar \
   /usr/include/QtWidgets/QTreeWidget \
   /usr/include/QtWidgets/QTreeWidgetItem \
   /usr/include/QtWidgets/QVBoxLayout \
@@ -812,6 +814,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/qspinbox.h \
   /usr/include/QtWidgets/qsplitter.h \
   /usr/include/QtWidgets/qstackedwidget.h \
+  /usr/include/QtWidgets/qstatusbar.h \
   /usr/include/QtWidgets/qstyle.h \
   /usr/include/QtWidgets/qstyleoption.h \
   /usr/include/QtWidgets/qtabbar.h \
@@ -819,6 +822,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/qtablewidget.h \
   /usr/include/QtWidgets/qtabwidget.h \
   /usr/include/QtWidgets/qtextedit.h \
+  /usr/include/QtWidgets/qtoolbar.h \
   /usr/include/QtWidgets/qtreeview.h \
   /usr/include/QtWidgets/qtreewidget.h \
   /usr/include/QtWidgets/qtreewidgetitemiterator.h \
@@ -1917,6 +1921,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtWidgets/qtreeview.h:
 
+/usr/include/QtWidgets/qtoolbar.h:
+
 /usr/include/QtWidgets/qtextedit.h:
 
 /usr/include/QtWidgets/qtabwidget.h:
@@ -1972,6 +1978,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/QtWidgets/QTextEdit:
 
 /usr/include/QtWidgets/QTableWidget:
+
+/usr/include/QtWidgets/QStatusBar:
 
 /usr/include/QtWidgets/QStackedWidget:
 
@@ -3151,6 +3159,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/c++/15.1.0/system_error:
 
+/usr/include/QtWidgets/qstatusbar.h:
+
 /usr/include/c++/15.1.0/tr1/ell_integral.tcc:
 
 /usr/include/c++/15.1.0/tr1/gamma.tcc:
@@ -3272,6 +3282,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /home/von/qt6\ projects/lfs_installer/src/installerwindow.cpp:
 
 /usr/include/QtWidgets/qslider.h:
+
+/usr/include/QtWidgets/QToolBar:
 
 /usr/include/bits/long-double.h:
 

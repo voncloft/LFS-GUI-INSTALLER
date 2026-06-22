@@ -416,7 +416,9 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/QLineEdit /usr/include/QtWidgets/qlineedit.h \
  /usr/include/QtGui/qtextcursor.h /usr/include/QtGui/qtextformat.h \
  /usr/include/QtGui/qpen.h /usr/include/QtGui/qtextoption.h \
- /usr/include/QtWidgets/QMessageBox /usr/include/QtWidgets/qmessagebox.h \
+ /usr/include/QtWidgets/QMenuBar /usr/include/QtWidgets/qmenubar.h \
+ /usr/include/QtWidgets/qmenu.h /usr/include/QtWidgets/QMessageBox \
+ /usr/include/QtWidgets/qmessagebox.h \
  /usr/include/QtWidgets/qdialogbuttonbox.h \
  /usr/include/QtWidgets/QPlainTextEdit \
  /usr/include/QtWidgets/qplaintextedit.h \
@@ -449,7 +451,8 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/qprogressbar.h /usr/include/QtWidgets/QPushButton \
  /usr/include/QtWidgets/qpushbutton.h /usr/include/QtWidgets/QStatusBar \
  /usr/include/QtWidgets/qstatusbar.h /usr/include/QtWidgets/QToolBar \
- /usr/include/QtWidgets/qtoolbar.h /usr/include/QtCore/QSaveFile \
+ /usr/include/QtWidgets/qtoolbar.h /usr/include/QtWidgets/QToolButton \
+ /usr/include/QtWidgets/qtoolbutton.h /usr/include/QtCore/QSaveFile \
  /usr/include/QtCore/qsavefile.h /usr/include/QtCore/QSet \
  /usr/include/QtCore/qset.h /usr/include/QtWidgets/QSpinBox \
  /usr/include/QtWidgets/qspinbox.h /usr/include/QtWidgets/QSplitter \
