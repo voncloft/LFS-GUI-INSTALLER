@@ -1400,6 +1400,7 @@ void InstallerWindow::startNextInstallScript()
     QProcessEnvironment processEnvironment = QProcessEnvironment::systemEnvironment();
     processEnvironment.remove("BASH_ENV");
     processEnvironment.remove("ENV");
+    processEnvironment.insert("INSTALL_RUN_DIR", currentRunDirectory_);
     installProcess_->setProcessEnvironment(processEnvironment);
     appendInstallLogLine(QString("$ %1 --noprofile --norc -x \"%2\"").arg(bashExecutable, scriptPath));
     installProcess_->start(bashExecutable, {"--noprofile", "--norc", "-x", scriptPath});
