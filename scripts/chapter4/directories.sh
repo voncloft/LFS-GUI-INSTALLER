@@ -1,6 +1,5 @@
 set -euo pipefail
 
-source  ../universal/default.sh
 echo "step:Building limited directory layout"
 
 mkdir -pv $LFS/{lib64,etc,var} $LFS/usr/{bin,lib{,32},sbin}

@@ -218,88 +218,6 @@ QString githubRawPrefix()
 
 constexpr int MaxConcurrentFeatureMetadataRequests = 6;
 
-QString wrappedScriptRunnerShell()
-{
-    return QStringLiteral(R"RUNNER(#!/usr/bin/env bash
-set -euo pipefail
-
-ENTRY_SCRIPT="${1:?missing entry script}"
-SCRIPT_ROOT="${2:?missing script root}"
-PROJECT_ROOT="${3:?missing project root}"
-
-resolve_source_target() {
-  local target="${1:-}"
-  local caller="${2:-}"
-  local candidate=""
-
-  if [[ -z "$target" || "$target" == /* ]]; then
-    printf '%s\n' "$target"
-    return
-  fi
-
-  if [[ -n "$caller" ]]; then
-    local caller_dir
-    caller_dir="$(cd -- "$(dirname -- "$caller")" && pwd)"
-    candidate="$caller_dir/$target"
-    if [[ -r "$candidate" ]]; then
-      printf '%s\n' "$candidate"
-      return
-    fi
-  fi
-
-  candidate="$SCRIPT_ROOT/$target"
-  if [[ -r "$candidate" ]]; then
-    printf '%s\n' "$candidate"
-    return
-  fi
-
-  candidate="$PROJECT_ROOT/$target"
-  if [[ -r "$candidate" ]]; then
-    printf '%s\n' "$candidate"
-    return
-  fi
-
-  if [[ "$target" == ../* ]]; then
-    candidate="$SCRIPT_ROOT/${target#../}"
-    if [[ -r "$candidate" ]]; then
-      printf '%s\n' "$candidate"
-      return
-    fi
-
-    candidate="$PROJECT_ROOT/${target#../}"
-    if [[ -r "$candidate" ]]; then
-      printf '%s\n' "$candidate"
-      return
-    fi
-  fi
-
-  printf '%s\n' "$target"
-}
-
-source() {
-  local target="${1:-}"
-  if [[ "$#" -gt 0 ]]; then
-    shift
-  fi
-  local restore_xtrace=0
-  if [[ "$-" == *x* ]]; then
-    restore_xtrace=1
-    set +x
-  fi
-  local caller="${BASH_SOURCE[1]:-}"
-  local resolved
-  resolved="$(resolve_source_target "$target" "$caller")"
-  if [[ "$restore_xtrace" == "1" ]]; then
-    set -x
-  fi
-  builtin source "$resolved" "$@"
-}
-cd -- "$(dirname -- "$ENTRY_SCRIPT")"
-set -x
-source "$ENTRY_SCRIPT"
-)RUNNER");
-}
-
 QColor fileSystemColor(const QString &fileSystem)
 {
     const QString normalized = fileSystem.toLower();
@@ -378,6 +296,10 @@ bool ensureDirectoryExists(const QString &path, QString *errorMessage)
 
     QDir directory;
     if (directory.mkpath(path)) {
+        QFile::setPermissions(path,
+                              QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
+                                  | QFileDevice::ReadGroup | QFileDevice::ExeGroup
+                                  | QFileDevice::ReadOther | QFileDevice::ExeOther);
         return true;
     }
 
@@ -397,7 +319,7 @@ bool ensureDirectoryExists(const QString &path, QString *errorMessage)
         return false;
     }
 
-    const QString command = QString("mkdir -p %1 && chown %2:%3 %1 && chmod 775 %1")
+    const QString command = QString("mkdir -p %1 && chown %2:%3 %1 && chmod 755 %1")
                                 .arg(shellQuote(path),
                                      QString::number(getuid()),
                                      QString::number(getgid()));
@@ -1914,26 +1836,6 @@ void InstallerWindow::startInstall()
             installProgressBar_->setRange(0, 0);
         }
     }
-    appendInstallLogLine("$ prepare run directory");
-    appendInstallLogLine(QString("> %1").arg(currentRunDirectory_));
-    appendInstallLogLine("$ write install-config.json");
-    appendInstallLogLine("$ write desktop setup summary");
-    appendInstallLogLine(QString("> %1").arg(desktopSummaryPath));
-    appendInstallLogLine("$ generate install artifacts");
-    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("final_setup.sh")));
-    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("partition.sh")));
-    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("mount.sh")));
-    const QString filesDirectory = QDir(QFileInfo(runtimeScriptsDirectory).absolutePath()).filePath("files");
-    appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("hostname")));
-    appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("clock")));
-    appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("fstab")));
-    appendInstallLogLine("$ read scripts/install.sh");
-    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("install.sh")));
-    appendInstallLogLine(QString("> source scripts dir %1").arg(scriptsDirectory));
-    appendInstallLogLine(QString("> using scripts dir %1").arg(runtimeScriptsDirectory));
-    for (const QString &scriptPath : installScriptPaths_) {
-        appendInstallLogLine(QString("> queued %1").arg(scriptPath));
-    }
     setInstallStatus("Current Step: Starting", QColor("#1b5e20"));
     updateNavigationState();
     startNextInstallScript();
@@ -2098,7 +2000,6 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     const QString stagedScriptsDirectory = QDir(stagedRoot).filePath("scripts");
     const QString stagedFilesDirectory = QDir(stagedRoot).filePath("files");
     const QString driverScriptPath = QDir(stagedRoot).filePath("install-driver.sh");
-    const QString runnerScriptPath = QDir(stagedRoot).filePath("script-runner.sh");
 
     QDir directory;
     if (!directory.mkpath(stagedScriptsDirectory)) {
@@ -2111,6 +2012,24 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         if (errorMessage) {
             *errorMessage = QString("Unable to create `%1`.").arg(stagedFilesDirectory);
         }
+        return false;
+    }
+
+    const auto setDirectoryPermissions = [errorMessage](const QString &path) -> bool {
+        const QFileDevice::Permissions permissions = QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
+                                                     | QFileDevice::ReadGroup | QFileDevice::ExeGroup
+                                                     | QFileDevice::ReadOther | QFileDevice::ExeOther;
+        if (!QFile::setPermissions(path, permissions)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to set permissions on `%1`.").arg(path);
+            }
+            return false;
+        }
+        return true;
+    };
+
+    if (!setDirectoryPermissions(stagedRoot) || !setDirectoryPermissions(stagedScriptsDirectory)
+        || !setDirectoryPermissions(stagedFilesDirectory)) {
         return false;
     }
 
@@ -2172,6 +2091,9 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
             }
             return false;
         }
+        if (!setDirectoryPermissions(QFileInfo(stagedPath).absolutePath())) {
+            return false;
+        }
 
         QFile sourceFile(sourcePath);
         if (!sourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -2220,36 +2142,42 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     if (!writeFile(QDir(stagedFilesDirectory).filePath("fstab"), buildFstabFile(), false)) {
         return false;
     }
-    if (!writeFile(runnerScriptPath, wrappedScriptRunnerShell(), true)) {
-        return false;
+
+    const QStringList stagedInstallScriptPaths = collectScriptPaths(stagedScriptsDirectory);
+    QStringList driverLines;
+    driverLines << "#!/usr/bin/env bash";
+    driverLines << "set -euo pipefail";
+    driverLines << "unset BASH_ENV ENV";
+    driverLines << QString("STAGED_SCRIPTS=%1").arg(shellQuote(stagedScriptsDirectory));
+    driverLines << QString("STAGED_FILES=%1").arg(shellQuote(stagedFilesDirectory));
+    driverLines << QString("STAGED_ROOT=%1").arg(shellQuote(stagedRoot));
+    driverLines << QString("TARGET_SCRIPTS=%1").arg(shellQuote(targetScriptsDirectory));
+    driverLines << QString("TARGET_FILES=%1").arg(shellQuote(targetFilesDirectory));
+    driverLines << "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"";
+    driverLines << "install -m 755 \"$STAGED_SCRIPTS/final_setup.sh\" \"$TARGET_SCRIPTS/final_setup.sh\"";
+    driverLines << "install -m 755 \"$STAGED_SCRIPTS/partition.sh\" \"$TARGET_SCRIPTS/partition.sh\"";
+    driverLines << "install -m 755 \"$STAGED_SCRIPTS/mount.sh\" \"$TARGET_SCRIPTS/mount.sh\"";
+    driverLines << "install -m 644 \"$STAGED_FILES/hostname\" \"$TARGET_FILES/hostname\"";
+    driverLines << "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"";
+    driverLines << "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"";
+
+    for (const QString &scriptPath : stagedInstallScriptPaths) {
+        const QString scriptName = QDir(stagedScriptsDirectory).relativeFilePath(scriptPath);
+        const QString scriptDir = QFileInfo(scriptPath).absolutePath();
+        driverLines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + scriptName));
+        driverLines << QString("SCRIPT_DIR=%1").arg(shellQuote(scriptDir));
+        driverLines << "export SCRIPT_DIR";
+        driverLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
+        driverLines << "export PROJECT_ROOT";
+        driverLines << "set -euo pipefail";
+        driverLines << "cd -- \"$SCRIPT_DIR\"";
+        driverLines << "set -x";
+        driverLines << QString("source %1").arg(shellQuote(scriptPath));
+        driverLines << "set +x";
+        driverLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
     }
 
-    const QString driverScript =
-        "#!/usr/bin/env bash\n"
-        "set -euo pipefail\n"
-        "STAGED_SCRIPTS=\"$(cd -- \"$(dirname -- \"$0\")/scripts\" && pwd)\"\n"
-        "STAGED_FILES=\"$(cd -- \"$(dirname -- \"$0\")/files\" && pwd)\"\n"
-        "STAGED_ROOT=\"$(cd -- \"$(dirname -- \"$0\")\" && pwd)\"\n"
-        "RUNNER=\"$STAGED_ROOT/script-runner.sh\"\n"
-        "TARGET_SCRIPTS=" + shellQuote(targetScriptsDirectory) + "\n"
-        "TARGET_FILES=" + shellQuote(targetFilesDirectory) + "\n"
-        "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"\n"
-        "install -m 755 \"$STAGED_SCRIPTS/final_setup.sh\" \"$TARGET_SCRIPTS/final_setup.sh\"\n"
-        "install -m 755 \"$STAGED_SCRIPTS/partition.sh\" \"$TARGET_SCRIPTS/partition.sh\"\n"
-        "install -m 755 \"$STAGED_SCRIPTS/mount.sh\" \"$TARGET_SCRIPTS/mount.sh\"\n"
-        "install -m 644 \"$STAGED_FILES/hostname\" \"$TARGET_FILES/hostname\"\n"
-        "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"\n"
-        "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"\n"
-        "while IFS= read -r script_name || [ -n \"$script_name\" ]; do\n"
-        "  [[ -z \"$script_name\" || \"$script_name\" == \\#* ]] && continue\n"
-        "  script_path=\"$STAGED_SCRIPTS/$script_name\"\n"
-        "  if [ ! -r \"$script_path\" ]; then\n"
-        "    echo \"> missing script $script_name\" >&2\n"
-        "    exit 1\n"
-        "  fi\n"
-        "  \"$RUNNER\" \"$script_path\" \"$STAGED_SCRIPTS\" \"$STAGED_ROOT\"\n"
-        "  echo \"__SCRIPT_DONE__:$script_name\"\n"
-        "done < \"$STAGED_SCRIPTS/install.sh\"\n";
+    const QString driverScript = driverLines.join('\n');
     if (!writeFile(driverScriptPath, driverScript, true)) {
         return false;
     }
@@ -2359,6 +2287,7 @@ void InstallerWindow::startNextInstallScript()
         installInProgress_ = false;
         installCompleted_ = true;
         currentInstallScriptPath_.clear();
+        currentInstallEntryName_.clear();
         if (installProgressBar_) {
             if (totalInstallSteps_ > 0) {
                 installProgressBar_->setValue(totalInstallSteps_);
@@ -2368,13 +2297,12 @@ void InstallerWindow::startNextInstallScript()
             }
         }
         setInstallStatus("Current Step: Complete", QColor("#1b5e20"));
-        appendInstallLogLine("> all scripts complete");
         updateNavigationState();
         return;
     }
 
     const QString driverScriptPath = QDir(currentRunDirectory_).filePath("generated-artifacts/install-driver.sh");
-    const bool useInstallDriver = geteuid() != 0 && currentInstallScriptIndex_ == 0 && QFileInfo(driverScriptPath).isFile();
+    const bool useInstallDriver = currentInstallScriptIndex_ == 0 && QFileInfo(driverScriptPath).isFile();
     const QString scriptPath = useInstallDriver ? driverScriptPath : installScriptPaths_.at(currentInstallScriptIndex_);
     const QFileInfo scriptInfo(scriptPath);
     if (!scriptInfo.exists() || !scriptInfo.isFile() || !scriptInfo.isReadable()) {
@@ -2397,6 +2325,7 @@ void InstallerWindow::startNextInstallScript()
     }
 
     currentInstallScriptPath_ = scriptPath;
+    currentInstallEntryName_.clear();
     installOutputBuffer_.clear();
     pendingInstallStepText_.clear();
     installProcess_->setWorkingDirectory(scriptInfo.absolutePath());
@@ -2407,15 +2336,9 @@ void InstallerWindow::startNextInstallScript()
     installProcess_->setProcessEnvironment(processEnvironment);
 
     QString program;
-    const QString runtimeScriptsRoot = currentRuntimeScriptsDirectory_.isEmpty()
-                                           ? scriptInfo.absolutePath()
-                                           : currentRuntimeScriptsDirectory_;
-    const QString runtimeProjectRoot = QFileInfo(runtimeScriptsRoot).absolutePath();
-    const QString runnerScriptPath = QDir(currentRunDirectory_).filePath("generated-artifacts/script-runner.sh");
     QStringList arguments;
-    QString commandDisplay;
 
-    if (useInstallDriver) {
+    if (useInstallDriver && geteuid() != 0) {
         const QString sudoExecutable = QStandardPaths::findExecutable("sudo");
         const QString envExecutable = QStandardPaths::findExecutable("env");
         if (sudoExecutable.isEmpty() || envExecutable.isEmpty()) {
@@ -2439,23 +2362,15 @@ void InstallerWindow::startNextInstallScript()
             "--norc",
             scriptPath
         };
-        commandDisplay = QString("$ %1").arg(QFileInfo(scriptPath).fileName());
     } else {
-        if (!QFileInfo(runnerScriptPath).isFile()) {
-            installInProgress_ = false;
-            installCompleted_ = false;
-            appendInstallLogLine(QString("> script runner unavailable: %1").arg(runnerScriptPath));
-            setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
-            updateNavigationState();
-            return;
+        program = bashExecutable;
+        arguments = {"--noprofile", "--norc"};
+        if (!useInstallDriver) {
+            arguments << "-x";
         }
-
-        program = runnerScriptPath;
-        arguments = {scriptPath, runtimeScriptsRoot, runtimeProjectRoot};
-        commandDisplay = QString("$ %1").arg(QFileInfo(scriptPath).fileName());
+        arguments << scriptPath;
     }
 
-    appendInstallLogLine(commandDisplay);
     installProcess_->start(program, arguments);
 }
 
@@ -2492,9 +2407,11 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
     if (exitStatus != QProcess::NormalExit || exitCode != 0) {
         installInProgress_ = false;
         installCompleted_ = false;
-        const QString scriptName = currentInstallScriptPath_.isEmpty()
-                                       ? QStringLiteral("<unknown>")
-                                       : QFileInfo(currentInstallScriptPath_).fileName();
+        const QString scriptName = !currentInstallEntryName_.isEmpty()
+                                       ? currentInstallEntryName_
+                                       : (currentInstallScriptPath_.isEmpty()
+                                              ? QStringLiteral("<unknown>")
+                                              : QFileInfo(currentInstallScriptPath_).fileName());
         const QString statusText = exitStatus == QProcess::NormalExit ? QStringLiteral("normal-exit")
                                                                       : QStringLiteral("crashed");
         appendInstallLogLine(QString("> %1 failed with exit code %2 (%3)").arg(scriptName).arg(exitCode).arg(statusText));
@@ -2506,6 +2423,7 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
     const QString driverScriptPath = QDir(currentRunDirectory_).filePath("generated-artifacts/install-driver.sh");
     if (QFileInfo(currentInstallScriptPath_).absoluteFilePath() == QFileInfo(driverScriptPath).absoluteFilePath()) {
         currentInstallScriptPath_.clear();
+        currentInstallEntryName_.clear();
         currentInstallScriptIndex_ = installScriptPaths_.size();
         startNextInstallScript();
         return;
@@ -2517,6 +2435,7 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
     }
 
     currentInstallScriptPath_.clear();
+    currentInstallEntryName_.clear();
     ++currentInstallScriptIndex_;
     startNextInstallScript();
 }
@@ -2559,13 +2478,23 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
         return;
     }
 
+    if (line.startsWith("__SCRIPT_BEGIN__:")) {
+        currentInstallEntryName_ = line.mid(QString("__SCRIPT_BEGIN__:").size()).trimmed();
+        return;
+    }
+
     if (line.startsWith("__SCRIPT_DONE__:")) {
-        const QString scriptName = line.mid(QString("__SCRIPT_DONE__:").size()).trimmed();
-        appendInstallLogLine(QString("> completed %1").arg(scriptName));
+        currentInstallEntryName_ = line.mid(QString("__SCRIPT_DONE__:").size()).trimmed();
         if (installProgressBar_ && totalInstallSteps_ > 0) {
             ++completedInstallSteps_;
             installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
         }
+        return;
+    }
+
+    static const QRegularExpression driverSourcePattern(R"(^\+\s+source\s+.+/generated-artifacts/scripts/.+\.sh\s*$)");
+    static const QRegularExpression driverSetPlusXPattern(R"(^\+\s+set\s+\+x\s*$)");
+    if (driverSourcePattern.match(line).hasMatch() || driverSetPlusXPattern.match(line).hasMatch()) {
         return;
     }
 

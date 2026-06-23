@@ -1,16 +1,4 @@
-set -euo pipefail
-
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT_PATH="$SCRIPT_DIR/$(basename -- "${BASH_SOURCE[0]}")"
-if [ "$(id -un)" != "lfs" ]; then
-  printf -v RELAUNCH_COMMAND 'cd -- %q && bash %q' "$SCRIPT_DIR" "$SCRIPT_PATH"
-  exec su lfs -s /bin/bash -c "$RELAUNCH_COMMAND"
-fi
-
-source ../universal/default_modified.sh
-source ../universal/cd_compile.sh
-
-echo "gcc:Binutils-pass 1"
+echo "step:GCC pass 1"
 
 tar xvf gcc*.tar.xz
 cd gcc*
@@ -61,4 +49,3 @@ make install
 cat ../gcc/{limitx,glimits,limity}.h  > \
   $($LFS_TGT-gcc -print-file-name=include)/limits.h
 
-source ../universal/cleanup.sh

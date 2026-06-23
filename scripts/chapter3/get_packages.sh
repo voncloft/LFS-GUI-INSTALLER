@@ -1,5 +1,4 @@
 set -euo pipefail
-source  ../universal/default.sh
 
 echo "step:Getting Packages"
 mkdir -v $LFS/sources

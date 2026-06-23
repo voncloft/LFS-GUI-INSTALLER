@@ -155,6 +155,7 @@ private:
     QString installOutputBuffer_;
     QString pendingInstallStepText_;
     QString currentInstallScriptPath_;
+    QString currentInstallEntryName_;
     QString currentRuntimeScriptsDirectory_;
     int currentInstallScriptIndex_ = -1;
     int totalInstallSteps_ = 0;

@@ -1,8 +1,5 @@
 set -euo pipefail
 
-source  ../universal/default.sh
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 echo "step:adding LFS user"
 
 groupadd lfs
@@ -14,3 +11,4 @@ fi
 install -v -m 644 "$PROJECT_ROOT/files/bash_profile" /home/lfs/.bash_profile
 install -v -m 644 "$PROJECT_ROOT/files/bashrc" /home/lfs/.bashrc
 chown -v lfs:lfs /home/lfs/.bash_profile /home/lfs/.bashrc
+su - lfs
