@@ -1,0 +1,37 @@
+Next steps
+
+1. Stage 3 remains responsible for the live-environment work.
+   - Use the page 2 partition plan.
+   - Generate the partition, mount, fstab, hostname, clock, and final setup artifacts.
+   - Build the base LFS system.
+   - Leave the target mounted and make the installation bootable.
+
+2. Stage 4 should become the post-bootstrap package phase.
+   - Assume the target system is already mounted and ready.
+   - Chroot into the new installation.
+   - Bootstrap or fetch scratchpkg inside that chroot environment.
+   - Use the packages selected on page 4.
+   - Run scratch install for the selected packages inside chroot.
+
+3. Page 4 is already shaped for that later step.
+   - The GUI now displays packages from:
+     https://github.com/voncloft/Voncloft-OS/tree/master/REPOS
+   - It reads package entries shaped like:
+     REPOS/core/nano/spkgbuild
+   - The list can search and display category, package name, version, and description.
+
+4. The intended future execution model for stage 4:
+   - collect selected package keys from page 4
+   - generate a chroot-stage script
+   - enter the target with chroot
+   - ensure scratchpkg is available
+   - run something equivalent to:
+     scratch install packages_selected
+
+5. Keep page responsibilities clean.
+   - Page 3: prepare and finish the base system.
+   - Page 4: chroot into the finished system and install optional repo packages.
+
+6. Preserve generated files during development.
+   - Do not auto-clean the working directory.
+   - Leave generated scripts and files available for inspection in the VM.
