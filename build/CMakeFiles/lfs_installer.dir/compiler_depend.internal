@@ -716,7 +716,6 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/qyieldcpu.h
  /usr/include/QtGui/QColor
  /usr/include/QtGui/QFontDatabase
- /usr/include/QtGui/QPalette
  /usr/include/QtGui/QTextCursor
  /usr/include/QtGui/QTransform
  /usr/include/QtGui/qabstracttextdocumentlayout.h
@@ -789,7 +788,6 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtWidgets/QStackedWidget
  /usr/include/QtWidgets/QStatusBar
  /usr/include/QtWidgets/QTableWidget
- /usr/include/QtWidgets/QTextEdit
  /usr/include/QtWidgets/QToolBar
  /usr/include/QtWidgets/QToolButton
  /usr/include/QtWidgets/QTreeWidget

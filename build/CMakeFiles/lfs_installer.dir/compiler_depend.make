@@ -714,7 +714,6 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtCore/qyieldcpu.h \
   /usr/include/QtGui/QColor \
   /usr/include/QtGui/QFontDatabase \
-  /usr/include/QtGui/QPalette \
   /usr/include/QtGui/QTextCursor \
   /usr/include/QtGui/QTransform \
   /usr/include/QtGui/qabstracttextdocumentlayout.h \
@@ -787,7 +786,6 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/QStackedWidget \
   /usr/include/QtWidgets/QStatusBar \
   /usr/include/QtWidgets/QTableWidget \
-  /usr/include/QtWidgets/QTextEdit \
   /usr/include/QtWidgets/QToolBar \
   /usr/include/QtWidgets/QToolButton \
   /usr/include/QtWidgets/QTreeWidget \
@@ -1996,8 +1994,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtWidgets/QTreeWidget:
 
-/usr/include/QtWidgets/QTextEdit:
-
 /usr/include/QtWidgets/QTableWidget:
 
 /usr/include/QtWidgets/QStatusBar:
@@ -2051,8 +2047,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/QtGui/qguiapplication_platform.h:
 
 /usr/include/QtGui/qglyphrun.h:
-
-/usr/include/QtGui/QPalette:
 
 /usr/include/QtGui/QFontDatabase:
 

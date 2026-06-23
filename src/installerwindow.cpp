@@ -1129,6 +1129,7 @@ void InstallerWindow::startInstall()
 
     installOutputBuffer_.clear();
     pendingInstallStepText_.clear();
+    currentInstallScriptPath_.clear();
     currentInstallScriptIndex_ = 0;
     completedInstallSteps_ = 0;
     totalInstallSteps_ = countScriptSteps(installScriptPaths_);
@@ -1263,6 +1264,7 @@ void InstallerWindow::resetInstallState(const QString &reason)
 {
     installCompleted_ = false;
     pendingInstallStepText_.clear();
+    currentInstallScriptPath_.clear();
     if (installProgressBar_) {
         installProgressBar_->setValue(0);
     }
@@ -1354,6 +1356,7 @@ void InstallerWindow::startNextInstallScript()
     if (currentInstallScriptIndex_ < 0 || currentInstallScriptIndex_ >= installScriptPaths_.size()) {
         installInProgress_ = false;
         installCompleted_ = true;
+        currentInstallScriptPath_.clear();
         if (installProgressBar_) {
             if (totalInstallSteps_ > 0) {
                 installProgressBar_->setValue(totalInstallSteps_);
@@ -1369,11 +1372,22 @@ void InstallerWindow::startNextInstallScript()
     }
 
     const QString scriptPath = installScriptPaths_.at(currentInstallScriptIndex_);
+    const QString bashExecutable = QStandardPaths::findExecutable("bash");
+    if (bashExecutable.isEmpty()) {
+        installInProgress_ = false;
+        installCompleted_ = false;
+        appendInstallLogLine("> unable to find `bash` in PATH");
+        setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+        updateNavigationState();
+        return;
+    }
+
+    currentInstallScriptPath_ = scriptPath;
     installOutputBuffer_.clear();
     pendingInstallStepText_.clear();
     installProcess_->setWorkingDirectory(QFileInfo(scriptPath).absolutePath());
-    appendInstallLogLine(QString("$ bash -x \"%1\"").arg(QFileInfo(scriptPath).fileName()));
-    installProcess_->start("bash", {"-x", scriptPath});
+    appendInstallLogLine(QString("$ %1 -x \"%2\"").arg(bashExecutable, scriptPath));
+    installProcess_->start(bashExecutable, {"-x", scriptPath});
 }
 
 void InstallerWindow::handleInstallProcessOutput()
@@ -1409,12 +1423,16 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
     if (exitStatus != QProcess::NormalExit || exitCode != 0) {
         installInProgress_ = false;
         installCompleted_ = false;
-        appendInstallLogLine(QString("> script failed with exit code %1").arg(exitCode));
+        const QString scriptName = currentInstallScriptPath_.isEmpty()
+                                       ? QStringLiteral("<unknown>")
+                                       : QFileInfo(currentInstallScriptPath_).fileName();
+        appendInstallLogLine(QString("> %1 failed with exit code %2").arg(scriptName).arg(exitCode));
         setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
         updateNavigationState();
         return;
     }
 
+    currentInstallScriptPath_.clear();
     ++currentInstallScriptIndex_;
     startNextInstallScript();
 }
@@ -1425,12 +1443,20 @@ void InstallerWindow::handleInstallProcessError(QProcess::ProcessError error)
         return;
     }
 
-    Q_UNUSED(error);
-    installInProgress_ = false;
-    installCompleted_ = false;
-    appendInstallLogLine(QString("> process error: %1").arg(installProcess_->errorString()));
-    setInstallStatus("Current Step: Failed to start script", QColor("#b71c1c"));
-    updateNavigationState();
+    const QString scriptName = currentInstallScriptPath_.isEmpty()
+                                   ? QStringLiteral("<unknown>")
+                                   : QFileInfo(currentInstallScriptPath_).fileName();
+
+    if (error == QProcess::FailedToStart || error == QProcess::Crashed) {
+        installInProgress_ = false;
+        installCompleted_ = false;
+        appendInstallLogLine(QString("> %1 process error: %2").arg(scriptName, installProcess_->errorString()));
+        setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+        updateNavigationState();
+        return;
+    }
+
+    appendInstallLogLine(QString("> %1 process warning: %2").arg(scriptName, installProcess_->errorString()));
 }
 
 void InstallerWindow::appendInstallLogLine(const QString &line)
