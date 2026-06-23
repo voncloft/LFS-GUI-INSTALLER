@@ -1,2 +1,2 @@
-rm -f "$LFS"/sources/*.tar.gz
-rm -f "$LFS"/sources/*.tar.xz
+echo "step:Cleaning up folders"
+rm -rf -- */

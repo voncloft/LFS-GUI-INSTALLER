@@ -6,5 +6,8 @@ chapter3/get_packages.sh
 chapter4/directories.sh
 chapter4/addlfsuser.sh
 chapter4/environment.sh
+universal/cd_to_sources.sh
 chapter5/binutils-pass1.sh
+universal/cleanup.sh
 chapter5/gcc-pass1.sh
+universal/cleanup.sh

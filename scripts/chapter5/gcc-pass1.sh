@@ -1,7 +1,7 @@
 echo "step:GCC pass 1"
 
 tar xvf gcc*.tar.xz
-cd gcc*
+cd gcc*/
 tar -xf ../mpfr-4.2.2.tar.xz
 mv -v mpfr-4.2.2 mpfr
 tar -xf ../gmp-6.3.0.tar.xz
