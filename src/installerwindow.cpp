@@ -1366,7 +1366,6 @@ void InstallerWindow::startNextInstallScript()
                 installProgressBar_->setValue(1);
             }
         }
-        setInstallStatus("Current Step: Complete", QColor("#1b5e20"));
         appendInstallLogLine("> all scripts complete");
         updateNavigationState();
         return;
