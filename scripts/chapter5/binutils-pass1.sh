@@ -1,5 +1,6 @@
 echo "step:Binutils-pass 1"
 
+cd $LFS/sources
 tar xvf binutils*.tar.xz
 
 cd binutils*
