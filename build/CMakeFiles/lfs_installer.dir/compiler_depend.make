@@ -535,11 +535,14 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtCore/QDir \
   /usr/include/QtCore/QFile \
   /usr/include/QtCore/QFileInfo \
+  /usr/include/QtCore/QFlags \
+  /usr/include/QtCore/QIODevice \
   /usr/include/QtCore/QJsonArray \
   /usr/include/QtCore/QJsonDocument \
   /usr/include/QtCore/QJsonObject \
   /usr/include/QtCore/QJsonValue \
   /usr/include/QtCore/QList \
+  /usr/include/QtCore/QMetaType \
   /usr/include/QtCore/QObject \
   /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QProcessEnvironment \
@@ -547,10 +550,15 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtCore/QRegularExpression \
   /usr/include/QtCore/QSaveFile \
   /usr/include/QtCore/QSet \
+  /usr/include/QtCore/QSharedDataPointer \
+  /usr/include/QtCore/QSignalBlocker \
   /usr/include/QtCore/QSize \
   /usr/include/QtCore/QSizeF \
   /usr/include/QtCore/QStandardPaths \
+  /usr/include/QtCore/QString \
   /usr/include/QtCore/QTimeZone \
+  /usr/include/QtCore/QUrl \
+  /usr/include/QtCore/QVariant \
   /usr/include/QtCore/QVector \
   /usr/include/QtCore/q17memory.h \
   /usr/include/QtCore/q20functional.h \
@@ -559,6 +567,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtCore/q20type_traits.h \
   /usr/include/QtCore/q20utility.h \
   /usr/include/QtCore/q23utility.h \
+  /usr/include/QtCore/q26numeric.h \
   /usr/include/QtCore/qabstracteventdispatcher.h \
   /usr/include/QtCore/qabstractitemmodel.h \
   /usr/include/QtCore/qalgorithms.h \
@@ -593,6 +602,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtCore/qcoreapplication.h \
   /usr/include/QtCore/qcoreapplication_platform.h \
   /usr/include/QtCore/qcoreevent.h \
+  /usr/include/QtCore/qcryptographichash.h \
   /usr/include/QtCore/qdarwinhelpers.h \
   /usr/include/QtCore/qdatastream.h \
   /usr/include/QtCore/qdatetime.h \
@@ -764,18 +774,41 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtGui/qvector2d.h \
   /usr/include/QtGui/qvectornd.h \
   /usr/include/QtGui/qwindowdefs.h \
+  /usr/include/QtNetwork/QNetworkAccessManager \
+  /usr/include/QtNetwork/QNetworkReply \
+  /usr/include/QtNetwork/QNetworkRequest \
+  /usr/include/QtNetwork/QSslConfiguration \
+  /usr/include/QtNetwork/QSslPreSharedKeyAuthenticator \
+  /usr/include/QtNetwork/qabstractsocket.h \
+  /usr/include/QtNetwork/qhostaddress.h \
+  /usr/include/QtNetwork/qhttpheaders.h \
+  /usr/include/QtNetwork/qnetworkaccessmanager.h \
+  /usr/include/QtNetwork/qnetworkreply.h \
+  /usr/include/QtNetwork/qnetworkrequest.h \
+  /usr/include/QtNetwork/qssl.h \
+  /usr/include/QtNetwork/qsslcertificate.h \
+  /usr/include/QtNetwork/qsslconfiguration.h \
+  /usr/include/QtNetwork/qsslerror.h \
+  /usr/include/QtNetwork/qsslpresharedkeyauthenticator.h \
+  /usr/include/QtNetwork/qsslsocket.h \
+  /usr/include/QtNetwork/qtcpsocket.h \
+  /usr/include/QtNetwork/qtnetwork-config.h \
+  /usr/include/QtNetwork/qtnetworkexports.h \
+  /usr/include/QtNetwork/qtnetworkglobal.h \
   /usr/include/QtWidgets/QCheckBox \
   /usr/include/QtWidgets/QComboBox \
   /usr/include/QtWidgets/QDoubleSpinBox \
   /usr/include/QtWidgets/QFileDialog \
   /usr/include/QtWidgets/QFormLayout \
   /usr/include/QtWidgets/QFrame \
+  /usr/include/QtWidgets/QGridLayout \
   /usr/include/QtWidgets/QGroupBox \
   /usr/include/QtWidgets/QHBoxLayout \
   /usr/include/QtWidgets/QHeaderView \
   /usr/include/QtWidgets/QLabel \
   /usr/include/QtWidgets/QLayout \
   /usr/include/QtWidgets/QLineEdit \
+  /usr/include/QtWidgets/QListWidget \
   /usr/include/QtWidgets/QMenuBar \
   /usr/include/QtWidgets/QMessageBox \
   /usr/include/QtWidgets/QPlainTextEdit \
@@ -813,6 +846,8 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/qlayout.h \
   /usr/include/QtWidgets/qlayoutitem.h \
   /usr/include/QtWidgets/qlineedit.h \
+  /usr/include/QtWidgets/qlistview.h \
+  /usr/include/QtWidgets/qlistwidget.h \
   /usr/include/QtWidgets/qmenu.h \
   /usr/include/QtWidgets/qmenubar.h \
   /usr/include/QtWidgets/qmessagebox.h \
@@ -1836,10 +1871,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/lib32/libpng16.so.16:
 
-/usr/lib32/libpcre2-8.so.0:
-
-/usr/lib32/libpcre2-16.so.0:
-
 /usr/lib32/libicuuc.so.77:
 
 /usr/lib32/libicudata.so.77:
@@ -1849,8 +1880,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/lib32/libglib-2.0.so.0:
 
 /usr/lib32/libfreetype.so.6:
-
-/usr/lib32/libdbus-1.so.3:
 
 /usr/lib32/libXau.so.6:
 
@@ -1924,8 +1953,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/c++/15.1.0/bits/fs_path.h:
 
-/usr/include/c++/15.1.0/bits/fs_ops.h:
-
 /usr/include/c++/15.1.0/bits/fs_dir.h:
 
 /usr/include/QtWidgets/qtreewidgetitemiterator.h:
@@ -1961,6 +1988,12 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/QtWidgets/qmenubar.h:
 
 /usr/include/QtWidgets/qmenu.h:
+
+/usr/lib32/libpcre2-16.so.0:
+
+/usr/include/QtWidgets/qlistwidget.h:
+
+/usr/include/QtWidgets/qlistview.h:
 
 /usr/include/QtWidgets/qlayoutitem.h:
 
@@ -2008,6 +2041,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtWidgets/QMessageBox:
 
+/usr/include/QtWidgets/QListWidget:
+
 /usr/include/QtWidgets/QLineEdit:
 
 /usr/include/QtWidgets/QLayout:
@@ -2024,6 +2059,30 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtWidgets/QComboBox:
 
+/usr/include/QtNetwork/qtnetwork-config.h:
+
+/usr/include/QtNetwork/qsslpresharedkeyauthenticator.h:
+
+/usr/include/QtNetwork/qsslerror.h:
+
+/usr/include/QtNetwork/qsslconfiguration.h:
+
+/usr/include/QtNetwork/qssl.h:
+
+/usr/include/QtNetwork/qnetworkrequest.h:
+
+/usr/lib32/libdbus-1.so.3:
+
+/usr/include/QtNetwork/qnetworkaccessmanager.h:
+
+/usr/include/QtNetwork/qabstractsocket.h:
+
+/usr/include/QtNetwork/QSslConfiguration:
+
+/usr/include/QtNetwork/QNetworkRequest:
+
+/usr/include/QtNetwork/QNetworkAccessManager:
+
 /usr/include/QtGui/qvector2d.h:
 
 /usr/include/QtGui/qtextoption.h:
@@ -2039,6 +2098,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/QtGui/qpen.h:
 
 /usr/include/QtWidgets/QHeaderView:
+
+/usr/include/QtNetwork/qnetworkreply.h:
 
 /usr/include/QtGui/qinputmethod.h:
 
@@ -2106,15 +2167,43 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtCore/qabstracteventdispatcher.h:
 
+/usr/include/QtCore/q26numeric.h:
+
+/usr/include/c++/15.1.0/bits/fs_ops.h:
+
+/usr/include/QtCore/QVariant:
+
+/usr/include/QtCore/QString:
+
 /usr/include/QtCore/QStandardPaths:
+
+/usr/include/QtWidgets/QGridLayout:
 
 /usr/include/QtCore/QSizeF:
 
 /usr/include/QtCore/QSize:
 
+/usr/lib32/libpcre2-8.so.0:
+
+/usr/include/QtNetwork/qtcpsocket.h:
+
+/usr/include/QtCore/QSignalBlocker:
+
+/usr/include/QtCore/QSharedDataPointer:
+
 /usr/include/QtCore/QSet:
 
 /usr/include/QtCore/QSaveFile:
+
+/usr/include/c++/15.1.0/bits/fs_fwd.h:
+
+/usr/include/QtCore/qdatetime.h:
+
+/usr/include/QtCore/QRegularExpression:
+
+/usr/include/QtCore/QRect:
+
+/usr/include/QtCore/QProcessEnvironment:
 
 /usr/include/bits/types/struct_sched_param.h:
 
@@ -2234,8 +2323,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/ctype_inline.h:
 
-/usr/include/QtCore/QProcessEnvironment:
-
 /usr/include/asm-generic/posix_types.h:
 
 /usr/include/bits/mathcalls-macros.h:
@@ -2310,6 +2397,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/lib32/libzstd.so.1:
 
+/usr/include/QtCore/qcryptographichash.h:
+
 /usr/include/c++/15.1.0/initializer_list:
 
 /usr/include/QtGui/qcursor.h:
@@ -2369,6 +2458,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/QtCore/qendian.h:
 
 /usr/include/QtCore/qmetatype.h:
+
+/usr/include/QtNetwork/qtnetworkexports.h:
 
 /usr/include/QtGui/qpointingdevice.h:
 
@@ -2578,6 +2669,8 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 
 /usr/include/c++/15.1.0/bits/formatfwd.h:
 
+/usr/include/QtCore/QIODevice:
+
 /usr/include/c++/15.1.0/list:
 
 /usr/include/c++/15.1.0/ext/atomicity.h:
@@ -2668,7 +2761,11 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/QtGui/qpixelformat.h:
 
+/usr/include/QtNetwork/qtnetworkglobal.h:
+
 /usr/include/c++/15.1.0/bits/ostream.tcc:
+
+/usr/include/QtNetwork/QNetworkReply:
 
 /usr/include/c++/15.1.0/stdlib.h:
 
@@ -2766,6 +2863,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/c++/15.1.0/tr1/modified_bessel_func.tcc:
 
+/usr/include/QtNetwork/QSslPreSharedKeyAuthenticator:
+
 /usr/include/QtCore/qtaggedpointer.h:
 
 /usr/include/QtCore/qtversionchecks.h:
@@ -2804,6 +2903,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/bits/wordsize.h:
 
+/usr/include/QtNetwork/qhttpheaders.h:
+
 /usr/include/c++/15.1.0/bits/streambuf_iterator.h:
 
 /usr/include/QtCore/qtextstream.h:
@@ -2815,6 +2916,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/QtCore/qtypeinfo.h:
 
 /usr/include/c++/15.1.0/backward/binders.h:
+
+/usr/include/QtNetwork/qhostaddress.h:
 
 /usr/include/QtCore/qprocessordetection.h:
 
@@ -2909,6 +3012,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/c++/15.1.0/cctype:
 
 /usr/include/c++/15.1.0/tr1/bessel_function.tcc:
+
+/usr/include/QtCore/QUrl:
 
 /usr/include/c++/15.1.0/bits/localefwd.h:
 
@@ -3009,12 +3114,6 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/c++/15.1.0/bits/functional_hash.h:
 
 /usr/include/c++/15.1.0/bits/stl_iterator_base_types.h:
-
-/usr/include/c++/15.1.0/bits/fs_fwd.h:
-
-/usr/include/QtCore/qdatetime.h:
-
-/usr/include/QtCore/QRegularExpression:
 
 /usr/include/c++/15.1.0/bits/stl_list.h:
 
@@ -3268,6 +3367,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/linux/types.h:
 
+/usr/include/QtNetwork/qsslcertificate.h:
+
 /usr/include/locale.h:
 
 /usr/include/math.h:
@@ -3328,10 +3429,14 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/QtCore/QFileInfo:
 
+/usr/include/QtNetwork/qsslsocket.h:
+
+/usr/include/QtCore/QFlags:
+
 /usr/include/QtCore/QJsonValue:
 
 /usr/include/bits/types/struct_timespec.h:
 
 /usr/include/QtCore/QList:
 
-/usr/include/QtCore/QRect:
+/usr/include/QtCore/QMetaType:

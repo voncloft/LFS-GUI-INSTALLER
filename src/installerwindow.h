@@ -10,6 +10,9 @@ class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
 class QLineEdit;
+class QListWidget;
+class QNetworkAccessManager;
+class QNetworkReply;
 class QPlainTextEdit;
 class QProgressBar;
 class QPushButton;
@@ -54,6 +57,7 @@ private slots:
     void handleInstallProcessOutput();
     void handleInstallProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void handleInstallProcessError(QProcess::ProcessError error);
+    void handleFeatureRepoReply(QNetworkReply *reply);
 
 private:
     void buildUi();
@@ -81,9 +85,14 @@ private:
                                   QString *errorMessage) const;
     QStringList collectScriptPaths(const QString &scriptsDirectory) const;
     int countScriptSteps(const QStringList &scriptPaths) const;
+    void populateFeaturePackages();
+    void applyFeatureFilters();
+    void loadFeaturePackagesFromRepo();
+    void requestCurrentFeatureMetadata();
     void startNextInstallScript();
     void appendInstallLogLine(const QString &line);
     void processInstallOutputLine(const QString &line);
+    QString buildFeatureOutputText() const;
     QString buildFinalSetupScript() const;
     QString buildPartitionScript() const;
     QString buildMountScript() const;
@@ -128,8 +137,12 @@ private:
     QPushButton *pageThreeBackButton_ = nullptr;
     QPushButton *pageThreeInstallButton_ = nullptr;
 
-    QVector<QCheckBox *> featureChecks_;
-    QPlainTextEdit *summaryPreview_ = nullptr;
+    QLineEdit *featureSearchEdit_ = nullptr;
+    QListWidget *featureListWidget_ = nullptr;
+    QLabel *featureCountLabel_ = nullptr;
+    QPlainTextEdit *featureOutput_ = nullptr;
+    QPushButton *featureOutdatedButton_ = nullptr;
+    QNetworkAccessManager *featureRepoManager_ = nullptr;
 
     QVector<DriveInfo> drives_;
     QProcess *installProcess_ = nullptr;

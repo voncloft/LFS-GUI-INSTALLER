@@ -56,7 +56,10 @@ template <> constexpr inline auto InstallerWindow::qt_create_metaobjectdata<qt_m
         "exitStatus",
         "handleInstallProcessError",
         "QProcess::ProcessError",
-        "error"
+        "error",
+        "handleFeatureRepoReply",
+        "QNetworkReply*",
+        "reply"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -87,6 +90,10 @@ template <> constexpr inline auto InstallerWindow::qt_create_metaobjectdata<qt_m
         // Slot 'handleInstallProcessError'
         QtMocHelpers::SlotData<void(QProcess::ProcessError)>(16, 2, QMC::AccessPrivate, QMetaType::Void, {{
             { 0x80000000 | 17, 18 },
+        }}),
+        // Slot 'handleFeatureRepoReply'
+        QtMocHelpers::SlotData<void(QNetworkReply *)>(19, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 20, 21 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -123,6 +130,7 @@ void InstallerWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
         case 9: _t->handleInstallProcessOutput(); break;
         case 10: _t->handleInstallProcessFinished((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QProcess::ExitStatus>>(_a[2]))); break;
         case 11: _t->handleInstallProcessError((*reinterpret_cast< std::add_pointer_t<QProcess::ProcessError>>(_a[1]))); break;
+        case 12: _t->handleFeatureRepoReply((*reinterpret_cast< std::add_pointer_t<QNetworkReply*>>(_a[1]))); break;
         default: ;
         }
     }
@@ -147,14 +155,14 @@ int InstallerWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 12)
+        if (_id < 13)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 12;
+        _id -= 13;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 12)
+        if (_id < 13)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 12;
+        _id -= 13;
     }
     return _id;
 }

@@ -6,6 +6,7 @@ lfs_installer: \
   CMakeFiles/lfs_installer.dir/src/main.cpp.o \
   CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o \
   /usr/lib/libQt6Widgets.so.6.9.1 \
+  /usr/lib/libQt6Network.so.6.9.1 \
   /usr/lib/libQt6Gui.so.6.9.1 \
   /usr/lib64/libGLX.so \
   /usr/lib64/libOpenGL.so \
@@ -37,6 +38,18 @@ lfs_installer: \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.0/crtendS.o \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.0/../../../../lib/crtn.o \
   /lib/libxkbcommon.so.0 \
+  /usr/lib32/libzstd.so.1 \
+  /lib/libzstd.so.1 \
+  /usr/lib32/libbrotlidec.so.1 \
+  /lib/libbrotlidec.so.1 \
+  /usr/lib32/libz.so.1 \
+  /lib/libz.so.1 \
+  /usr/lib32/libresolv.so.2 \
+  /lib/libresolv.so.2 \
+  /usr/lib32/libssl.so.3 \
+  /lib/libssl.so.3 \
+  /usr/lib32/libcrypto.so.3 \
+  /lib/libcrypto.so.3 \
   /usr/lib32/libEGL.so.1 \
   /usr/lib64/libEGL.so.1 \
   /usr/lib32/libfontconfig.so.1 \
@@ -52,8 +65,6 @@ lfs_installer: \
   /lib/libharfbuzz.so.0 \
   /usr/lib32/libfreetype.so.6 \
   /lib/libfreetype.so.6 \
-  /usr/lib32/libz.so.1 \
-  /lib/libz.so.1 \
   /usr/lib32/libgthread-2.0.so.0 \
   /lib/libgthread-2.0.so.0 \
   /usr/lib/libgthread-2.0.so.0 \
@@ -67,11 +78,11 @@ lfs_installer: \
   /lib/libicuuc.so.77 \
   /usr/lib32/libicudata.so.77 \
   /lib/libicudata.so.77 \
-  /usr/lib32/libzstd.so.1 \
-  /lib/libzstd.so.1 \
   /usr/lib32/libpcre2-16.so.0 \
   /lib/libpcre2-16.so.0 \
   /usr/lib/ld-linux-x86-64.so.2 \
+  /usr/lib32/libbrotlicommon.so.1 \
+  /lib/libbrotlicommon.so.1 \
   /usr/lib32/libexpat.so.1 \
   /lib/libexpat.so.1 \
   /usr/lib32/libxcb.so.1 \
@@ -102,6 +113,8 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o:
 CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o:
 
 /usr/lib/libQt6Widgets.so.6.9.1:
+
+/usr/lib/libQt6Network.so.6.9.1:
 
 /usr/lib/libQt6Gui.so.6.9.1:
 
@@ -165,6 +178,30 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o:
 
 /lib/libxkbcommon.so.0:
 
+/usr/lib32/libzstd.so.1:
+
+/lib/libzstd.so.1:
+
+/usr/lib32/libbrotlidec.so.1:
+
+/lib/libbrotlidec.so.1:
+
+/usr/lib32/libz.so.1:
+
+/lib/libz.so.1:
+
+/usr/lib32/libresolv.so.2:
+
+/lib/libresolv.so.2:
+
+/usr/lib32/libssl.so.3:
+
+/lib/libssl.so.3:
+
+/usr/lib32/libcrypto.so.3:
+
+/lib/libcrypto.so.3:
+
 /usr/lib32/libEGL.so.1:
 
 /usr/lib64/libEGL.so.1:
@@ -195,10 +232,6 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o:
 
 /lib/libfreetype.so.6:
 
-/usr/lib32/libz.so.1:
-
-/lib/libz.so.1:
-
 /usr/lib32/libgthread-2.0.so.0:
 
 /lib/libgthread-2.0.so.0:
@@ -225,15 +258,15 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o:
 
 /lib/libicudata.so.77:
 
-/usr/lib32/libzstd.so.1:
-
-/lib/libzstd.so.1:
-
 /usr/lib32/libpcre2-16.so.0:
 
 /lib/libpcre2-16.so.0:
 
 /usr/lib/ld-linux-x86-64.so.2:
+
+/usr/lib32/libbrotlicommon.so.1:
+
+/lib/libbrotlicommon.so.1:
 
 /usr/lib32/libexpat.so.1:
 

@@ -408,6 +408,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtGui/QFontDatabase /usr/include/QtGui/qfontdatabase.h \
  /usr/include/QtWidgets/QFrame /usr/include/QtWidgets/qframe.h \
  /usr/include/QtWidgets/QGroupBox /usr/include/QtWidgets/qgroupbox.h \
+ /usr/include/QtWidgets/QGridLayout /usr/include/QtWidgets/qgridlayout.h \
  /usr/include/QtWidgets/QHeaderView /usr/include/QtWidgets/qheaderview.h \
  /usr/include/QtWidgets/qabstractitemview.h \
  /usr/include/QtWidgets/qabstractscrollarea.h \
@@ -430,6 +431,36 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/qmenu.h /usr/include/QtWidgets/QMessageBox \
  /usr/include/QtWidgets/qmessagebox.h \
  /usr/include/QtWidgets/qdialogbuttonbox.h \
+ /usr/include/QtNetwork/QNetworkAccessManager \
+ /usr/include/QtNetwork/qnetworkaccessmanager.h \
+ /usr/include/QtNetwork/qtnetworkglobal.h \
+ /usr/include/QtNetwork/qtnetwork-config.h \
+ /usr/include/QtNetwork/qtnetworkexports.h \
+ /usr/include/QtNetwork/qnetworkrequest.h \
+ /usr/include/QtNetwork/qhttpheaders.h \
+ /usr/include/QtCore/QSharedDataPointer /usr/include/QtCore/qshareddata.h \
+ /usr/include/QtCore/QString /usr/include/QtCore/qstring.h \
+ /usr/include/QtCore/QUrl /usr/include/QtCore/qurl.h \
+ /usr/include/QtCore/QVariant /usr/include/QtCore/qvariant.h \
+ /usr/include/QtCore/q26numeric.h /usr/include/QtCore/QList \
+ /usr/include/QtCore/qlist.h /usr/include/QtCore/QObject \
+ /usr/include/QtCore/qobject.h /usr/include/QtNetwork/QSslConfiguration \
+ /usr/include/QtNetwork/qsslconfiguration.h \
+ /usr/include/QtNetwork/qsslsocket.h /usr/include/QtNetwork/qtcpsocket.h \
+ /usr/include/QtNetwork/qabstractsocket.h \
+ /usr/include/QtNetwork/qhostaddress.h /usr/include/QtNetwork/qsslerror.h \
+ /usr/include/QtNetwork/qsslcertificate.h \
+ /usr/include/QtCore/qcryptographichash.h /usr/include/QtNetwork/qssl.h \
+ /usr/include/QtCore/QFlags /usr/include/QtCore/qflags.h \
+ /usr/include/QtNetwork/QSslPreSharedKeyAuthenticator \
+ /usr/include/QtNetwork/qsslpresharedkeyauthenticator.h \
+ /usr/include/QtCore/QMetaType /usr/include/QtCore/qmetatype.h \
+ /usr/include/QtNetwork/QNetworkReply \
+ /usr/include/QtNetwork/qnetworkreply.h /usr/include/QtCore/QIODevice \
+ /usr/include/QtCore/qiodevice.h /usr/include/QtNetwork/QNetworkRequest \
+ /usr/include/QtNetwork/qnetworkrequest.h \
+ /usr/include/QtNetwork/QNetworkAccessManager \
+ /usr/include/QtNetwork/QNetworkRequest \
  /usr/include/QtWidgets/QPlainTextEdit \
  /usr/include/QtWidgets/qplaintextedit.h \
  /usr/include/QtWidgets/qtextedit.h \
@@ -438,8 +469,6 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtGui/qeventpoint.h /usr/include/QtGui/qvector2d.h \
  /usr/include/QtGui/qvectornd.h /usr/include/QtGui/qpointingdevice.h \
  /usr/include/QtGui/qinputdevice.h /usr/include/QtGui/qscreen.h \
- /usr/include/QtCore/QList /usr/include/QtCore/qlist.h \
- /usr/include/QtCore/QObject /usr/include/QtCore/qobject.h \
  /usr/include/QtCore/QRect /usr/include/QtCore/qrect.h \
  /usr/include/QtCore/QSize /usr/include/QtCore/qsize.h \
  /usr/include/QtCore/QSizeF /usr/include/QtGui/QTransform \
@@ -459,10 +488,10 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/QToolBar /usr/include/QtWidgets/qtoolbar.h \
  /usr/include/QtWidgets/QToolButton /usr/include/QtWidgets/qtoolbutton.h \
  /usr/include/QtCore/QSaveFile /usr/include/QtCore/qsavefile.h \
- /usr/include/QtCore/QSet /usr/include/QtCore/qset.h \
- /usr/include/QtWidgets/QSpinBox /usr/include/QtWidgets/qspinbox.h \
- /usr/include/QtWidgets/QSplitter /usr/include/QtWidgets/qsplitter.h \
- /usr/include/QtWidgets/QStackedWidget \
+ /usr/include/QtCore/QSignalBlocker /usr/include/QtCore/QSet \
+ /usr/include/QtCore/qset.h /usr/include/QtWidgets/QSpinBox \
+ /usr/include/QtWidgets/qspinbox.h /usr/include/QtWidgets/QSplitter \
+ /usr/include/QtWidgets/qsplitter.h /usr/include/QtWidgets/QStackedWidget \
  /usr/include/QtWidgets/qstackedwidget.h \
  /usr/include/QtWidgets/QTableWidget \
  /usr/include/QtWidgets/qtablewidget.h \
@@ -472,4 +501,6 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/qtreewidget.h /usr/include/QtWidgets/qtreeview.h \
  /usr/include/QtWidgets/qtreewidgetitemiterator.h \
  /usr/include/QtWidgets/QTreeWidgetItem \
+ /usr/include/QtWidgets/QListWidget /usr/include/QtWidgets/qlistwidget.h \
+ /usr/include/QtWidgets/qlistview.h /usr/include/QtCore/QUrl \
  /usr/include/QtWidgets/QVBoxLayout /usr/include/QtWidgets/QDoubleSpinBox

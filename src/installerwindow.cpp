@@ -12,6 +12,7 @@
 #include <QFontDatabase>
 #include <QFrame>
 #include <QGroupBox>
+#include <QGridLayout>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QJsonArray>
@@ -23,6 +24,9 @@
 #include <QLineEdit>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QPlainTextEdit>
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -34,6 +38,7 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QSaveFile>
+#include <QSignalBlocker>
 #include <QSet>
 #include <QSpinBox>
 #include <QSplitter>
@@ -43,6 +48,8 @@
 #include <QTimeZone>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+#include <QListWidget>
+#include <QUrl>
 #include <QVBoxLayout>
 #include <QDoubleSpinBox>
 
@@ -172,6 +179,40 @@ QStringList localMountPointOptions()
         QStringLiteral("/mnt/lfs/var"),
         QStringLiteral("/mnt/lfs/swap")
     };
+}
+
+constexpr int FeatureKeyRole = Qt::UserRole + 1;
+constexpr int FeatureVersionRole = Qt::UserRole + 2;
+constexpr int FeatureDescriptionRole = Qt::UserRole + 3;
+constexpr int FeatureRawUrlRole = Qt::UserRole + 4;
+constexpr int FeatureMetadataLoadedRole = Qt::UserRole + 5;
+constexpr int FeatureMetadataLoadingRole = Qt::UserRole + 6;
+constexpr int FeatureRepoPathRole = Qt::UserRole + 7;
+
+QString featureDisplayText(const QString &category,
+                           const QString &packageName,
+                           const QString &version,
+                           const QString &description)
+{
+    QString text = QString("[%1] %2").arg(category, packageName);
+    if (!version.trimmed().isEmpty()) {
+        text += QString(" - %1").arg(version.trimmed());
+    }
+    if (!description.trimmed().isEmpty()) {
+        text += QString(": %1").arg(description.trimmed());
+    }
+
+    return text;
+}
+
+QString githubReposTreeUrl()
+{
+    return QStringLiteral("https://api.github.com/repos/voncloft/Voncloft-OS/git/trees/master?recursive=1");
+}
+
+QString githubRawPrefix()
+{
+    return QStringLiteral("https://raw.githubusercontent.com/voncloft/Voncloft-OS/master/");
 }
 
 QColor fileSystemColor(const QString &fileSystem)
@@ -689,51 +730,112 @@ QWidget *InstallerWindow::buildInstallPage()
 QWidget *InstallerWindow::buildFeaturesPage()
 {
     auto *page = new QWidget(this);
-    auto *layout = new QVBoxLayout(page);
+    auto *layout = new QGridLayout(page);
     layout->setContentsMargins(12, 12, 12, 12);
+    layout->setHorizontalSpacing(8);
+    layout->setVerticalSpacing(8);
 
-    auto *header = new QLabel("Page 4: Additional Features");
-    header->setStyleSheet("font-size: 18px; font-weight: 600;");
-    layout->addWidget(header);
+    auto *searchRow = new QHBoxLayout();
+    searchRow->setContentsMargins(0, 0, 0, 0);
+    searchRow->addStretch(1);
+    featureSearchEdit_ = new QLineEdit(page);
+    featureSearchEdit_->setPlaceholderText("Search");
+    featureSearchEdit_->setFixedSize(300, 40);
+    searchRow->addWidget(featureSearchEdit_);
+    layout->addLayout(searchRow, 0, 0, 1, 5);
 
-    auto *featuresBox = new QGroupBox("Checkbox selection", page);
-    auto *featuresLayout = new QVBoxLayout(featuresBox);
+    featureListWidget_ = new QListWidget(page);
+    featureListWidget_->setFocusPolicy(Qt::NoFocus);
+    layout->addWidget(featureListWidget_, 1, 0, 1, 5);
 
-    const QStringList featureLabels = {
-        "Enable sudo for the created user",
-        "Install OpenSSH",
-        "Install base development tools",
-        "Enable NetworkManager",
-        "Install KDE Plasma",
-        "Enable serial console logging"
-    };
+    auto *installButton = new QPushButton("Install", page);
+    auto *updateButton = new QPushButton("Update", page);
+    auto *reloadButton = new QPushButton("Reload", page);
+    auto *updatePackagesButton = new QPushButton("Update Packages", page);
+    featureOutdatedButton_ = new QPushButton("Outdated Packages", page);
 
-    for (const QString &label : featureLabels) {
-        auto *check = new QCheckBox(label, featuresBox);
-        featuresLayout->addWidget(check);
-        featureChecks_.append(check);
-        connect(check, &QCheckBox::checkStateChanged, this, &InstallerWindow::refreshSummaries);
+    installButton->setFocusPolicy(Qt::NoFocus);
+    updateButton->setFocusPolicy(Qt::NoFocus);
+    reloadButton->setFocusPolicy(Qt::NoFocus);
+    updatePackagesButton->setFocusPolicy(Qt::NoFocus);
+    featureOutdatedButton_->setFocusPolicy(Qt::NoFocus);
+    layout->addWidget(installButton, 2, 0);
+    layout->addWidget(updateButton, 2, 1);
+    layout->addWidget(reloadButton, 2, 2);
+    layout->addWidget(updatePackagesButton, 2, 3);
+    layout->addWidget(featureOutdatedButton_, 2, 4);
+
+    featureOutput_ = new QPlainTextEdit(page);
+    featureOutput_->setReadOnly(true);
+    featureOutput_->setFocusPolicy(Qt::NoFocus);
+    featureOutput_->setLineWrapMode(QPlainTextEdit::NoWrap);
+    featureOutput_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    layout->addWidget(featureOutput_, 3, 0, 1, 5);
+
+    featureCountLabel_ = new QLabel("Packages loaded: 0 | Selected: 0", page);
+    layout->addWidget(featureCountLabel_, 4, 0, 1, 5);
+
+    layout->setRowStretch(1, 3);
+    layout->setRowStretch(3, 2);
+
+    if (!featureRepoManager_) {
+        featureRepoManager_ = new QNetworkAccessManager(this);
+        connect(featureRepoManager_, &QNetworkAccessManager::finished, this, &InstallerWindow::handleFeatureRepoReply);
     }
 
-    layout->addWidget(featuresBox);
+    connect(featureSearchEdit_, &QLineEdit::textChanged, this, [this](const QString &) {
+        applyFeatureFilters();
+        refreshSummaries();
+    });
+    connect(featureListWidget_, &QListWidget::itemChanged, this, [this]() {
+        refreshSummaries();
+    });
+    connect(featureListWidget_, &QListWidget::currentItemChanged, this, [this](QListWidgetItem *, QListWidgetItem *) {
+        requestCurrentFeatureMetadata();
+        refreshSummaries();
+    });
+    connect(reloadButton, &QPushButton::clicked, this, [this]() {
+        if (featureSearchEdit_) {
+            featureSearchEdit_->clear();
+        }
+        loadFeaturePackagesFromRepo();
+    });
+    connect(installButton, &QPushButton::clicked, this, [this]() {
+        if (!featureOutput_) {
+            return;
+        }
 
-    auto *summaryBox = new QGroupBox("Summary / export", page);
-    auto *summaryLayout = new QVBoxLayout(summaryBox);
-    summaryPreview_ = new QPlainTextEdit(summaryBox);
-    summaryPreview_->setReadOnly(true);
-    summaryPreview_->setFocusPolicy(Qt::NoFocus);
-    summaryLayout->addWidget(summaryPreview_);
+        QStringList lines;
+        lines << "Install action is not wired on page 4 yet.";
+        lines << "";
+        lines << "Selected repo packages:";
+        const QStringList features = collectSelectedFeatures();
+        if (features.isEmpty()) {
+            lines << "  none";
+        } else {
+            for (const QString &feature : features) {
+                lines << QString("  - %1").arg(feature);
+            }
+        }
+        featureOutput_->setPlainText(lines.join('\n'));
+    });
+    connect(updateButton, &QPushButton::clicked, this, [this]() {
+        if (featureOutput_) {
+            featureOutput_->setPlainText("Update action is not wired on page 4 yet.\n\nUse Reload to refresh the GitHub-backed package list.");
+        }
+    });
+    connect(updatePackagesButton, &QPushButton::clicked, this, [this]() {
+        if (featureOutput_) {
+            featureOutput_->setPlainText("Update Packages is not wired on page 4 yet.\n\nThis page currently mirrors the GitHub repo list and search flow only.");
+        }
+    });
+    connect(featureOutdatedButton_, &QPushButton::clicked, this, [this]() {
+        if (featureOutput_) {
+            featureOutput_->setPlainText("Outdated package filtering is not wired on page 4 yet.\n\nThe repo browser is currently focused on package listing, search, and selection.");
+        }
+    });
 
-    auto *exportButton = new QPushButton("Export config JSON", summaryBox);
-    summaryLayout->addWidget(exportButton, 0, Qt::AlignRight);
-    layout->addWidget(summaryBox, 1);
-
-    auto *note = new QLabel("You can keep this page as a simple selector now, then wire the exported feature list into your repo later.");
-    note->setWordWrap(true);
-    note->setStyleSheet("color: #555;");
-    layout->addWidget(note);
-
-    connect(exportButton, &QPushButton::clicked, this, &InstallerWindow::exportConfiguration);
+    populateFeaturePackages();
 
     return page;
 }
@@ -1005,16 +1107,291 @@ void InstallerWindow::refreshPartitionEditorPreview()
     }
 }
 
+void InstallerWindow::populateFeaturePackages()
+{
+    loadFeaturePackagesFromRepo();
+}
+
+void InstallerWindow::applyFeatureFilters()
+{
+    if (!featureListWidget_) {
+        return;
+    }
+
+    const QString term = featureSearchEdit_ ? featureSearchEdit_->text().trimmed() : QString();
+    QListWidgetItem *firstVisibleItem = nullptr;
+    for (int row = 0; row < featureListWidget_->count(); ++row) {
+        QListWidgetItem *item = featureListWidget_->item(row);
+        if (!item) {
+            continue;
+        }
+
+        const bool matchesSearch = term.isEmpty() || item->text().contains(term, Qt::CaseInsensitive);
+        item->setHidden(!matchesSearch);
+        if (!item->isHidden() && !firstVisibleItem) {
+            firstVisibleItem = item;
+        }
+    }
+
+    if (featureListWidget_->currentItem() && !featureListWidget_->currentItem()->isHidden()) {
+        return;
+    }
+
+    if (firstVisibleItem) {
+        featureListWidget_->setCurrentItem(firstVisibleItem);
+    } else {
+        featureListWidget_->setCurrentRow(-1);
+    }
+}
+
+void InstallerWindow::loadFeaturePackagesFromRepo()
+{
+    if (!featureRepoManager_ || !featureListWidget_) {
+        return;
+    }
+
+    {
+        QSignalBlocker blocker(featureListWidget_);
+        featureListWidget_->clear();
+    }
+
+    if (featureOutput_) {
+        featureOutput_->setPlainText("Loading package index from GitHub...\n\nSource: voncloft/Voncloft-OS/REPOS");
+    }
+    if (featureCountLabel_) {
+        featureCountLabel_->setText("Packages loaded: loading... | Selected: 0");
+    }
+
+    QNetworkRequest request{QUrl{githubReposTreeUrl()}};
+    request.setHeader(QNetworkRequest::UserAgentHeader, "lfs-installer");
+    request.setRawHeader("Accept", "application/vnd.github+json");
+    QNetworkReply *reply = featureRepoManager_->get(request);
+    reply->setProperty("requestType", "index");
+}
+
+void InstallerWindow::requestCurrentFeatureMetadata()
+{
+    if (!featureRepoManager_ || !featureListWidget_) {
+        return;
+    }
+
+    QListWidgetItem *item = featureListWidget_->currentItem();
+    if (!item) {
+        return;
+    }
+
+    if (item->data(FeatureMetadataLoadedRole).toBool() || item->data(FeatureMetadataLoadingRole).toBool()) {
+        return;
+    }
+
+    const QString rawUrl = item->data(FeatureRawUrlRole).toString();
+    if (rawUrl.isEmpty()) {
+        return;
+    }
+
+    item->setData(FeatureMetadataLoadingRole, true);
+    refreshSummaries();
+
+    QNetworkRequest request{QUrl{rawUrl}};
+    request.setHeader(QNetworkRequest::UserAgentHeader, "lfs-installer");
+    QNetworkReply *reply = featureRepoManager_->get(request);
+    reply->setProperty("requestType", "metadata");
+    reply->setProperty("repoPath", item->data(FeatureRepoPathRole).toString());
+    reply->setProperty("rawUrl", rawUrl);
+}
+
+void InstallerWindow::handleFeatureRepoReply(QNetworkReply *reply)
+{
+    if (!reply) {
+        return;
+    }
+
+    const QString requestType = reply->property("requestType").toString();
+    const QByteArray payload = reply->readAll();
+    const bool requestSucceeded = reply->error() == QNetworkReply::NoError;
+    const QString errorText = reply->errorString();
+    reply->deleteLater();
+
+    if (requestType == "index") {
+        if (!requestSucceeded) {
+            if (featureOutput_) {
+                featureOutput_->setPlainText(QString("Failed to load repo index from GitHub.\n\n%1").arg(errorText));
+            }
+            if (featureCountLabel_) {
+                featureCountLabel_->setText("Packages loaded: 0 | Selected: 0");
+            }
+            return;
+        }
+
+        const QJsonDocument document = QJsonDocument::fromJson(payload);
+        const QJsonArray tree = document.object().value("tree").toArray();
+
+        QSignalBlocker blocker(featureListWidget_);
+        featureListWidget_->clear();
+
+        for (const QJsonValue &value : tree) {
+            const QJsonObject object = value.toObject();
+            const QString path = object.value("path").toString();
+            if (!path.startsWith("REPOS/") || !path.endsWith("/spkgbuild")) {
+                continue;
+            }
+
+            const QStringList parts = path.split('/');
+            if (parts.size() < 4) {
+                continue;
+            }
+
+            const QString category = parts.mid(1, parts.size() - 3).join('/');
+            const QString packageName = parts.at(parts.size() - 2);
+            const QString packageKey = QString("%1/%2").arg(category, packageName);
+            const QString rawUrl = githubRawPrefix() + path;
+
+            auto *item = new QListWidgetItem(featureDisplayText(category, packageName, QString(), QString()), featureListWidget_);
+            item->setFlags((item->flags() | Qt::ItemIsUserCheckable) & ~Qt::ItemIsEditable);
+            item->setCheckState(Qt::Unchecked);
+            item->setData(FeatureKeyRole, packageKey);
+            item->setData(FeatureVersionRole, QString());
+            item->setData(FeatureDescriptionRole, QString());
+            item->setData(FeatureRawUrlRole, rawUrl);
+            item->setData(FeatureMetadataLoadedRole, false);
+            item->setData(FeatureMetadataLoadingRole, false);
+            item->setData(FeatureRepoPathRole, path);
+            item->setToolTip(path);
+        }
+
+        featureListWidget_->sortItems(Qt::AscendingOrder);
+        applyFeatureFilters();
+        if (featureListWidget_->count() > 0 && !featureListWidget_->currentItem()) {
+            featureListWidget_->setCurrentRow(0);
+        }
+        requestCurrentFeatureMetadata();
+        refreshSummaries();
+        return;
+    }
+
+    if (requestType != "metadata" || !featureListWidget_) {
+        return;
+    }
+
+    const QString rawUrl = reply->property("rawUrl").toString();
+    for (int row = 0; row < featureListWidget_->count(); ++row) {
+        QListWidgetItem *item = featureListWidget_->item(row);
+        if (!item || item->data(FeatureRawUrlRole).toString() != rawUrl) {
+            continue;
+        }
+
+        QString version;
+        QString description;
+        if (requestSucceeded) {
+            const QString contents = QString::fromUtf8(payload);
+            const QRegularExpression versionPattern(R"(^\s*version=(.+)\s*$)", QRegularExpression::MultilineOption);
+            const QRegularExpression descriptionPattern(R"(^\s*#\s*description\s*:\s*(.+)\s*$)", QRegularExpression::MultilineOption);
+            version = versionPattern.match(contents).captured(1).trimmed();
+            description = descriptionPattern.match(contents).captured(1).trimmed();
+            if ((version.startsWith('"') && version.endsWith('"')) || (version.startsWith('\'') && version.endsWith('\''))) {
+                version = version.mid(1, version.size() - 2);
+            }
+        } else {
+            description = QString("Metadata unavailable (%1)").arg(errorText);
+        }
+
+        const QString packageKey = item->data(FeatureKeyRole).toString();
+        const int slashIndex = packageKey.lastIndexOf('/');
+        const QString category = slashIndex >= 0 ? packageKey.left(slashIndex) : QString();
+        const QString packageName = slashIndex >= 0 ? packageKey.mid(slashIndex + 1) : packageKey;
+
+        {
+            QSignalBlocker blocker(featureListWidget_);
+            item->setData(FeatureVersionRole, version);
+            item->setData(FeatureDescriptionRole, description);
+            item->setData(FeatureMetadataLoadedRole, true);
+            item->setData(FeatureMetadataLoadingRole, false);
+            item->setText(featureDisplayText(category, packageName, version, description));
+        }
+
+        if (item == featureListWidget_->currentItem()) {
+            refreshSummaries();
+        }
+        break;
+    }
+}
+
 QStringList InstallerWindow::collectSelectedFeatures() const
 {
     QStringList features;
-    for (QCheckBox *check : featureChecks_) {
-        if (check->isChecked()) {
-            features.append(check->text());
+    if (!featureListWidget_) {
+        return features;
+    }
+
+    for (int row = 0; row < featureListWidget_->count(); ++row) {
+        QListWidgetItem *item = featureListWidget_->item(row);
+        if (item && item->checkState() == Qt::Checked) {
+            features.append(item->data(FeatureKeyRole).toString());
         }
     }
 
     return features;
+}
+
+QString InstallerWindow::buildFeatureOutputText() const
+{
+    QStringList lines;
+    lines << "Source: https://github.com/voncloft/Voncloft-OS/tree/master/REPOS";
+
+    int visibleCount = 0;
+    const int totalCount = featureListWidget_ ? featureListWidget_->count() : 0;
+    for (int row = 0; row < totalCount; ++row) {
+        QListWidgetItem *item = featureListWidget_->item(row);
+        if (item && !item->isHidden()) {
+            ++visibleCount;
+        }
+    }
+
+    if (totalCount == 0) {
+        lines << "";
+        lines << "Package index: waiting for GitHub reply...";
+    }
+
+    if (featureListWidget_ && featureListWidget_->currentItem()) {
+        QListWidgetItem *item = featureListWidget_->currentItem();
+        const QString packageKey = item->data(FeatureKeyRole).toString();
+        const int slashIndex = packageKey.lastIndexOf('/');
+        const QString category = slashIndex >= 0 ? packageKey.left(slashIndex) : QString();
+        const QString packageName = slashIndex >= 0 ? packageKey.mid(slashIndex + 1) : packageKey;
+
+        lines << "";
+        lines << QString("Package: %1").arg(packageName);
+        lines << QString("Category: %1").arg(category);
+        if (item->data(FeatureMetadataLoadingRole).toBool()) {
+            lines << "Metadata: loading from GitHub...";
+        } else {
+            const QString version = item->data(FeatureVersionRole).toString().trimmed();
+            const QString description = item->data(FeatureDescriptionRole).toString().trimmed();
+            lines << QString("Version: %1").arg(version.isEmpty() ? QStringLiteral("(not loaded)") : version);
+            lines << QString("Description: %1").arg(description.isEmpty() ? QStringLiteral("(not loaded)") : description);
+        }
+        lines << QString("Repo path: %1").arg(item->data(FeatureRepoPathRole).toString());
+        lines << QString("Selected: %1").arg(item->checkState() == Qt::Checked ? "yes" : "no");
+    }
+
+    lines << "";
+    lines << QString("Visible packages: %1 of %2").arg(visibleCount).arg(totalCount);
+    if (featureSearchEdit_ && !featureSearchEdit_->text().trimmed().isEmpty()) {
+        lines << QString("Search: %1").arg(featureSearchEdit_->text().trimmed());
+    }
+
+    const QStringList selectedFeatures = collectSelectedFeatures();
+    lines << QString("Selected packages: %1").arg(selectedFeatures.size());
+    if (selectedFeatures.isEmpty()) {
+        lines << "Selections: none";
+    } else {
+        lines << "Selections:";
+        for (const QString &feature : selectedFeatures) {
+            lines << QString("  - %1").arg(feature);
+        }
+    }
+
+    return lines.join('\n');
 }
 
 DriveInfo InstallerWindow::currentDrive() const
@@ -1395,8 +1772,16 @@ void InstallerWindow::refreshSummaries()
     if (configPreview_ && configPreview_->toPlainText() != summaryText) {
         configPreview_->setPlainText(summaryText);
     }
-    if (summaryPreview_ && summaryPreview_->toPlainText() != summaryText) {
-        summaryPreview_->setPlainText(summaryText);
+    if (featureOutput_) {
+        const QString featureText = buildFeatureOutputText();
+        if (featureOutput_->toPlainText() != featureText) {
+            featureOutput_->setPlainText(featureText);
+        }
+    }
+    if (featureCountLabel_) {
+        const int loadedCount = featureListWidget_ ? featureListWidget_->count() : 0;
+        const int selectedCount = collectSelectedFeatures().size();
+        featureCountLabel_->setText(QString("Packages loaded: %1 | Selected: %2").arg(loadedCount).arg(selectedCount));
     }
 
     refreshingSummaries_ = false;

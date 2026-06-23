@@ -537,11 +537,14 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/QDir
  /usr/include/QtCore/QFile
  /usr/include/QtCore/QFileInfo
+ /usr/include/QtCore/QFlags
+ /usr/include/QtCore/QIODevice
  /usr/include/QtCore/QJsonArray
  /usr/include/QtCore/QJsonDocument
  /usr/include/QtCore/QJsonObject
  /usr/include/QtCore/QJsonValue
  /usr/include/QtCore/QList
+ /usr/include/QtCore/QMetaType
  /usr/include/QtCore/QObject
  /usr/include/QtCore/QProcess
  /usr/include/QtCore/QProcessEnvironment
@@ -549,10 +552,15 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/QRegularExpression
  /usr/include/QtCore/QSaveFile
  /usr/include/QtCore/QSet
+ /usr/include/QtCore/QSharedDataPointer
+ /usr/include/QtCore/QSignalBlocker
  /usr/include/QtCore/QSize
  /usr/include/QtCore/QSizeF
  /usr/include/QtCore/QStandardPaths
+ /usr/include/QtCore/QString
  /usr/include/QtCore/QTimeZone
+ /usr/include/QtCore/QUrl
+ /usr/include/QtCore/QVariant
  /usr/include/QtCore/QVector
  /usr/include/QtCore/q17memory.h
  /usr/include/QtCore/q20functional.h
@@ -561,6 +569,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/q20type_traits.h
  /usr/include/QtCore/q20utility.h
  /usr/include/QtCore/q23utility.h
+ /usr/include/QtCore/q26numeric.h
  /usr/include/QtCore/qabstracteventdispatcher.h
  /usr/include/QtCore/qabstractitemmodel.h
  /usr/include/QtCore/qalgorithms.h
@@ -595,6 +604,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/qcoreapplication.h
  /usr/include/QtCore/qcoreapplication_platform.h
  /usr/include/QtCore/qcoreevent.h
+ /usr/include/QtCore/qcryptographichash.h
  /usr/include/QtCore/qdarwinhelpers.h
  /usr/include/QtCore/qdatastream.h
  /usr/include/QtCore/qdatetime.h
@@ -766,18 +776,41 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtGui/qvector2d.h
  /usr/include/QtGui/qvectornd.h
  /usr/include/QtGui/qwindowdefs.h
+ /usr/include/QtNetwork/QNetworkAccessManager
+ /usr/include/QtNetwork/QNetworkReply
+ /usr/include/QtNetwork/QNetworkRequest
+ /usr/include/QtNetwork/QSslConfiguration
+ /usr/include/QtNetwork/QSslPreSharedKeyAuthenticator
+ /usr/include/QtNetwork/qabstractsocket.h
+ /usr/include/QtNetwork/qhostaddress.h
+ /usr/include/QtNetwork/qhttpheaders.h
+ /usr/include/QtNetwork/qnetworkaccessmanager.h
+ /usr/include/QtNetwork/qnetworkreply.h
+ /usr/include/QtNetwork/qnetworkrequest.h
+ /usr/include/QtNetwork/qssl.h
+ /usr/include/QtNetwork/qsslcertificate.h
+ /usr/include/QtNetwork/qsslconfiguration.h
+ /usr/include/QtNetwork/qsslerror.h
+ /usr/include/QtNetwork/qsslpresharedkeyauthenticator.h
+ /usr/include/QtNetwork/qsslsocket.h
+ /usr/include/QtNetwork/qtcpsocket.h
+ /usr/include/QtNetwork/qtnetwork-config.h
+ /usr/include/QtNetwork/qtnetworkexports.h
+ /usr/include/QtNetwork/qtnetworkglobal.h
  /usr/include/QtWidgets/QCheckBox
  /usr/include/QtWidgets/QComboBox
  /usr/include/QtWidgets/QDoubleSpinBox
  /usr/include/QtWidgets/QFileDialog
  /usr/include/QtWidgets/QFormLayout
  /usr/include/QtWidgets/QFrame
+ /usr/include/QtWidgets/QGridLayout
  /usr/include/QtWidgets/QGroupBox
  /usr/include/QtWidgets/QHBoxLayout
  /usr/include/QtWidgets/QHeaderView
  /usr/include/QtWidgets/QLabel
  /usr/include/QtWidgets/QLayout
  /usr/include/QtWidgets/QLineEdit
+ /usr/include/QtWidgets/QListWidget
  /usr/include/QtWidgets/QMenuBar
  /usr/include/QtWidgets/QMessageBox
  /usr/include/QtWidgets/QPlainTextEdit
@@ -815,6 +848,8 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtWidgets/qlayout.h
  /usr/include/QtWidgets/qlayoutitem.h
  /usr/include/QtWidgets/qlineedit.h
+ /usr/include/QtWidgets/qlistview.h
+ /usr/include/QtWidgets/qlistwidget.h
  /usr/include/QtWidgets/qmenu.h
  /usr/include/QtWidgets/qmenubar.h
  /usr/include/QtWidgets/qmessagebox.h
