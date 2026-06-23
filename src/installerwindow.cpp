@@ -2557,16 +2557,35 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
         return;
     }
 
-    appendInstallLogLine(line);
+    QString displayLine = line;
+    static const QRegularExpression ansiEscapePattern(QStringLiteral(R"(\x1B\[[0-9;?]*[ -/]*[@-~])"));
+    displayLine.remove(ansiEscapePattern);
+    displayLine.replace('\t', "    ");
+
+    QString sanitizedLine;
+    sanitizedLine.reserve(displayLine.size());
+    for (const QChar character : std::as_const(displayLine)) {
+        if (character == QChar::fromLatin1('\b') ||
+            character == QChar::fromLatin1('\f') ||
+            character == QChar::fromLatin1('\v')) {
+            continue;
+        }
+
+        if (character.isPrint() || character == QChar::fromLatin1(' ')) {
+            sanitizedLine.append(character);
+        }
+    }
+
+    appendInstallLogLine(sanitizedLine);
 
     static const QRegularExpression tracedStepPattern(R"(^\+\s+echo\s+['"]?step:(.*?)['"]?\s*$)");
 
     QString stepText;
     bool tracedStep = false;
-    if (line.startsWith("step:")) {
-        stepText = line.mid(5).trimmed();
+    if (sanitizedLine.startsWith("step:")) {
+        stepText = sanitizedLine.mid(5).trimmed();
     } else {
-        const QRegularExpressionMatch match = tracedStepPattern.match(line);
+        const QRegularExpressionMatch match = tracedStepPattern.match(sanitizedLine);
         if (match.hasMatch()) {
             tracedStep = true;
             stepText = match.captured(1).trimmed();
