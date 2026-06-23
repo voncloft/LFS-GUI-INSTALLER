@@ -500,7 +500,8 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtCore/qtimezone.h /usr/include/QtWidgets/QTreeWidget \
  /usr/include/QtWidgets/qtreewidget.h /usr/include/QtWidgets/qtreeview.h \
  /usr/include/QtWidgets/qtreewidgetitemiterator.h \
- /usr/include/QtWidgets/QTreeWidgetItem \
- /usr/include/QtWidgets/QListWidget /usr/include/QtWidgets/qlistwidget.h \
- /usr/include/QtWidgets/qlistview.h /usr/include/QtCore/QUrl \
- /usr/include/QtWidgets/QVBoxLayout /usr/include/QtWidgets/QDoubleSpinBox
+ /usr/include/QtWidgets/QTreeWidgetItem /usr/include/QtCore/QDirIterator \
+ /usr/include/QtCore/qdiriterator.h /usr/include/QtWidgets/QListWidget \
+ /usr/include/QtWidgets/qlistwidget.h /usr/include/QtWidgets/qlistview.h \
+ /usr/include/QtCore/QUrl /usr/include/QtWidgets/QVBoxLayout \
+ /usr/include/QtWidgets/QDoubleSpinBox

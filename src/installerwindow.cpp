@@ -48,6 +48,7 @@
 #include <QTimeZone>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+#include <QDirIterator>
 #include <QListWidget>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -2002,10 +2003,22 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         return true;
     };
 
-    const QDir sourceScriptsDir(sourceScriptsDirectory);
-    const QStringList existingScriptNames = sourceScriptsDir.entryList({"*.sh"}, QDir::Files | QDir::Readable, QDir::Name);
-    for (const QString &fileName : existingScriptNames) {
-        QFile sourceFile(sourceScriptsDir.filePath(fileName));
+    QDirIterator scriptIterator(sourceScriptsDirectory,
+                                QStringList() << "*.sh",
+                                QDir::Files | QDir::Readable,
+                                QDirIterator::Subdirectories);
+    while (scriptIterator.hasNext()) {
+        const QString sourcePath = scriptIterator.next();
+        const QString relativePath = QDir(sourceScriptsDirectory).relativeFilePath(sourcePath);
+        const QString stagedPath = QDir(stagedScriptsDirectory).filePath(relativePath);
+        if (!directory.mkpath(QFileInfo(stagedPath).absolutePath())) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to create `%1`.").arg(QFileInfo(stagedPath).absolutePath());
+            }
+            return false;
+        }
+
+        QFile sourceFile(sourcePath);
         if (!sourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
             if (errorMessage) {
                 *errorMessage = QString("Unable to read `%1`.").arg(sourceFile.fileName());
@@ -2013,7 +2026,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
             return false;
         }
 
-        if (!writeFile(QDir(stagedScriptsDirectory).filePath(fileName), QString::fromUtf8(sourceFile.readAll()), true)) {
+        if (!writeFile(stagedPath, QString::fromUtf8(sourceFile.readAll()), true)) {
             return false;
         }
     }
