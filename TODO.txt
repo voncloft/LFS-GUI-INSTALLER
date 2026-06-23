@@ -1,3 +1,7 @@
+###NEXT TEST
+Start from scratch see if binutils-pass1.sh can install
+
+
 Setup Proccess outside of chroot
 Have installer do on step 3 part 1
 
