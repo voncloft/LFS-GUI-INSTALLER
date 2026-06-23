@@ -1398,6 +1398,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     const QString stagedRoot = QDir(currentRunDirectory_).filePath("generated-artifacts");
     const QString stagedScriptsDirectory = QDir(stagedRoot).filePath("scripts");
     const QString stagedFilesDirectory = QDir(stagedRoot).filePath("files");
+    const QString driverScriptPath = QDir(stagedRoot).filePath("install-driver.sh");
 
     QDir directory;
     if (!directory.mkpath(stagedScriptsDirectory)) {
@@ -1457,6 +1458,38 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         return true;
     };
 
+    const QDir sourceScriptsDir(sourceScriptsDirectory);
+    const QStringList existingScriptNames = sourceScriptsDir.entryList({"*.sh"}, QDir::Files | QDir::Readable, QDir::Name);
+    for (const QString &fileName : existingScriptNames) {
+        QFile sourceFile(sourceScriptsDir.filePath(fileName));
+        if (!sourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to read `%1`.").arg(sourceFile.fileName());
+            }
+            return false;
+        }
+
+        if (!writeFile(QDir(stagedScriptsDirectory).filePath(fileName), QString::fromUtf8(sourceFile.readAll()), true)) {
+            return false;
+        }
+    }
+
+    const QDir sourceFilesDir(targetFilesDirectory);
+    const QStringList existingFileNames = sourceFilesDir.entryList(QDir::Files | QDir::Readable, QDir::Name);
+    for (const QString &fileName : existingFileNames) {
+        QFile sourceFile(sourceFilesDir.filePath(fileName));
+        if (!sourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to read `%1`.").arg(sourceFile.fileName());
+            }
+            return false;
+        }
+
+        if (!writeFile(QDir(stagedFilesDirectory).filePath(fileName), QString::fromUtf8(sourceFile.readAll()), false)) {
+            return false;
+        }
+    }
+
     if (!writeFile(QDir(stagedScriptsDirectory).filePath("final_setup.sh"), buildFinalSetupScript(), true)) {
         return false;
     }
@@ -1470,6 +1503,33 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         return false;
     }
     if (!writeFile(QDir(stagedFilesDirectory).filePath("fstab"), buildFstabFile(), false)) {
+        return false;
+    }
+
+    const QString driverScript =
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        "STAGED_SCRIPTS=\"$(cd -- \"$(dirname -- \"$0\")/scripts\" && pwd)\"\n"
+        "STAGED_FILES=\"$(cd -- \"$(dirname -- \"$0\")/files\" && pwd)\"\n"
+        "TARGET_SCRIPTS=" + shellQuote(targetScriptsDirectory) + "\n"
+        "TARGET_FILES=" + shellQuote(targetFilesDirectory) + "\n"
+        "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"\n"
+        "install -m 755 \"$STAGED_SCRIPTS/final_setup.sh\" \"$TARGET_SCRIPTS/final_setup.sh\"\n"
+        "install -m 755 \"$STAGED_SCRIPTS/partition.sh\" \"$TARGET_SCRIPTS/partition.sh\"\n"
+        "install -m 644 \"$STAGED_FILES/hostname\" \"$TARGET_FILES/hostname\"\n"
+        "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"\n"
+        "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"\n"
+        "while IFS= read -r script_name || [ -n \"$script_name\" ]; do\n"
+        "  [[ -z \"$script_name\" || \"$script_name\" == \\#* ]] && continue\n"
+        "  script_path=\"$STAGED_SCRIPTS/$script_name\"\n"
+        "  if [ ! -r \"$script_path\" ]; then\n"
+        "    echo \"> missing script $script_name\" >&2\n"
+        "    exit 1\n"
+        "  fi\n"
+        "  bash --noprofile --norc -x \"$script_path\"\n"
+        "  echo \"__SCRIPT_DONE__:$script_name\"\n"
+        "done < \"$STAGED_SCRIPTS/install.sh\"\n";
+    if (!writeFile(driverScriptPath, driverScript, true)) {
         return false;
     }
 
@@ -1502,56 +1562,10 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         if (!writeFile(QDir(targetFilesDirectory).filePath("fstab"), buildFstabFile(), false)) {
             return false;
         }
-    } else {
-        const QString helperPath = QDir(stagedRoot).filePath("sync-generated-artifacts.sh");
-        const QString helperScript =
-            "#!/usr/bin/env bash\n"
-            "set -euo pipefail\n"
-            "STAGED_SCRIPTS=\"$1\"\n"
-            "STAGED_FILES=\"$2\"\n"
-            "TARGET_SCRIPTS=\"$3\"\n"
-            "TARGET_FILES=\"$4\"\n"
-            "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"\n"
-            "install -m 755 \"$STAGED_SCRIPTS/final_setup.sh\" \"$TARGET_SCRIPTS/final_setup.sh\"\n"
-            "install -m 755 \"$STAGED_SCRIPTS/partition.sh\" \"$TARGET_SCRIPTS/partition.sh\"\n"
-            "install -m 644 \"$STAGED_FILES/hostname\" \"$TARGET_FILES/hostname\"\n"
-            "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"\n"
-            "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"\n";
-        if (!writeFile(helperPath, helperScript, true)) {
-            return false;
-        }
-
-        const QString pkexecExecutable = QStandardPaths::findExecutable("pkexec");
-        if (pkexecExecutable.isEmpty()) {
-            if (errorMessage) {
-                *errorMessage = QStringLiteral("Unable to find `pkexec` in PATH.");
-            }
-            return false;
-        }
-
-        QProcess syncProcess;
-        syncProcess.setProcessChannelMode(QProcess::MergedChannels);
-        syncProcess.start(pkexecExecutable,
-                          {helperPath, stagedScriptsDirectory, stagedFilesDirectory, targetScriptsDirectory, targetFilesDirectory});
-        if (!syncProcess.waitForStarted(5000)) {
-            if (errorMessage) {
-                *errorMessage = QString("Unable to start `pkexec`: %1").arg(syncProcess.errorString());
-            }
-            return false;
-        }
-        if (!syncProcess.waitForFinished(300000) || syncProcess.exitStatus() != QProcess::NormalExit || syncProcess.exitCode() != 0) {
-            const QString processOutput = QString::fromLocal8Bit(syncProcess.readAll()).trimmed();
-            if (errorMessage) {
-                *errorMessage = processOutput.isEmpty()
-                                    ? QString("Unable to copy generated artifacts into `%1`.").arg(projectRoot)
-                                    : processOutput;
-            }
-            return false;
-        }
     }
 
     if (runtimeScriptsDirectory) {
-        *runtimeScriptsDirectory = targetScriptsDirectory;
+        *runtimeScriptsDirectory = geteuid() == 0 ? targetScriptsDirectory : stagedScriptsDirectory;
     }
 
     return true;
@@ -1635,7 +1649,9 @@ void InstallerWindow::startNextInstallScript()
         return;
     }
 
-    const QString scriptPath = installScriptPaths_.at(currentInstallScriptIndex_);
+    const QString driverScriptPath = QDir(currentRunDirectory_).filePath("generated-artifacts/install-driver.sh");
+    const bool useInstallDriver = geteuid() != 0 && currentInstallScriptIndex_ == 0 && QFileInfo(driverScriptPath).isFile();
+    const QString scriptPath = useInstallDriver ? driverScriptPath : installScriptPaths_.at(currentInstallScriptIndex_);
     const QFileInfo scriptInfo(scriptPath);
     if (!scriptInfo.exists() || !scriptInfo.isFile() || !scriptInfo.isReadable()) {
         installInProgress_ = false;
@@ -1670,20 +1686,21 @@ void InstallerWindow::startNextInstallScript()
     QStringList arguments = {"--noprofile", "--norc", "-x", scriptPath};
     QString commandDisplay = QString("$ %1 --noprofile --norc -x \"%2\"").arg(bashExecutable, scriptPath);
 
-    if (geteuid() != 0) {
-        const QString pkexecExecutable = QStandardPaths::findExecutable("pkexec");
+    if (useInstallDriver) {
+        const QString sudoExecutable = QStandardPaths::findExecutable("sudo");
         const QString envExecutable = QStandardPaths::findExecutable("env");
-        if (pkexecExecutable.isEmpty() || envExecutable.isEmpty()) {
+        if (sudoExecutable.isEmpty() || envExecutable.isEmpty()) {
             installInProgress_ = false;
             installCompleted_ = false;
-            appendInstallLogLine("> root access requires `pkexec` and `env` in PATH");
+            appendInstallLogLine("> root access requires `sudo` and `env` in PATH");
             setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
             updateNavigationState();
             return;
         }
 
-        program = pkexecExecutable;
+        program = sudoExecutable;
         arguments = {
+            "-n",
             envExecutable,
             QString("INSTALL_RUN_DIR=%1").arg(currentRunDirectory_),
             "BASH_ENV=",
@@ -1694,8 +1711,8 @@ void InstallerWindow::startNextInstallScript()
             "-x",
             scriptPath
         };
-        commandDisplay = QString("$ %1 %2 INSTALL_RUN_DIR=%3 BASH_ENV= ENV= %4 --noprofile --norc -x \"%5\"")
-                             .arg(pkexecExecutable,
+        commandDisplay = QString("$ %1 -n %2 INSTALL_RUN_DIR=%3 BASH_ENV= ENV= %4 --noprofile --norc -x \"%5\"")
+                             .arg(sudoExecutable,
                                   envExecutable,
                                   shellQuote(currentRunDirectory_),
                                   bashExecutable,
@@ -1750,6 +1767,14 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
         return;
     }
 
+    const QString driverScriptPath = QDir(currentRunDirectory_).filePath("generated-artifacts/install-driver.sh");
+    if (QFileInfo(currentInstallScriptPath_).absoluteFilePath() == QFileInfo(driverScriptPath).absoluteFilePath()) {
+        currentInstallScriptPath_.clear();
+        currentInstallScriptIndex_ = installScriptPaths_.size();
+        startNextInstallScript();
+        return;
+    }
+
     if (installProgressBar_ && totalInstallSteps_ > 0) {
         ++completedInstallSteps_;
         installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
@@ -1795,6 +1820,16 @@ void InstallerWindow::appendInstallLogLine(const QString &line)
 void InstallerWindow::processInstallOutputLine(const QString &line)
 {
     if (line.isEmpty()) {
+        return;
+    }
+
+    if (line.startsWith("__SCRIPT_DONE__:")) {
+        const QString scriptName = line.mid(QString("__SCRIPT_DONE__:").size()).trimmed();
+        appendInstallLogLine(QString("> completed %1").arg(scriptName));
+        if (installProgressBar_ && totalInstallSteps_ > 0) {
+            ++completedInstallSteps_;
+            installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
+        }
         return;
     }
 
