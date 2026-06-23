@@ -1,1 +1,1 @@
-cd /mnt/lfs/sources
+cd "$LFS/sources"

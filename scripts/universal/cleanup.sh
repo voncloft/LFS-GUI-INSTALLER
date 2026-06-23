@@ -1,2 +1,2 @@
-rm /mnt/lfs/sources/*.tar.gz
-rm /mnt/lfs/sources/*.tar.xz
+rm -f "$LFS"/sources/*.tar.gz
+rm -f "$LFS"/sources/*.tar.xz
