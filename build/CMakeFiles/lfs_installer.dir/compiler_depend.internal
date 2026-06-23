@@ -535,6 +535,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/QCoreApplication
  /usr/include/QtCore/QDateTime
  /usr/include/QtCore/QDir
+ /usr/include/QtCore/QDirIterator
  /usr/include/QtCore/QFile
  /usr/include/QtCore/QFileInfo
  /usr/include/QtCore/QFlags
@@ -611,6 +612,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtCore/qdeadlinetimer.h
  /usr/include/QtCore/qdebug.h
  /usr/include/QtCore/qdir.h
+ /usr/include/QtCore/qdiriterator.h
  /usr/include/QtCore/qdirlisting.h
  /usr/include/QtCore/qelapsedtimer.h
  /usr/include/QtCore/qendian.h

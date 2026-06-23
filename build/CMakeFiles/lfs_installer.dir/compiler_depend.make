@@ -533,6 +533,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtCore/QCoreApplication \
   /usr/include/QtCore/QDateTime \
   /usr/include/QtCore/QDir \
+  /usr/include/QtCore/QDirIterator \
   /usr/include/QtCore/QFile \
   /usr/include/QtCore/QFileInfo \
   /usr/include/QtCore/QFlags \
@@ -609,6 +610,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtCore/qdeadlinetimer.h \
   /usr/include/QtCore/qdebug.h \
   /usr/include/QtCore/qdir.h \
+  /usr/include/QtCore/qdiriterator.h \
   /usr/include/QtCore/qdirlisting.h \
   /usr/include/QtCore/qelapsedtimer.h \
   /usr/include/QtCore/qendian.h \
@@ -2344,8 +2346,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/asm/bitsperlong.h:
 
-/usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/ctype_inline.h:
-
 /usr/include/asm-generic/posix_types.h:
 
 /usr/include/bits/mathcalls-macros.h:
@@ -2599,6 +2599,10 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/QtCore/qcompilerdetection.h:
 
 /usr/include/syscall.h:
+
+/usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/ctype_inline.h:
+
+/usr/include/QtCore/QDirIterator:
 
 /usr/include/bits/local_lim.h:
 
@@ -3311,6 +3315,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/c++/15.1.0/tr1/special_function_util.h:
 
 /usr/include/c++/15.1.0/string:
+
+/usr/include/QtCore/qdiriterator.h:
 
 /usr/include/c++/15.1.0/system_error:
 

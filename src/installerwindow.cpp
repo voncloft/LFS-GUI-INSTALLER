@@ -218,6 +218,56 @@ QString githubRawPrefix()
 
 constexpr int MaxConcurrentFeatureMetadataRequests = 6;
 
+QString wrappedScriptRunnerShell()
+{
+    return QStringLiteral(
+        "source() {\n"
+        "  local target=\"${1:-}\"\n"
+        "  if [ \"$#\" -gt 0 ]; then\n"
+        "    shift\n"
+        "  fi\n"
+        "  local resolved=\"$target\"\n"
+        "  if [[ -n \"$target\" && \"$target\" != /* ]]; then\n"
+        "    local caller=\"${BASH_SOURCE[1]:-}\"\n"
+        "    local candidate=\"\"\n"
+        "    if [[ -n \"$caller\" ]]; then\n"
+        "      local caller_dir=\"$(cd -- \"$(dirname -- \"$caller\")\" && pwd)\"\n"
+        "      candidate=\"$caller_dir/$target\"\n"
+        "      if [[ -r \"$candidate\" ]]; then\n"
+        "        resolved=\"$candidate\"\n"
+        "      else\n"
+        "        candidate=\"$SCRIPT_ROOT/$target\"\n"
+        "        if [[ -r \"$candidate\" ]]; then\n"
+        "          resolved=\"$candidate\"\n"
+        "        else\n"
+        "          candidate=\"$PROJECT_ROOT/$target\"\n"
+        "          if [[ -r \"$candidate\" ]]; then\n"
+        "            resolved=\"$candidate\"\n"
+        "          elif [[ \"$target\" == ../* ]]; then\n"
+        "            candidate=\"$SCRIPT_ROOT/${target#../}\"\n"
+        "            if [[ -r \"$candidate\" ]]; then\n"
+        "              resolved=\"$candidate\"\n"
+        "            else\n"
+        "              candidate=\"$PROJECT_ROOT/${target#../}\"\n"
+        "              if [[ -r \"$candidate\" ]]; then\n"
+        "                resolved=\"$candidate\"\n"
+        "              fi\n"
+        "            fi\n"
+        "          fi\n"
+        "        fi\n"
+        "      fi\n"
+        "    fi\n"
+        "  fi\n"
+        "  builtin source \"$resolved\" \"$@\"\n"
+        "}\n"
+        "script_path=\"$1\"\n"
+        "SCRIPT_ROOT=\"$2\"\n"
+        "PROJECT_ROOT=\"$3\"\n"
+        "cd -- \"$(dirname -- \"$script_path\")\"\n"
+        "set -x\n"
+        "source \"$script_path\"\n");
+}
+
 QColor fileSystemColor(const QString &fileSystem)
 {
     const QString normalized = fileSystem.toLower();
@@ -721,7 +771,11 @@ QWidget *InstallerWindow::buildInstallPage()
     scriptPathEdit_->setText("install.sh");
     scriptPathEdit_->hide();
     workRootEdit_ = new QLineEdit(page);
-    workRootEdit_->setText("/tmp/lfs-installer");
+    const QString scriptsDirectory = findScriptsDirectory();
+    const QString projectRoot = scriptsDirectory.isEmpty()
+                                    ? QDir::currentPath()
+                                    : QFileInfo(scriptsDirectory).absolutePath();
+    workRootEdit_->setText(QDir(projectRoot).filePath("run-artifacts"));
     workRootEdit_->hide();
 
     connect(pageThreeBackButton_, &QPushButton::clicked, this, &InstallerWindow::handleBackAction);
@@ -1729,6 +1783,7 @@ void InstallerWindow::startInstall()
     }
 
     installScriptPaths_ = collectScriptPaths(runtimeScriptsDirectory);
+    currentRuntimeScriptsDirectory_ = runtimeScriptsDirectory;
     if (installScriptPaths_.isEmpty()) {
         QMessageBox::critical(this, "Install list empty", "No scripts were listed in `scripts/install.sh`.");
         return;
@@ -2071,6 +2126,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         "set -euo pipefail\n"
         "STAGED_SCRIPTS=\"$(cd -- \"$(dirname -- \"$0\")/scripts\" && pwd)\"\n"
         "STAGED_FILES=\"$(cd -- \"$(dirname -- \"$0\")/files\" && pwd)\"\n"
+        "STAGED_ROOT=\"$(cd -- \"$(dirname -- \"$0\")\" && pwd)\"\n"
         "TARGET_SCRIPTS=" + shellQuote(targetScriptsDirectory) + "\n"
         "TARGET_FILES=" + shellQuote(targetFilesDirectory) + "\n"
         "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"\n"
@@ -2087,7 +2143,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         "    echo \"> missing script $script_name\" >&2\n"
         "    exit 1\n"
         "  fi\n"
-        "  bash --noprofile --norc -x \"$script_path\"\n"
+        "  bash --noprofile --norc -c " + shellQuote(wrappedScriptRunnerShell()) + " lfs-script-runner \"$script_path\" \"$STAGED_SCRIPTS\" \"$STAGED_ROOT\"\n"
         "  echo \"__SCRIPT_DONE__:$script_name\"\n"
         "done < \"$STAGED_SCRIPTS/install.sh\"\n";
     if (!writeFile(driverScriptPath, driverScript, true)) {
@@ -2247,8 +2303,25 @@ void InstallerWindow::startNextInstallScript()
     installProcess_->setProcessEnvironment(processEnvironment);
 
     QString program = bashExecutable;
-    QStringList arguments = {"--noprofile", "--norc", "-x", scriptPath};
-    QString commandDisplay = QString("$ %1 --noprofile --norc -x \"%2\"").arg(bashExecutable, scriptPath);
+    const QString runtimeScriptsRoot = currentRuntimeScriptsDirectory_.isEmpty()
+                                           ? scriptInfo.absolutePath()
+                                           : currentRuntimeScriptsDirectory_;
+    const QString runtimeProjectRoot = QFileInfo(runtimeScriptsRoot).absolutePath();
+    QStringList arguments = {
+        "--noprofile",
+        "--norc",
+        "-c",
+        wrappedScriptRunnerShell(),
+        "lfs-script-runner",
+        scriptPath,
+        runtimeScriptsRoot,
+        runtimeProjectRoot
+    };
+    QString commandDisplay = QString("$ %1 --noprofile --norc -c <wrapped-runner> \"%2\" \"%3\" \"%4\"")
+                                 .arg(bashExecutable,
+                                      scriptPath,
+                                      runtimeScriptsRoot,
+                                      runtimeProjectRoot);
 
     if (useInstallDriver) {
         const QString sudoExecutable = QStandardPaths::findExecutable("sudo");
@@ -2272,15 +2345,21 @@ void InstallerWindow::startNextInstallScript()
             bashExecutable,
             "--noprofile",
             "--norc",
-            "-x",
-            scriptPath
+            "-c",
+            wrappedScriptRunnerShell(),
+            "lfs-script-runner",
+            scriptPath,
+            runtimeScriptsRoot,
+            runtimeProjectRoot
         };
-        commandDisplay = QString("$ %1 -n %2 INSTALL_RUN_DIR=%3 BASH_ENV= ENV= %4 --noprofile --norc -x \"%5\"")
+        commandDisplay = QString("$ %1 -n %2 INSTALL_RUN_DIR=%3 BASH_ENV= ENV= %4 --noprofile --norc -c <wrapped-runner> \"%5\" \"%6\" \"%7\"")
                              .arg(sudoExecutable,
                                   envExecutable,
                                   shellQuote(currentRunDirectory_),
                                   bashExecutable,
-                                  scriptPath);
+                                  scriptPath,
+                                  runtimeScriptsRoot,
+                                  runtimeProjectRoot);
     }
 
     appendInstallLogLine(commandDisplay);
