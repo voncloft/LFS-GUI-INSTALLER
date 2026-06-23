@@ -1232,7 +1232,7 @@ void InstallerWindow::startInstall()
     appendInstallLogLine("$ generate install artifacts");
     appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("final_setup.sh")));
     appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("partition.sh")));
-    const QString filesDirectory = QDir(currentRunDirectory_).filePath("files");
+    const QString filesDirectory = QDir(QFileInfo(runtimeScriptsDirectory).absolutePath()).filePath("files");
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("hostname")));
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("clock")));
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("fstab")));
@@ -1392,8 +1392,12 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         return false;
     }
 
-    const QString stagedScriptsDirectory = QDir(currentRunDirectory_).filePath("scripts");
-    const QString stagedFilesDirectory = QDir(currentRunDirectory_).filePath("files");
+    const QString projectRoot = QFileInfo(sourceScriptsDirectory).absolutePath();
+    const QString targetScriptsDirectory = sourceScriptsDirectory;
+    const QString targetFilesDirectory = QDir(projectRoot).filePath("files");
+    const QString stagedRoot = QDir(currentRunDirectory_).filePath("generated-artifacts");
+    const QString stagedScriptsDirectory = QDir(stagedRoot).filePath("scripts");
+    const QString stagedFilesDirectory = QDir(stagedRoot).filePath("files");
 
     QDir directory;
     if (!directory.mkpath(stagedScriptsDirectory)) {
@@ -1453,30 +1457,6 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         return true;
     };
 
-    const QDir sourceDirectory(sourceScriptsDirectory);
-    const QStringList sourceScriptNames = sourceDirectory.entryList({"*.sh"}, QDir::Files | QDir::Readable, QDir::Name);
-    if (!sourceScriptNames.contains("install.sh")) {
-        if (errorMessage) {
-            *errorMessage = QString("Unable to find `%1`.").arg(sourceDirectory.filePath("install.sh"));
-        }
-        return false;
-    }
-
-    for (const QString &fileName : sourceScriptNames) {
-        QFile sourceFile(sourceDirectory.filePath(fileName));
-        if (!sourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            if (errorMessage) {
-                *errorMessage = QString("Unable to read `%1`.").arg(sourceFile.fileName());
-            }
-            return false;
-        }
-
-        const QString contents = QString::fromUtf8(sourceFile.readAll());
-        if (!writeFile(QDir(stagedScriptsDirectory).filePath(fileName), contents, fileName != "install.sh")) {
-            return false;
-        }
-    }
-
     if (!writeFile(QDir(stagedScriptsDirectory).filePath("final_setup.sh"), buildFinalSetupScript(), true)) {
         return false;
     }
@@ -1493,8 +1473,85 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         return false;
     }
 
+    if (geteuid() == 0) {
+        if (!directory.mkpath(targetScriptsDirectory)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to create `%1`.").arg(targetScriptsDirectory);
+            }
+            return false;
+        }
+        if (!directory.mkpath(targetFilesDirectory)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to create `%1`.").arg(targetFilesDirectory);
+            }
+            return false;
+        }
+
+        if (!writeFile(QDir(targetScriptsDirectory).filePath("final_setup.sh"), buildFinalSetupScript(), true)) {
+            return false;
+        }
+        if (!writeFile(QDir(targetScriptsDirectory).filePath("partition.sh"), buildPartitionScript(), true)) {
+            return false;
+        }
+        if (!writeFile(QDir(targetFilesDirectory).filePath("hostname"), buildHostnameFile(), false)) {
+            return false;
+        }
+        if (!writeFile(QDir(targetFilesDirectory).filePath("clock"), buildClockFile(), false)) {
+            return false;
+        }
+        if (!writeFile(QDir(targetFilesDirectory).filePath("fstab"), buildFstabFile(), false)) {
+            return false;
+        }
+    } else {
+        const QString helperPath = QDir(stagedRoot).filePath("sync-generated-artifacts.sh");
+        const QString helperScript =
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "STAGED_SCRIPTS=\"$1\"\n"
+            "STAGED_FILES=\"$2\"\n"
+            "TARGET_SCRIPTS=\"$3\"\n"
+            "TARGET_FILES=\"$4\"\n"
+            "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"\n"
+            "install -m 755 \"$STAGED_SCRIPTS/final_setup.sh\" \"$TARGET_SCRIPTS/final_setup.sh\"\n"
+            "install -m 755 \"$STAGED_SCRIPTS/partition.sh\" \"$TARGET_SCRIPTS/partition.sh\"\n"
+            "install -m 644 \"$STAGED_FILES/hostname\" \"$TARGET_FILES/hostname\"\n"
+            "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"\n"
+            "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"\n";
+        if (!writeFile(helperPath, helperScript, true)) {
+            return false;
+        }
+
+        const QString pkexecExecutable = QStandardPaths::findExecutable("pkexec");
+        if (pkexecExecutable.isEmpty()) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("Unable to find `pkexec` in PATH.");
+            }
+            return false;
+        }
+
+        QProcess syncProcess;
+        syncProcess.setProcessChannelMode(QProcess::MergedChannels);
+        syncProcess.start(pkexecExecutable,
+                          {helperPath, stagedScriptsDirectory, stagedFilesDirectory, targetScriptsDirectory, targetFilesDirectory});
+        if (!syncProcess.waitForStarted(5000)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to start `pkexec`: %1").arg(syncProcess.errorString());
+            }
+            return false;
+        }
+        if (!syncProcess.waitForFinished(300000) || syncProcess.exitStatus() != QProcess::NormalExit || syncProcess.exitCode() != 0) {
+            const QString processOutput = QString::fromLocal8Bit(syncProcess.readAll()).trimmed();
+            if (errorMessage) {
+                *errorMessage = processOutput.isEmpty()
+                                    ? QString("Unable to copy generated artifacts into `%1`.").arg(projectRoot)
+                                    : processOutput;
+            }
+            return false;
+        }
+    }
+
     if (runtimeScriptsDirectory) {
-        *runtimeScriptsDirectory = stagedScriptsDirectory;
+        *runtimeScriptsDirectory = targetScriptsDirectory;
     }
 
     return true;
