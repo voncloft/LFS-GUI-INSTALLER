@@ -1,5 +1,5 @@
 set -euo pipefail
-source ../universal/compile.sh
+source ../universal/cd_compile.sh
 source  ../universal/default_modified.sh
 
 echo "step:Binutils-pass 1"
