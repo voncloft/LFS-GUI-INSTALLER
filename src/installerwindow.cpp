@@ -2185,7 +2185,6 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         sessionLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
         sessionLines << "export PROJECT_ROOT";
         sessionLines << "set -euo pipefail";
-        sessionLines << "cd -- \"$SCRIPT_DIR\"";
         sessionLines << "set -x";
         sessionLines << scriptContents;
         sessionLines << "set +x";
