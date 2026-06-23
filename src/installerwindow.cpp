@@ -2145,6 +2145,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
 
     const QStringList stagedInstallScriptPaths = collectScriptPaths(stagedScriptsDirectory);
     QStringList driverLines;
+    QStringList sessionLines;
     driverLines << "#!/usr/bin/env bash";
     driverLines << "set -euo pipefail";
     driverLines << "unset BASH_ENV ENV";
@@ -2161,21 +2162,28 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     driverLines << "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"";
     driverLines << "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"";
 
+    sessionLines << "set -euo pipefail";
+    sessionLines << "unset BASH_ENV ENV";
+
     for (const QString &scriptPath : stagedInstallScriptPaths) {
         const QString scriptName = QDir(stagedScriptsDirectory).relativeFilePath(scriptPath);
         const QString scriptDir = QFileInfo(scriptPath).absolutePath();
-        driverLines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + scriptName));
-        driverLines << QString("SCRIPT_DIR=%1").arg(shellQuote(scriptDir));
-        driverLines << "export SCRIPT_DIR";
-        driverLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
-        driverLines << "export PROJECT_ROOT";
-        driverLines << "set -euo pipefail";
-        driverLines << "cd -- \"$SCRIPT_DIR\"";
-        driverLines << "set -x";
-        driverLines << QString("source %1").arg(shellQuote(scriptPath));
-        driverLines << "set +x";
-        driverLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
+        sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + scriptName));
+        sessionLines << QString("SCRIPT_DIR=%1").arg(shellQuote(scriptDir));
+        sessionLines << "export SCRIPT_DIR";
+        sessionLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
+        sessionLines << "export PROJECT_ROOT";
+        sessionLines << "set -euo pipefail";
+        sessionLines << "cd -- \"$SCRIPT_DIR\"";
+        sessionLines << "set -x";
+        sessionLines << QString("source %1").arg(shellQuote(scriptPath));
+        sessionLines << "set +x";
+        sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
     }
+
+    driverLines << "bash --noprofile --norc <<'__LFS_INSTALL_SESSION__'";
+    driverLines << sessionLines;
+    driverLines << "__LFS_INSTALL_SESSION__";
 
     const QString driverScript = driverLines.join('\n');
     if (!writeFile(driverScriptPath, driverScript, true)) {
