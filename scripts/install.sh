@@ -6,3 +6,4 @@ chapter3/get_packages.sh
 chapter4/directories.sh
 chapter4/addlfsuser.sh
 chapter5/binutils-pass1.sh
+chapter5/gcc-pass1.sh
