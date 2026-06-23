@@ -215,6 +215,8 @@ QString githubRawPrefix()
     return QStringLiteral("https://raw.githubusercontent.com/voncloft/Voncloft-OS/master/");
 }
 
+constexpr int MaxConcurrentFeatureMetadataRequests = 6;
+
 QColor fileSystemColor(const QString &fileSystem)
 {
     const QString normalized = fileSystem.toLower();
@@ -1150,6 +1152,13 @@ void InstallerWindow::loadFeaturePackagesFromRepo()
         return;
     }
 
+    ++featureRepoRequestGeneration_;
+    activeFeatureMetadataRequests_ = 0;
+    const auto inFlightReplies = featureRepoManager_->findChildren<QNetworkReply *>();
+    for (QNetworkReply *inFlightReply : inFlightReplies) {
+        inFlightReply->abort();
+    }
+
     {
         QSignalBlocker blocker(featureListWidget_);
         featureListWidget_->clear();
@@ -1167,16 +1176,40 @@ void InstallerWindow::loadFeaturePackagesFromRepo()
     request.setRawHeader("Accept", "application/vnd.github+json");
     QNetworkReply *reply = featureRepoManager_->get(request);
     reply->setProperty("requestType", "index");
+    reply->setProperty("generation", featureRepoRequestGeneration_);
 }
 
-void InstallerWindow::requestCurrentFeatureMetadata()
+void InstallerWindow::queueFeatureMetadataRequests()
 {
-    if (!featureRepoManager_ || !featureListWidget_) {
+    if (!featureListWidget_) {
         return;
     }
 
-    QListWidgetItem *item = featureListWidget_->currentItem();
-    if (!item) {
+    while (activeFeatureMetadataRequests_ < MaxConcurrentFeatureMetadataRequests) {
+        QListWidgetItem *nextItem = nullptr;
+        for (int row = 0; row < featureListWidget_->count(); ++row) {
+            QListWidgetItem *candidate = featureListWidget_->item(row);
+            if (!candidate) {
+                continue;
+            }
+            if (candidate->data(FeatureMetadataLoadedRole).toBool() || candidate->data(FeatureMetadataLoadingRole).toBool()) {
+                continue;
+            }
+            nextItem = candidate;
+            break;
+        }
+
+        if (!nextItem) {
+            return;
+        }
+
+        requestFeatureMetadataForItem(nextItem);
+    }
+}
+
+void InstallerWindow::requestFeatureMetadataForItem(QListWidgetItem *item)
+{
+    if (!featureRepoManager_ || !item) {
         return;
     }
 
@@ -1190,14 +1223,32 @@ void InstallerWindow::requestCurrentFeatureMetadata()
     }
 
     item->setData(FeatureMetadataLoadingRole, true);
-    refreshSummaries();
+    ++activeFeatureMetadataRequests_;
+
+    if (item == featureListWidget_->currentItem()) {
+        refreshSummaries();
+    }
 
     QNetworkRequest request{QUrl{rawUrl}};
     request.setHeader(QNetworkRequest::UserAgentHeader, "lfs-installer");
     QNetworkReply *reply = featureRepoManager_->get(request);
     reply->setProperty("requestType", "metadata");
+    reply->setProperty("generation", featureRepoRequestGeneration_);
     reply->setProperty("repoPath", item->data(FeatureRepoPathRole).toString());
     reply->setProperty("rawUrl", rawUrl);
+}
+
+void InstallerWindow::requestCurrentFeatureMetadata()
+{
+    if (!featureListWidget_) {
+        return;
+    }
+
+    QListWidgetItem *item = featureListWidget_->currentItem();
+    if (!item) {
+        return;
+    }
+    requestFeatureMetadataForItem(item);
 }
 
 void InstallerWindow::handleFeatureRepoReply(QNetworkReply *reply)
@@ -1207,10 +1258,15 @@ void InstallerWindow::handleFeatureRepoReply(QNetworkReply *reply)
     }
 
     const QString requestType = reply->property("requestType").toString();
+    const int generation = reply->property("generation").toInt();
     const QByteArray payload = reply->readAll();
     const bool requestSucceeded = reply->error() == QNetworkReply::NoError;
     const QString errorText = reply->errorString();
     reply->deleteLater();
+
+    if (generation != featureRepoRequestGeneration_) {
+        return;
+    }
 
     if (requestType == "index") {
         if (!requestSucceeded) {
@@ -1264,13 +1320,17 @@ void InstallerWindow::handleFeatureRepoReply(QNetworkReply *reply)
         if (featureListWidget_->count() > 0 && !featureListWidget_->currentItem()) {
             featureListWidget_->setCurrentRow(0);
         }
-        requestCurrentFeatureMetadata();
+        queueFeatureMetadataRequests();
         refreshSummaries();
         return;
     }
 
     if (requestType != "metadata" || !featureListWidget_) {
         return;
+    }
+
+    if (activeFeatureMetadataRequests_ > 0) {
+        --activeFeatureMetadataRequests_;
     }
 
     const QString rawUrl = reply->property("rawUrl").toString();
@@ -1309,11 +1369,16 @@ void InstallerWindow::handleFeatureRepoReply(QNetworkReply *reply)
             item->setText(featureDisplayText(category, packageName, version, description));
         }
 
+        if (featureSearchEdit_ && !featureSearchEdit_->text().trimmed().isEmpty()) {
+            applyFeatureFilters();
+        }
         if (item == featureListWidget_->currentItem()) {
             refreshSummaries();
         }
         break;
     }
+
+    queueFeatureMetadataRequests();
 }
 
 QStringList InstallerWindow::collectSelectedFeatures() const

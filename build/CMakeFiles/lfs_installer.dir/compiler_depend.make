@@ -1782,7 +1782,10 @@ lfs_installer: /lib/libQt6DBus.so.6 \
   /lib/libX11.so.6 \
   /lib/libXau.so.6 \
   /lib/libXdmcp.so.6 \
+  /lib/libbrotlicommon.so.1 \
+  /lib/libbrotlidec.so.1 \
   /lib/libbz2.so.1.0 \
+  /lib/libcrypto.so.3 \
   /lib/libdbus-1.so.3 \
   /lib/libexpat.so.1 \
   /lib/libfontconfig.so.1 \
@@ -1798,6 +1801,8 @@ lfs_installer: /lib/libQt6DBus.so.6 \
   /lib/libpcre2-16.so.0 \
   /lib/libpcre2-8.so.0 \
   /lib/libpng16.so.16 \
+  /lib/libresolv.so.2 \
+  /lib/libssl.so.3 \
   /lib/libxcb.so.1 \
   /lib/libxkbcommon.so.0 \
   /lib/libz.so.1 \
@@ -1816,6 +1821,7 @@ lfs_installer: /lib/libQt6DBus.so.6 \
   /usr/lib/ld-linux-x86-64.so.2 \
   /usr/lib/libQt6Core.so.6.9.1 \
   /usr/lib/libQt6Gui.so.6.9.1 \
+  /usr/lib/libQt6Network.so.6.9.1 \
   /usr/lib/libQt6Widgets.so.6.9.1 \
   /usr/lib/libc.so.6 \
   /usr/lib/libc_nonshared.a \
@@ -1826,7 +1832,10 @@ lfs_installer: /lib/libQt6DBus.so.6 \
   /usr/lib32/libGLdispatch.so.0 \
   /usr/lib32/libX11.so.6 \
   /usr/lib32/libXau.so.6 \
+  /usr/lib32/libbrotlicommon.so.1 \
+  /usr/lib32/libbrotlidec.so.1 \
   /usr/lib32/libbz2.so.1.0 \
+  /usr/lib32/libcrypto.so.3 \
   /usr/lib32/libdbus-1.so.3 \
   /usr/lib32/libexpat.so.1 \
   /usr/lib32/libfontconfig.so.1 \
@@ -1841,6 +1850,8 @@ lfs_installer: /lib/libQt6DBus.so.6 \
   /usr/lib32/libpcre2-16.so.0 \
   /usr/lib32/libpcre2-8.so.0 \
   /usr/lib32/libpng16.so.16 \
+  /usr/lib32/libresolv.so.2 \
+  /usr/lib32/libssl.so.3 \
   /usr/lib32/libxcb.so.1 \
   /usr/lib32/libz.so.1 \
   /usr/lib32/libzstd.so.1 \
@@ -1893,6 +1904,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/lib/libQt6Widgets.so.6.9.1:
 
+/usr/lib/libQt6Network.so.6.9.1:
+
 /usr/lib/libQt6Gui.so.6.9.1:
 
 /usr/lib/libQt6Core.so.6.9.1:
@@ -1915,6 +1928,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /lib/libz.so.1:
 
+/lib/libresolv.so.2:
+
 /lib/libpng16.so.16:
 
 /lib/libpcre2-8.so.0:
@@ -1933,7 +1948,11 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /lib/libdbus-1.so.3:
 
+/lib/libcrypto.so.3:
+
 /lib/libbz2.so.1.0:
+
+/lib/libbrotlicommon.so.1:
 
 /lib/libXdmcp.so.6:
 
@@ -2261,9 +2280,13 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/bits/libm-simd-decl-stubs.h:
 
+/usr/lib32/libbrotlicommon.so.1:
+
 /usr/include/QtGui/qtguiexports.h:
 
 /usr/include/bits/libc-header-start.h:
+
+/lib/libssl.so.3:
 
 /usr/include/c++/15.1.0/bits/alloc_traits.h:
 
@@ -2495,6 +2518,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/wchar.h:
 
+/usr/lib32/libcrypto.so.3:
+
 /usr/include/QtCore/qtcoreexports.h:
 
 /usr/include/QtCore/qarraydata.h:
@@ -2608,6 +2633,8 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 /usr/include/QtCore/qhash.h:
 
 /usr/include/QtCore/qcompare.h:
+
+/usr/lib32/libresolv.so.2:
 
 /usr/include/bits/getopt_core.h:
 
@@ -3035,6 +3062,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/QtCore/QDateTime:
 
+/usr/lib32/libbrotlidec.so.1:
+
 /usr/include/stdlib.h:
 
 /usr/include/c++/15.1.0/bits/new_allocator.h:
@@ -3303,6 +3332,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/c++/15.1.0/tr1/riemann_zeta.tcc:
 
+/usr/lib32/libssl.so.3:
+
 /usr/include/c++/15.1.0/tuple:
 
 /usr/include/c++/15.1.0/unordered_map:
@@ -3396,6 +3427,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/QtCore/QJsonObject:
 
 /usr/include/sys/types.h:
+
+/lib/libbrotlidec.so.1:
 
 /usr/include/QtCore/qfileinfo.h:
 

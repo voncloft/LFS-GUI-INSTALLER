@@ -11,6 +11,7 @@ class QDoubleSpinBox;
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class QListWidgetItem;
 class QNetworkAccessManager;
 class QNetworkReply;
 class QPlainTextEdit;
@@ -88,6 +89,8 @@ private:
     void populateFeaturePackages();
     void applyFeatureFilters();
     void loadFeaturePackagesFromRepo();
+    void queueFeatureMetadataRequests();
+    void requestFeatureMetadataForItem(QListWidgetItem *item);
     void requestCurrentFeatureMetadata();
     void startNextInstallScript();
     void appendInstallLogLine(const QString &line);
@@ -143,6 +146,8 @@ private:
     QPlainTextEdit *featureOutput_ = nullptr;
     QPushButton *featureOutdatedButton_ = nullptr;
     QNetworkAccessManager *featureRepoManager_ = nullptr;
+    int featureRepoRequestGeneration_ = 0;
+    int activeFeatureMetadataRequests_ = 0;
 
     QVector<DriveInfo> drives_;
     QProcess *installProcess_ = nullptr;
