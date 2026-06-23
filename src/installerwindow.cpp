@@ -1152,8 +1152,9 @@ void InstallerWindow::startInstall()
     appendInstallLogLine(QString("> %1").arg(desktopSummaryPath));
     appendInstallLogLine("$ read scripts/install.sh");
     appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("install.sh")));
+    appendInstallLogLine(QString("> using scripts dir %1").arg(scriptsDirectory));
     for (const QString &scriptPath : installScriptPaths_) {
-        appendInstallLogLine(QString("> queued %1").arg(QFileInfo(scriptPath).fileName()));
+        appendInstallLogLine(QString("> queued %1").arg(scriptPath));
     }
     setInstallStatus("Current Step: Starting", QColor("#1b5e20"));
     updateNavigationState();
@@ -1279,9 +1280,9 @@ QString InstallerWindow::findScriptsDirectory() const
 {
     const QString appDir = QCoreApplication::applicationDirPath();
     const QStringList candidates = {
-        QDir::current().filePath("scripts"),
+        QDir(appDir).filePath("../scripts"),
         QDir(appDir).filePath("scripts"),
-        QDir(appDir).filePath("../scripts")
+        QDir::current().filePath("scripts")
     };
 
     for (const QString &candidate : candidates) {
@@ -1372,6 +1373,16 @@ void InstallerWindow::startNextInstallScript()
     }
 
     const QString scriptPath = installScriptPaths_.at(currentInstallScriptIndex_);
+    const QFileInfo scriptInfo(scriptPath);
+    if (!scriptInfo.exists() || !scriptInfo.isFile() || !scriptInfo.isReadable()) {
+        installInProgress_ = false;
+        installCompleted_ = false;
+        appendInstallLogLine(QString("> script unavailable: %1").arg(scriptPath));
+        setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+        updateNavigationState();
+        return;
+    }
+
     const QString bashExecutable = QStandardPaths::findExecutable("bash");
     if (bashExecutable.isEmpty()) {
         installInProgress_ = false;
@@ -1385,9 +1396,13 @@ void InstallerWindow::startNextInstallScript()
     currentInstallScriptPath_ = scriptPath;
     installOutputBuffer_.clear();
     pendingInstallStepText_.clear();
-    installProcess_->setWorkingDirectory(QFileInfo(scriptPath).absolutePath());
-    appendInstallLogLine(QString("$ %1 -x \"%2\"").arg(bashExecutable, scriptPath));
-    installProcess_->start(bashExecutable, {"-x", scriptPath});
+    installProcess_->setWorkingDirectory(scriptInfo.absolutePath());
+    QProcessEnvironment processEnvironment = QProcessEnvironment::systemEnvironment();
+    processEnvironment.remove("BASH_ENV");
+    processEnvironment.remove("ENV");
+    installProcess_->setProcessEnvironment(processEnvironment);
+    appendInstallLogLine(QString("$ %1 --noprofile --norc -x \"%2\"").arg(bashExecutable, scriptPath));
+    installProcess_->start(bashExecutable, {"--noprofile", "--norc", "-x", scriptPath});
 }
 
 void InstallerWindow::handleInstallProcessOutput()
@@ -1426,7 +1441,9 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
         const QString scriptName = currentInstallScriptPath_.isEmpty()
                                        ? QStringLiteral("<unknown>")
                                        : QFileInfo(currentInstallScriptPath_).fileName();
-        appendInstallLogLine(QString("> %1 failed with exit code %2").arg(scriptName).arg(exitCode));
+        const QString statusText = exitStatus == QProcess::NormalExit ? QStringLiteral("normal-exit")
+                                                                      : QStringLiteral("crashed");
+        appendInstallLogLine(QString("> %1 failed with exit code %2 (%3)").arg(scriptName).arg(exitCode).arg(statusText));
         setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
         updateNavigationState();
         return;
