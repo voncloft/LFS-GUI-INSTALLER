@@ -188,6 +188,76 @@ QString unusedText(const PlannedPartition &partition)
     return QString("%1 GiB").arg(QString::number(partition.sizeGiB, 'f', 2));
 }
 
+QString shellQuote(const QString &value)
+{
+    QString escaped = value;
+    escaped.replace('\'', "'\"'\"'");
+    return QString("'%1'").arg(escaped);
+}
+
+QString partedFileSystem(const PlannedPartition &partition)
+{
+    if (partition.mountPoint == "/boot/efi") {
+        return QStringLiteral("fat32");
+    }
+
+    const QString normalized = partition.fileSystem.trimmed().toLower();
+    if (partition.mountPoint == "swap" || normalized == "swap") {
+        return QStringLiteral("linux-swap");
+    }
+
+    return normalized.isEmpty() ? QStringLiteral("ext4") : normalized;
+}
+
+QString fstabFileSystem(const PlannedPartition &partition)
+{
+    const QString normalized = partition.fileSystem.trimmed().toLower();
+    if (partition.mountPoint == "swap" || normalized == "swap") {
+        return QStringLiteral("swap");
+    }
+    if (normalized == "fat32") {
+        return QStringLiteral("vfat");
+    }
+
+    return normalized.isEmpty() ? QStringLiteral("auto") : normalized;
+}
+
+QString mkfsCommand(const PlannedPartition &partition, const QString &devicePath)
+{
+    if (!partition.format) {
+        return QString("# format disabled for %1").arg(devicePath);
+    }
+
+    const QString normalized = partition.fileSystem.trimmed().toLower();
+    const QString quotedDevice = shellQuote(devicePath);
+    if (partition.mountPoint == "swap" || normalized == "swap") {
+        return QString("mkswap %1").arg(quotedDevice);
+    }
+    if (normalized == "fat32") {
+        return QString("mkfs.fat -F 32 %1").arg(quotedDevice);
+    }
+    if (normalized == "ext4") {
+        return QString("mkfs.ext4 -F %1").arg(quotedDevice);
+    }
+    if (normalized == "xfs") {
+        return QString("mkfs.xfs -f %1").arg(quotedDevice);
+    }
+    if (normalized == "btrfs") {
+        return QString("mkfs.btrfs -f %1").arg(quotedDevice);
+    }
+
+    return QString("# unsupported filesystem %1 for %2").arg(normalized, devicePath);
+}
+
+int fstabPassNumber(const PlannedPartition &partition)
+{
+    if (partition.mountPoint == "swap") {
+        return 0;
+    }
+
+    return partition.mountPoint == "/" ? 1 : 2;
+}
+
 }
 
 InstallerWindow::InstallerWindow(QWidget *parent)
@@ -1113,6 +1183,12 @@ void InstallerWindow::startInstall()
         return;
     }
 
+    QString artifactError;
+    if (!generateInstallArtifacts(scriptsDirectory, &artifactError)) {
+        QMessageBox::critical(this, "Artifact generation failed", artifactError);
+        return;
+    }
+
     installScriptPaths_ = collectScriptPaths(scriptsDirectory);
     if (installScriptPaths_.isEmpty()) {
         QMessageBox::critical(this, "Install list empty", "No scripts were listed in `scripts/install.sh`.");
@@ -1132,7 +1208,7 @@ void InstallerWindow::startInstall()
     currentInstallScriptPath_.clear();
     currentInstallScriptIndex_ = 0;
     completedInstallSteps_ = 0;
-    totalInstallSteps_ = countScriptSteps(installScriptPaths_);
+    totalInstallSteps_ = installScriptPaths_.size();
     installInProgress_ = true;
     installCompleted_ = false;
 
@@ -1150,6 +1226,13 @@ void InstallerWindow::startInstall()
     appendInstallLogLine("$ write install-config.json");
     appendInstallLogLine("$ write desktop setup summary");
     appendInstallLogLine(QString("> %1").arg(desktopSummaryPath));
+    appendInstallLogLine("$ generate install artifacts");
+    appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("final_setup.sh")));
+    appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("partition.sh")));
+    const QString filesDirectory = QDir(QFileInfo(scriptsDirectory).absolutePath()).filePath("files");
+    appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("hostname")));
+    appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("clock")));
+    appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("fstab")));
     appendInstallLogLine("$ read scripts/install.sh");
     appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("install.sh")));
     appendInstallLogLine(QString("> using scripts dir %1").arg(scriptsDirectory));
@@ -1294,6 +1377,88 @@ QString InstallerWindow::findScriptsDirectory() const
     return {};
 }
 
+bool InstallerWindow::generateInstallArtifacts(const QString &scriptsDirectory, QString *errorMessage) const
+{
+    const QString projectRoot = QFileInfo(scriptsDirectory).absolutePath();
+    const QString filesDirectory = QDir(projectRoot).filePath("files");
+
+    QDir directory;
+    if (!directory.mkpath(scriptsDirectory)) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to create `%1`.").arg(scriptsDirectory);
+        }
+        return false;
+    }
+    if (!directory.mkpath(filesDirectory)) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to create `%1`.").arg(filesDirectory);
+        }
+        return false;
+    }
+
+    const auto writeFile = [errorMessage](const QString &path, const QString &contents, bool executable) -> bool {
+        QSaveFile file(path);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to open `%1` for writing.").arg(path);
+            }
+            return false;
+        }
+
+        QString normalized = contents;
+        if (!normalized.endsWith('\n')) {
+            normalized.append('\n');
+        }
+
+        if (file.write(normalized.toUtf8()) < 0) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to write `%1`.").arg(path);
+            }
+            return false;
+        }
+
+        if (!file.commit()) {
+            if (errorMessage) {
+                *errorMessage = QString("Failed to finalize `%1`.").arg(path);
+            }
+            return false;
+        }
+
+        const QFileDevice::Permissions permissions = executable
+                                                         ? (QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
+                                                            | QFileDevice::ReadGroup | QFileDevice::ExeGroup
+                                                            | QFileDevice::ReadOther | QFileDevice::ExeOther)
+                                                         : (QFileDevice::ReadOwner | QFileDevice::WriteOwner
+                                                            | QFileDevice::ReadGroup | QFileDevice::ReadOther);
+        if (!QFile::setPermissions(path, permissions)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to set permissions on `%1`.").arg(path);
+            }
+            return false;
+        }
+
+        return true;
+    };
+
+    if (!writeFile(QDir(scriptsDirectory).filePath("final_setup.sh"), buildFinalSetupScript(), true)) {
+        return false;
+    }
+    if (!writeFile(QDir(scriptsDirectory).filePath("partition.sh"), buildPartitionScript(), true)) {
+        return false;
+    }
+    if (!writeFile(QDir(filesDirectory).filePath("hostname"), buildHostnameFile(), false)) {
+        return false;
+    }
+    if (!writeFile(QDir(filesDirectory).filePath("clock"), buildClockFile(), false)) {
+        return false;
+    }
+    if (!writeFile(QDir(filesDirectory).filePath("fstab"), buildFstabFile(), false)) {
+        return false;
+    }
+
+    return true;
+}
+
 QStringList InstallerWindow::collectScriptPaths(const QString &scriptsDirectory) const
 {
     const QString installListPath = QDir(scriptsDirectory).filePath("install.sh");
@@ -1366,6 +1531,7 @@ void InstallerWindow::startNextInstallScript()
                 installProgressBar_->setValue(1);
             }
         }
+        setInstallStatus("Current Step: Complete", QColor("#1b5e20"));
         appendInstallLogLine("> all scripts complete");
         updateNavigationState();
         return;
@@ -1449,6 +1615,11 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
         return;
     }
 
+    if (installProgressBar_ && totalInstallSteps_ > 0) {
+        ++completedInstallSteps_;
+        installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
+    }
+
     currentInstallScriptPath_.clear();
     ++currentInstallScriptIndex_;
     startNextInstallScript();
@@ -1519,11 +1690,112 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
 
     pendingInstallStepText_ = tracedStep ? stepText : QString();
     setInstallStatus(QString("Current Step: %1").arg(stepText), QColor("#1b5e20"));
+}
 
-    if (installProgressBar_ && totalInstallSteps_ > 0) {
-        ++completedInstallSteps_;
-        installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
+QString InstallerWindow::buildFinalSetupScript() const
+{
+    const QString username = usernameEdit_->text().trimmed();
+    const QString password = passwordEdit_->text();
+
+    QStringList lines;
+    lines << "#!/usr/bin/env bash";
+    lines << "";
+    lines << "set -euo pipefail";
+    lines << "";
+    lines << "SCRIPT_DIR=\"$(cd -- \"$(dirname -- \"$0\")\" && pwd)\"";
+    lines << "FILES_DIR=\"$SCRIPT_DIR/../files\"";
+    lines << "";
+    lines << "echo \"step:Finalizing setup\"";
+    lines << QString("useradd -m %1").arg(shellQuote(username));
+    lines << QString("printf '%s\\n' %1 | chpasswd").arg(shellQuote(username + ":" + password));
+    lines << "install -Dm644 \"$FILES_DIR/hostname\" /etc/hostname";
+    lines << "install -Dm644 \"$FILES_DIR/clock\" /etc/sysconfig/clock";
+    lines << "install -Dm644 \"$FILES_DIR/fstab\" /etc/fstab";
+
+    return lines.join('\n') + '\n';
+}
+
+QString InstallerWindow::buildPartitionScript() const
+{
+    const DriveInfo drive = currentDrive();
+    const QVector<PlannedPartition> partitions = collectPartitions();
+
+    QStringList lines;
+    QStringList formatLines;
+    lines << "#!/usr/bin/env bash";
+    lines << "";
+    lines << "set -euo pipefail";
+    lines << "";
+    lines << QString("TARGET_DRIVE=%1").arg(shellQuote(drive.path));
+    lines << "";
+    lines << "echo \"step:Setting up partitions\"";
+    lines << "parted --script \"$TARGET_DRIVE\" mklabel gpt";
+
+    qint64 startMiB = 1;
+    for (int row = 0; row < partitions.size(); ++row) {
+        const PlannedPartition &partition = partitions.at(row);
+        const qint64 sizeMiB = qMax<qint64>(1, static_cast<qint64>((partition.sizeGiB * 1024.0) + 0.5));
+        const qint64 endMiB = startMiB + sizeMiB;
+        const QString devicePath = partitionNodeName(drive.path, row);
+
+        lines << QString("parted --script \"$TARGET_DRIVE\" mkpart primary %1 %2MiB %3MiB")
+                     .arg(partedFileSystem(partition))
+                     .arg(startMiB)
+                     .arg(endMiB);
+        if (partition.mountPoint == "/boot/efi") {
+            lines << QString("parted --script \"$TARGET_DRIVE\" set %1 esp on").arg(row + 1);
+            lines << QString("parted --script \"$TARGET_DRIVE\" set %1 boot on").arg(row + 1);
+        }
+
+        formatLines << QString("# %1 -> %2 (%3, %4 GiB)")
+                            .arg(devicePath,
+                                 partition.mountPoint,
+                                 partition.fileSystem,
+                                 QString::number(partition.sizeGiB, 'f', 1));
+        formatLines << mkfsCommand(partition, devicePath);
+        startMiB = endMiB;
     }
+
+    lines << "partprobe \"$TARGET_DRIVE\"";
+    lines << "";
+    lines << formatLines;
+
+    return lines.join('\n') + '\n';
+}
+
+QString InstallerWindow::buildHostnameFile() const
+{
+    return hostnameEdit_->text().trimmed() + '\n';
+}
+
+QString InstallerWindow::buildClockFile() const
+{
+    return QString("ZONE=\"%1\"\n").arg(timeZoneCombo_->currentText().trimmed());
+}
+
+QString InstallerWindow::buildFstabFile() const
+{
+    const DriveInfo drive = currentDrive();
+    const QVector<PlannedPartition> partitions = collectPartitions();
+
+    QStringList lines;
+    lines << "# <file system> <mount point> <type> <options> <dump> <pass>";
+    for (int row = 0; row < partitions.size(); ++row) {
+        const PlannedPartition &partition = partitions.at(row);
+        const QString devicePath = partitionNodeName(drive.path, row);
+        if (partition.mountPoint == "swap") {
+            lines << QString("%1\tswap\tswap\tdefaults\t0\t0").arg(devicePath);
+            continue;
+        }
+
+        lines << QString("%1\t%2\t%3\tdefaults\t0\t%4")
+                     .arg(devicePath,
+                          partition.mountPoint,
+                          fstabFileSystem(partition))
+                     .arg(fstabPassNumber(partition));
+    }
+
+    return lines.join('\n') + '\n';
 }
 
 QString InstallerWindow::buildConfigText() const

@@ -71,11 +71,17 @@ private:
     void setInstallStatus(const QString &message, const QColor &color);
     void resetInstallState(const QString &reason);
     QString findScriptsDirectory() const;
+    bool generateInstallArtifacts(const QString &scriptsDirectory, QString *errorMessage) const;
     QStringList collectScriptPaths(const QString &scriptsDirectory) const;
     int countScriptSteps(const QStringList &scriptPaths) const;
     void startNextInstallScript();
     void appendInstallLogLine(const QString &line);
     void processInstallOutputLine(const QString &line);
+    QString buildFinalSetupScript() const;
+    QString buildPartitionScript() const;
+    QString buildHostnameFile() const;
+    QString buildClockFile() const;
+    QString buildFstabFile() const;
     QString buildConfigText() const;
     QByteArray buildConfigJson(bool pretty) const;
 
