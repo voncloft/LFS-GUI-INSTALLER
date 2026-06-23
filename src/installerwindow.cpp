@@ -775,7 +775,7 @@ QWidget *InstallerWindow::buildInstallPage()
     const QString projectRoot = scriptsDirectory.isEmpty()
                                     ? QDir::currentPath()
                                     : QFileInfo(scriptsDirectory).absolutePath();
-    workRootEdit_->setText(QDir(projectRoot).filePath("run-artifacts"));
+    workRootEdit_->setText(projectRoot);
     workRootEdit_->hide();
 
     connect(pageThreeBackButton_, &QPushButton::clicked, this, &InstallerWindow::handleBackAction);
