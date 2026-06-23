@@ -46,6 +46,8 @@
 #include <QVBoxLayout>
 #include <QDoubleSpinBox>
 
+#include <unistd.h>
+
 namespace
 {
 QString humanSize(quint64 bytes)
@@ -1183,13 +1185,14 @@ void InstallerWindow::startInstall()
         return;
     }
 
+    QString runtimeScriptsDirectory;
     QString artifactError;
-    if (!generateInstallArtifacts(scriptsDirectory, &artifactError)) {
+    if (!generateInstallArtifacts(scriptsDirectory, &runtimeScriptsDirectory, &artifactError)) {
         QMessageBox::critical(this, "Artifact generation failed", artifactError);
         return;
     }
 
-    installScriptPaths_ = collectScriptPaths(scriptsDirectory);
+    installScriptPaths_ = collectScriptPaths(runtimeScriptsDirectory);
     if (installScriptPaths_.isEmpty()) {
         QMessageBox::critical(this, "Install list empty", "No scripts were listed in `scripts/install.sh`.");
         return;
@@ -1227,15 +1230,16 @@ void InstallerWindow::startInstall()
     appendInstallLogLine("$ write desktop setup summary");
     appendInstallLogLine(QString("> %1").arg(desktopSummaryPath));
     appendInstallLogLine("$ generate install artifacts");
-    appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("final_setup.sh")));
-    appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("partition.sh")));
-    const QString filesDirectory = QDir(QFileInfo(scriptsDirectory).absolutePath()).filePath("files");
+    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("final_setup.sh")));
+    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("partition.sh")));
+    const QString filesDirectory = QDir(currentRunDirectory_).filePath("files");
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("hostname")));
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("clock")));
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("fstab")));
     appendInstallLogLine("$ read scripts/install.sh");
-    appendInstallLogLine(QString("> %1").arg(QDir(scriptsDirectory).filePath("install.sh")));
-    appendInstallLogLine(QString("> using scripts dir %1").arg(scriptsDirectory));
+    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("install.sh")));
+    appendInstallLogLine(QString("> source scripts dir %1").arg(scriptsDirectory));
+    appendInstallLogLine(QString("> using scripts dir %1").arg(runtimeScriptsDirectory));
     for (const QString &scriptPath : installScriptPaths_) {
         appendInstallLogLine(QString("> queued %1").arg(scriptPath));
     }
@@ -1377,21 +1381,30 @@ QString InstallerWindow::findScriptsDirectory() const
     return {};
 }
 
-bool InstallerWindow::generateInstallArtifacts(const QString &scriptsDirectory, QString *errorMessage) const
+bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirectory,
+                                               QString *runtimeScriptsDirectory,
+                                               QString *errorMessage) const
 {
-    const QString projectRoot = QFileInfo(scriptsDirectory).absolutePath();
-    const QString filesDirectory = QDir(projectRoot).filePath("files");
-
-    QDir directory;
-    if (!directory.mkpath(scriptsDirectory)) {
+    if (currentRunDirectory_.isEmpty()) {
         if (errorMessage) {
-            *errorMessage = QString("Unable to create `%1`.").arg(scriptsDirectory);
+            *errorMessage = QStringLiteral("No run directory has been prepared yet.");
         }
         return false;
     }
-    if (!directory.mkpath(filesDirectory)) {
+
+    const QString stagedScriptsDirectory = QDir(currentRunDirectory_).filePath("scripts");
+    const QString stagedFilesDirectory = QDir(currentRunDirectory_).filePath("files");
+
+    QDir directory;
+    if (!directory.mkpath(stagedScriptsDirectory)) {
         if (errorMessage) {
-            *errorMessage = QString("Unable to create `%1`.").arg(filesDirectory);
+            *errorMessage = QString("Unable to create `%1`.").arg(stagedScriptsDirectory);
+        }
+        return false;
+    }
+    if (!directory.mkpath(stagedFilesDirectory)) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to create `%1`.").arg(stagedFilesDirectory);
         }
         return false;
     }
@@ -1440,20 +1453,48 @@ bool InstallerWindow::generateInstallArtifacts(const QString &scriptsDirectory, 
         return true;
     };
 
-    if (!writeFile(QDir(scriptsDirectory).filePath("final_setup.sh"), buildFinalSetupScript(), true)) {
+    const QDir sourceDirectory(sourceScriptsDirectory);
+    const QStringList sourceScriptNames = sourceDirectory.entryList({"*.sh"}, QDir::Files | QDir::Readable, QDir::Name);
+    if (!sourceScriptNames.contains("install.sh")) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to find `%1`.").arg(sourceDirectory.filePath("install.sh"));
+        }
         return false;
     }
-    if (!writeFile(QDir(scriptsDirectory).filePath("partition.sh"), buildPartitionScript(), true)) {
+
+    for (const QString &fileName : sourceScriptNames) {
+        QFile sourceFile(sourceDirectory.filePath(fileName));
+        if (!sourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            if (errorMessage) {
+                *errorMessage = QString("Unable to read `%1`.").arg(sourceFile.fileName());
+            }
+            return false;
+        }
+
+        const QString contents = QString::fromUtf8(sourceFile.readAll());
+        if (!writeFile(QDir(stagedScriptsDirectory).filePath(fileName), contents, fileName != "install.sh")) {
+            return false;
+        }
+    }
+
+    if (!writeFile(QDir(stagedScriptsDirectory).filePath("final_setup.sh"), buildFinalSetupScript(), true)) {
         return false;
     }
-    if (!writeFile(QDir(filesDirectory).filePath("hostname"), buildHostnameFile(), false)) {
+    if (!writeFile(QDir(stagedScriptsDirectory).filePath("partition.sh"), buildPartitionScript(), true)) {
         return false;
     }
-    if (!writeFile(QDir(filesDirectory).filePath("clock"), buildClockFile(), false)) {
+    if (!writeFile(QDir(stagedFilesDirectory).filePath("hostname"), buildHostnameFile(), false)) {
         return false;
     }
-    if (!writeFile(QDir(filesDirectory).filePath("fstab"), buildFstabFile(), false)) {
+    if (!writeFile(QDir(stagedFilesDirectory).filePath("clock"), buildClockFile(), false)) {
         return false;
+    }
+    if (!writeFile(QDir(stagedFilesDirectory).filePath("fstab"), buildFstabFile(), false)) {
+        return false;
+    }
+
+    if (runtimeScriptsDirectory) {
+        *runtimeScriptsDirectory = stagedScriptsDirectory;
     }
 
     return true;
@@ -1567,8 +1608,45 @@ void InstallerWindow::startNextInstallScript()
     processEnvironment.remove("ENV");
     processEnvironment.insert("INSTALL_RUN_DIR", currentRunDirectory_);
     installProcess_->setProcessEnvironment(processEnvironment);
-    appendInstallLogLine(QString("$ %1 --noprofile --norc -x \"%2\"").arg(bashExecutable, scriptPath));
-    installProcess_->start(bashExecutable, {"--noprofile", "--norc", "-x", scriptPath});
+
+    QString program = bashExecutable;
+    QStringList arguments = {"--noprofile", "--norc", "-x", scriptPath};
+    QString commandDisplay = QString("$ %1 --noprofile --norc -x \"%2\"").arg(bashExecutable, scriptPath);
+
+    if (geteuid() != 0) {
+        const QString pkexecExecutable = QStandardPaths::findExecutable("pkexec");
+        const QString envExecutable = QStandardPaths::findExecutable("env");
+        if (pkexecExecutable.isEmpty() || envExecutable.isEmpty()) {
+            installInProgress_ = false;
+            installCompleted_ = false;
+            appendInstallLogLine("> root access requires `pkexec` and `env` in PATH");
+            setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+            updateNavigationState();
+            return;
+        }
+
+        program = pkexecExecutable;
+        arguments = {
+            envExecutable,
+            QString("INSTALL_RUN_DIR=%1").arg(currentRunDirectory_),
+            "BASH_ENV=",
+            "ENV=",
+            bashExecutable,
+            "--noprofile",
+            "--norc",
+            "-x",
+            scriptPath
+        };
+        commandDisplay = QString("$ %1 %2 INSTALL_RUN_DIR=%3 BASH_ENV= ENV= %4 --noprofile --norc -x \"%5\"")
+                             .arg(pkexecExecutable,
+                                  envExecutable,
+                                  shellQuote(currentRunDirectory_),
+                                  bashExecutable,
+                                  scriptPath);
+    }
+
+    appendInstallLogLine(commandDisplay);
+    installProcess_->start(program, arguments);
 }
 
 void InstallerWindow::handleInstallProcessOutput()

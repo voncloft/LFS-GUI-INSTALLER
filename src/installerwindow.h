@@ -71,7 +71,9 @@ private:
     void setInstallStatus(const QString &message, const QColor &color);
     void resetInstallState(const QString &reason);
     QString findScriptsDirectory() const;
-    bool generateInstallArtifacts(const QString &scriptsDirectory, QString *errorMessage) const;
+    bool generateInstallArtifacts(const QString &sourceScriptsDirectory,
+                                  QString *runtimeScriptsDirectory,
+                                  QString *errorMessage) const;
     QStringList collectScriptPaths(const QString &scriptsDirectory) const;
     int countScriptSteps(const QStringList &scriptPaths) const;
     void startNextInstallScript();
