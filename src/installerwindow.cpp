@@ -2191,6 +2191,9 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
     }
 
+    sessionLines << "exit";
+    sessionLines << "exit";
+
     driverLines << sessionLines;
 
     const QString driverScript = driverLines.join('\n');

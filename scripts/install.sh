@@ -11,3 +11,9 @@ chapter5/binutils-pass1.sh
 universal/cleanup.sh
 chapter5/gcc-pass1.sh
 universal/cleanup.sh
+chapter5/linux-headers.sh
+universal/cleanup.sh
+chapter5/glibc.sh
+universal/cleanup.sh
+chapter5/libstdcxx.sh
+universal/cleanup.sh
