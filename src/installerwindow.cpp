@@ -2191,9 +2191,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
     }
 
-    driverLines << "bash --noprofile --norc <<'__LFS_INSTALL_SESSION__'";
     driverLines << sessionLines;
-    driverLines << "__LFS_INSTALL_SESSION__";
 
     const QString driverScript = driverLines.join('\n');
     if (!writeFile(driverScriptPath, driverScript, true)) {
@@ -2356,7 +2354,20 @@ void InstallerWindow::startNextInstallScript()
     QString program;
     QStringList arguments;
 
-    if (useInstallDriver && geteuid() != 0) {
+    if (useInstallDriver) {
+        const QString scriptExecutable = QStandardPaths::findExecutable("script");
+        if (scriptExecutable.isEmpty()) {
+            installInProgress_ = false;
+            installCompleted_ = false;
+            appendInstallLogLine("> install driver requires `script` in PATH");
+            setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+            updateNavigationState();
+            return;
+        }
+
+        const QString ptyCommand = QString("%1 --noprofile --norc").arg(shellQuote(bashExecutable));
+
+        if (geteuid() != 0) {
         const QString sudoExecutable = QStandardPaths::findExecutable("sudo");
         const QString envExecutable = QStandardPaths::findExecutable("env");
         if (sudoExecutable.isEmpty() || envExecutable.isEmpty()) {
@@ -2375,11 +2386,15 @@ void InstallerWindow::startNextInstallScript()
             QString("INSTALL_RUN_DIR=%1").arg(currentRunDirectory_),
             "BASH_ENV=",
             "ENV=",
-            bashExecutable,
-            "--noprofile",
-            "--norc",
-            scriptPath
+            scriptExecutable,
+            "-qefc",
+            ptyCommand,
+            "/dev/null"
         };
+        } else {
+            program = scriptExecutable;
+            arguments = {"-qefc", ptyCommand, "/dev/null"};
+        }
     } else {
         program = bashExecutable;
         arguments = {"--noprofile", "--norc"};
@@ -2390,6 +2405,29 @@ void InstallerWindow::startNextInstallScript()
     }
 
     installProcess_->start(program, arguments);
+    if (useInstallDriver) {
+        if (!installProcess_->waitForStarted(5000)) {
+            installInProgress_ = false;
+            installCompleted_ = false;
+            appendInstallLogLine("> failed to start install session");
+            setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+            updateNavigationState();
+            return;
+        }
+
+        QFile driverFile(scriptPath);
+        if (!driverFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            installInProgress_ = false;
+            installCompleted_ = false;
+            appendInstallLogLine(QString("> unable to read install session: %1").arg(scriptPath));
+            setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+            updateNavigationState();
+            return;
+        }
+
+        installProcess_->write(driverFile.readAll());
+        installProcess_->closeWriteChannel();
+    }
 }
 
 void InstallerWindow::handleInstallProcessOutput()
