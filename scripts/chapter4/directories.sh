@@ -1,4 +1,4 @@
-set -euo pipefall
+set -euo pipefail
 
 source  ../universal/default.sh
 echo "step:Building limited directory layout"

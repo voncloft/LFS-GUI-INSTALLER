@@ -1,5 +1,4 @@
-set -euo pipefall
+set -euo pipefail
 
 source  ../universal/default_modified.sh
 echo "step:"
-

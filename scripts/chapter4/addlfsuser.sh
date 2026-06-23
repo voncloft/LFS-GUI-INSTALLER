@@ -1,4 +1,4 @@
-set -euo pipefall
+set -euo pipefail
 
 source  ../universal/default.sh
 echo "step:adding LFS user"
