@@ -324,6 +324,73 @@ QString shellQuote(const QString &value)
     return QString("'%1'").arg(escaped);
 }
 
+bool ensureDirectoryExists(const QString &path, QString *errorMessage)
+{
+    if (path.trimmed().isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Directory path is empty.");
+        }
+        return false;
+    }
+
+    const QFileInfo info(path);
+    if (info.exists()) {
+        if (info.isDir()) {
+            return true;
+        }
+        if (errorMessage) {
+            *errorMessage = QString("`%1` exists but is not a directory.").arg(path);
+        }
+        return false;
+    }
+
+    QDir directory;
+    if (directory.mkpath(path)) {
+        return true;
+    }
+
+    if (geteuid() == 0) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to create `%1`.").arg(path);
+        }
+        return false;
+    }
+
+    const QString sudoExecutable = QStandardPaths::findExecutable("sudo");
+    const QString shExecutable = QStandardPaths::findExecutable("sh");
+    if (sudoExecutable.isEmpty() || shExecutable.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to create `%1` and no non-interactive sudo path is available.").arg(path);
+        }
+        return false;
+    }
+
+    const QString command = QString("mkdir -p %1 && chown %2:%3 %1 && chmod 775 %1")
+                                .arg(shellQuote(path),
+                                     QString::number(getuid()),
+                                     QString::number(getgid()));
+    QProcess process;
+    process.start(sudoExecutable, {"-n", shExecutable, "-c", command});
+    if (!process.waitForFinished(10000) || process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
+        if (errorMessage) {
+            const QString details = QString::fromLocal8Bit(process.readAllStandardError()).trimmed();
+            *errorMessage = details.isEmpty()
+                                ? QString("Unable to create `%1`.").arg(path)
+                                : QString("Unable to create `%1`: %2").arg(path, details);
+        }
+        return false;
+    }
+
+    if (QFileInfo(path).isDir()) {
+        return true;
+    }
+
+    if (errorMessage) {
+        *errorMessage = QString("Unable to create `%1`.").arg(path);
+    }
+    return false;
+}
+
 QString partedFileSystem(const PlannedPartition &partition)
 {
     if (partition.mountPoint == "/boot/efi") {
@@ -1728,15 +1795,15 @@ void InstallerWindow::startInstall()
 
     const QString workRoot = workRootEdit_->text().trimmed();
     const QString runStamp = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss");
-    QDir directory;
-    if (!directory.mkpath(workRoot)) {
-        QMessageBox::critical(this, "Working directory error", QString("Unable to create `%1`.").arg(workRoot));
+    QString directoryError;
+    if (!ensureDirectoryExists(workRoot, &directoryError)) {
+        QMessageBox::critical(this, "Working directory error", directoryError);
         return;
     }
 
     currentRunDirectory_ = QDir(workRoot).filePath("run-" + runStamp);
-    if (!directory.mkpath(currentRunDirectory_)) {
-        QMessageBox::critical(this, "Working directory error", QString("Unable to create `%1`.").arg(currentRunDirectory_));
+    if (!ensureDirectoryExists(currentRunDirectory_, &directoryError)) {
+        QMessageBox::critical(this, "Working directory error", directoryError);
         return;
     }
 
