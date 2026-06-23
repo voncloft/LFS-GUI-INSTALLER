@@ -1,3 +1,8 @@
+chapter2/prereqs.sh
 partition.sh
 mount.sh
-1.sh
+chapter2/prereqs.sh
+chapter2/change_permissions.sh
+chapter3/get_packages.sh
+chapter4/directories.sh
+chapter4/addlfsuser.sh
