@@ -487,7 +487,8 @@ QWidget *InstallerWindow::buildStoragePage()
     newPartitionMountCombo_->setEditable(true);
     newPartitionMountCombo_->addItems({"", "/", "/boot", "/boot/efi", "/home", "/var", "swap"});
     newPartitionMountCombo_->setMinimumContentsLength(12);
-    createLayout->addWidget(newPartitionMountCombo_);
+    newPartitionMountCombo_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    createLayout->addWidget(newPartitionMountCombo_, 1);
 
     createLayout->addWidget(new QLabel("Local mount", createBox));
     newPartitionLocalMountCombo_ = new QComboBox(createBox);
@@ -495,8 +496,8 @@ QWidget *InstallerWindow::buildStoragePage()
     newPartitionLocalMountCombo_->addItems(localMountPointOptions());
     newPartitionLocalMountCombo_->setCurrentText("/mnt/lfs");
     newPartitionLocalMountCombo_->setMinimumContentsLength(14);
-    newPartitionLocalMountCombo_->setMaximumWidth(170);
-    createLayout->addWidget(newPartitionLocalMountCombo_);
+    newPartitionLocalMountCombo_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    createLayout->addWidget(newPartitionLocalMountCombo_, 2);
 
     createLayout->addWidget(new QLabel("Filesystem", createBox));
     newPartitionFsCombo_ = new QComboBox(createBox);
@@ -531,10 +532,11 @@ QWidget *InstallerWindow::buildStoragePage()
     partitionTable_->setSelectionMode(QAbstractItemView::SingleSelection);
     partitionTable_->setShowGrid(true);
     partitionTable_->verticalHeader()->setVisible(false);
+    partitionTable_->horizontalHeader()->setStretchLastSection(false);
     partitionTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    partitionTable_->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    partitionTable_->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
     partitionTable_->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
@@ -749,12 +751,13 @@ void InstallerWindow::addPartitionRow(const QString &mountPoint,
     mountCombo->setEditable(true);
     mountCombo->addItems({"/boot/efi", "/boot", "/", "/home", "/var", "swap"});
     mountCombo->setCurrentText(mountPoint);
+    mountCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto *localMountCombo = new QComboBox(partitionTable_);
     localMountCombo->setEditable(true);
     localMountCombo->addItems(localMountPointOptions());
     localMountCombo->setCurrentText(localMountPoint.isEmpty() ? defaultLocalMountPoint(mountPoint) : localMountPoint);
     localMountCombo->setMinimumContentsLength(14);
-    localMountCombo->setMaximumWidth(170);
+    localMountCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     connect(localMountCombo, &QComboBox::currentTextChanged, this, &InstallerWindow::markInstallDirty);
     connect(mountCombo, &QComboBox::currentTextChanged, this, [this, localMountCombo](const QString &text) {
         localMountCombo->setCurrentText(defaultLocalMountPoint(text));
