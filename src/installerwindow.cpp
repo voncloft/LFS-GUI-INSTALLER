@@ -331,9 +331,11 @@ void InstallerWindow::buildUi()
     mainLayout->addWidget(pages_, 1);
 
     auto *buttonRow = new QHBoxLayout();
+    buttonRow->setContentsMargins(12, 0, 12, 0);
     backButton_ = new QPushButton("Back", this);
     primaryButton_ = new QPushButton("Next", this);
-    primaryButton_->setMinimumWidth(160);
+    backButton_->setFixedSize(150, 50);
+    primaryButton_->setFixedSize(150, 50);
 
     buttonRow->addWidget(backButton_);
     buttonRow->addStretch(1);
@@ -350,6 +352,7 @@ QWidget *InstallerWindow::buildDetailsPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(12, 12, 12, 12);
 
     auto *card = new QGroupBox("Page 1: System Details", page);
     auto *form = new QFormLayout(card);
@@ -687,6 +690,7 @@ QWidget *InstallerWindow::buildFeaturesPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(12, 12, 12, 12);
 
     auto *header = new QLabel("Page 4: Additional Features");
     header->setStyleSheet("font-size: 18px; font-weight: 600;");
