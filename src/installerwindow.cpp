@@ -94,6 +94,7 @@ QJsonArray partitionsToJson(const QVector<PlannedPartition> &partitions)
     for (const PlannedPartition &partition : partitions) {
         QJsonObject object;
         object.insert("mountPoint", partition.mountPoint);
+        object.insert("localMountPoint", partition.localMountPoint);
         object.insert("fileSystem", partition.fileSystem);
         object.insert("sizeGiB", partition.sizeGiB);
         object.insert("format", partition.format);
@@ -139,6 +140,38 @@ QString partitionLabelText(const QString &mountPoint)
     QString label = mountPoint;
     label.remove('/');
     return label.isEmpty() ? QStringLiteral("CUSTOM") : label.toUpper();
+}
+
+QString defaultLocalMountPoint(const QString &mountPoint)
+{
+    const QString trimmed = mountPoint.trimmed();
+    if (trimmed.isEmpty()) {
+        return QString();
+    }
+    if (trimmed == "/") {
+        return QStringLiteral("/mnt/lfs");
+    }
+    if (trimmed.startsWith('/')) {
+        return QStringLiteral("/mnt/lfs") + trimmed;
+    }
+    if (trimmed == "swap") {
+        return QStringLiteral("/mnt/lfs/swap");
+    }
+
+    return QStringLiteral("/mnt/lfs/") + trimmed;
+}
+
+QStringList localMountPointOptions()
+{
+    return {
+        QString(),
+        QStringLiteral("/mnt/lfs"),
+        QStringLiteral("/mnt/lfs/boot"),
+        QStringLiteral("/mnt/lfs/boot/efi"),
+        QStringLiteral("/mnt/lfs/home"),
+        QStringLiteral("/mnt/lfs/var"),
+        QStringLiteral("/mnt/lfs/swap")
+    };
 }
 
 QColor fileSystemColor(const QString &fileSystem)
@@ -456,6 +489,15 @@ QWidget *InstallerWindow::buildStoragePage()
     newPartitionMountCombo_->setMinimumContentsLength(12);
     createLayout->addWidget(newPartitionMountCombo_);
 
+    createLayout->addWidget(new QLabel("Local mount", createBox));
+    newPartitionLocalMountCombo_ = new QComboBox(createBox);
+    newPartitionLocalMountCombo_->setEditable(true);
+    newPartitionLocalMountCombo_->addItems(localMountPointOptions());
+    newPartitionLocalMountCombo_->setCurrentText("/mnt/lfs");
+    newPartitionLocalMountCombo_->setMinimumContentsLength(14);
+    newPartitionLocalMountCombo_->setMaximumWidth(170);
+    createLayout->addWidget(newPartitionLocalMountCombo_);
+
     createLayout->addWidget(new QLabel("Filesystem", createBox));
     newPartitionFsCombo_ = new QComboBox(createBox);
     newPartitionFsCombo_->addItems({"ext4", "xfs", "btrfs", "fat32", "swap"});
@@ -482,8 +524,8 @@ QWidget *InstallerWindow::buildStoragePage()
 
     tableLayout->addWidget(createBox);
 
-    partitionTable_ = new QTableWidget(0, 8, tableBox);
-    partitionTable_->setHorizontalHeaderLabels({"Partition", "File System", "Mount Point", "Label", "Size", "Used", "Unused", "Flags"});
+    partitionTable_ = new QTableWidget(0, 9, tableBox);
+    partitionTable_->setHorizontalHeaderLabels({"Partition", "File System", "Mount Point", "Local Mount", "Label", "Size", "Used", "Unused", "Flags"});
     partitionTable_->setAlternatingRowColors(true);
     partitionTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
     partitionTable_->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -491,12 +533,13 @@ QWidget *InstallerWindow::buildStoragePage()
     partitionTable_->verticalHeader()->setVisible(false);
     partitionTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    partitionTable_->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
     partitionTable_->horizontalHeader()->setSectionResizeMode(7, QHeaderView::ResizeToContents);
+    partitionTable_->horizontalHeader()->setSectionResizeMode(8, QHeaderView::ResizeToContents);
     partitionTable_->verticalHeader()->setDefaultSectionSize(34);
     tableLayout->addWidget(partitionTable_);
     plannerLayout->addWidget(tableBox, 1);
@@ -513,6 +556,9 @@ QWidget *InstallerWindow::buildStoragePage()
     connect(driveCombo_, &QComboBox::currentIndexChanged, this, &InstallerWindow::markInstallDirty);
     connect(newPartitionMountCombo_, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         const QString mountPoint = text.trimmed();
+        if (newPartitionLocalMountCombo_) {
+            newPartitionLocalMountCombo_->setCurrentText(defaultLocalMountPoint(mountPoint));
+        }
         if (mountPoint == "swap") {
             const int index = newPartitionFsCombo_->findText("swap");
             if (index >= 0) {
@@ -536,6 +582,7 @@ QWidget *InstallerWindow::buildStoragePage()
             return;
         }
         addPartitionRow(newPartitionMountCombo_->currentText().trimmed(),
+                        newPartitionLocalMountCombo_->currentText().trimmed(),
                         newPartitionFsCombo_->currentText().trimmed(),
                         newPartitionSizeSpin_->value(),
                         newPartitionFormatCheck_->isChecked());
@@ -685,7 +732,11 @@ QWidget *InstallerWindow::buildFeaturesPage()
     return page;
 }
 
-void InstallerWindow::addPartitionRow(const QString &mountPoint, const QString &fileSystem, double sizeGiB, bool format)
+void InstallerWindow::addPartitionRow(const QString &mountPoint,
+                                      const QString &localMountPoint,
+                                      const QString &fileSystem,
+                                      double sizeGiB,
+                                      bool format)
 {
     const int row = partitionTable_->rowCount();
     partitionTable_->insertRow(row);
@@ -698,8 +749,19 @@ void InstallerWindow::addPartitionRow(const QString &mountPoint, const QString &
     mountCombo->setEditable(true);
     mountCombo->addItems({"/boot/efi", "/boot", "/", "/home", "/var", "swap"});
     mountCombo->setCurrentText(mountPoint);
-    connect(mountCombo, &QComboBox::currentTextChanged, this, &InstallerWindow::markInstallDirty);
+    auto *localMountCombo = new QComboBox(partitionTable_);
+    localMountCombo->setEditable(true);
+    localMountCombo->addItems(localMountPointOptions());
+    localMountCombo->setCurrentText(localMountPoint.isEmpty() ? defaultLocalMountPoint(mountPoint) : localMountPoint);
+    localMountCombo->setMinimumContentsLength(14);
+    localMountCombo->setMaximumWidth(170);
+    connect(localMountCombo, &QComboBox::currentTextChanged, this, &InstallerWindow::markInstallDirty);
+    connect(mountCombo, &QComboBox::currentTextChanged, this, [this, localMountCombo](const QString &text) {
+        localMountCombo->setCurrentText(defaultLocalMountPoint(text));
+        markInstallDirty();
+    });
     partitionTable_->setCellWidget(row, 2, mountCombo);
+    partitionTable_->setCellWidget(row, 3, localMountCombo);
 
     auto *fsCombo = new QComboBox(partitionTable_);
     fsCombo->addItems({"ext4", "xfs", "btrfs", "fat32", "swap"});
@@ -712,7 +774,7 @@ void InstallerWindow::addPartitionRow(const QString &mountPoint, const QString &
 
     auto *labelItem = new QTableWidgetItem();
     labelItem->setFlags(labelItem->flags() & ~Qt::ItemIsEditable);
-    partitionTable_->setItem(row, 3, labelItem);
+    partitionTable_->setItem(row, 4, labelItem);
 
     auto *sizeSpin = new QDoubleSpinBox(partitionTable_);
     sizeSpin->setRange(0.1, 102400.0);
@@ -722,21 +784,27 @@ void InstallerWindow::addPartitionRow(const QString &mountPoint, const QString &
     connect(sizeSpin, &QDoubleSpinBox::valueChanged, this, [this](double) {
         markInstallDirty();
     });
-    partitionTable_->setCellWidget(row, 4, sizeSpin);
+    partitionTable_->setCellWidget(row, 5, sizeSpin);
 
     auto *usedItem = new QTableWidgetItem();
     usedItem->setFlags(usedItem->flags() & ~Qt::ItemIsEditable);
-    partitionTable_->setItem(row, 5, usedItem);
+    partitionTable_->setItem(row, 6, usedItem);
 
     auto *unusedItem = new QTableWidgetItem();
     unusedItem->setFlags(unusedItem->flags() & ~Qt::ItemIsEditable);
-    partitionTable_->setItem(row, 6, unusedItem);
+    partitionTable_->setItem(row, 7, unusedItem);
 
     auto *formatCheck = new QCheckBox(partitionTable_);
     formatCheck->setChecked(format);
-    formatCheck->setText(flagsText({mountPoint, fileSystem, sizeGiB, format}));
+    PlannedPartition partition;
+    partition.mountPoint = mountPoint;
+    partition.localMountPoint = localMountCombo->currentText().trimmed();
+    partition.fileSystem = fileSystem;
+    partition.sizeGiB = sizeGiB;
+    partition.format = format;
+    formatCheck->setText(flagsText(partition));
     connect(formatCheck, &QCheckBox::checkStateChanged, this, &InstallerWindow::markInstallDirty);
-    partitionTable_->setCellWidget(row, 7, formatCheck);
+    partitionTable_->setCellWidget(row, 8, formatCheck);
 }
 
 QVector<PlannedPartition> InstallerWindow::collectPartitions() const
@@ -744,16 +812,18 @@ QVector<PlannedPartition> InstallerWindow::collectPartitions() const
     QVector<PlannedPartition> partitions;
     for (int row = 0; row < partitionTable_->rowCount(); ++row) {
         auto *mountCombo = qobject_cast<QComboBox *>(partitionTable_->cellWidget(row, 2));
+        auto *localMountCombo = qobject_cast<QComboBox *>(partitionTable_->cellWidget(row, 3));
         auto *fsCombo = qobject_cast<QComboBox *>(partitionTable_->cellWidget(row, 1));
-        auto *sizeSpin = qobject_cast<QDoubleSpinBox *>(partitionTable_->cellWidget(row, 4));
-        auto *formatCheck = qobject_cast<QCheckBox *>(partitionTable_->cellWidget(row, 7));
+        auto *sizeSpin = qobject_cast<QDoubleSpinBox *>(partitionTable_->cellWidget(row, 5));
+        auto *formatCheck = qobject_cast<QCheckBox *>(partitionTable_->cellWidget(row, 8));
 
-        if (!mountCombo || !fsCombo || !sizeSpin || !formatCheck) {
+        if (!mountCombo || !localMountCombo || !fsCombo || !sizeSpin || !formatCheck) {
             continue;
         }
 
         PlannedPartition partition;
         partition.mountPoint = mountCombo->currentText().trimmed();
+        partition.localMountPoint = localMountCombo->currentText().trimmed();
         partition.fileSystem = fsCombo->currentText().trimmed();
         partition.sizeGiB = sizeSpin->value();
         partition.format = formatCheck->isChecked();
@@ -779,7 +849,7 @@ void InstallerWindow::refreshPartitionEditorPreview()
     const double unallocatedGiB = driveGiB > plannedGiB ? driveGiB - plannedGiB : 0.0;
 
     for (int row = 0; row < partitionTable_->rowCount(); ++row) {
-        auto *sizeSpin = qobject_cast<QDoubleSpinBox *>(partitionTable_->cellWidget(row, 4));
+        auto *sizeSpin = qobject_cast<QDoubleSpinBox *>(partitionTable_->cellWidget(row, 5));
         if (!sizeSpin) {
             continue;
         }
@@ -824,16 +894,16 @@ void InstallerWindow::refreshPartitionEditorPreview()
         if (auto *partitionItem = partitionTable_->item(row, 0)) {
             partitionItem->setText(partitionNodeName(drive.path, row));
         }
-        if (auto *labelItem = partitionTable_->item(row, 3)) {
+        if (auto *labelItem = partitionTable_->item(row, 4)) {
             labelItem->setText(partitionLabelText(partitions.at(row).mountPoint));
         }
-        if (auto *usedItem = partitionTable_->item(row, 5)) {
+        if (auto *usedItem = partitionTable_->item(row, 6)) {
             usedItem->setText(usedText(partitions.at(row)));
         }
-        if (auto *unusedItem = partitionTable_->item(row, 6)) {
+        if (auto *unusedItem = partitionTable_->item(row, 7)) {
             unusedItem->setText(unusedText(partitions.at(row)));
         }
-        if (auto *formatCheck = qobject_cast<QCheckBox *>(partitionTable_->cellWidget(row, 7))) {
+        if (auto *formatCheck = qobject_cast<QCheckBox *>(partitionTable_->cellWidget(row, 8))) {
             formatCheck->setText(flagsText(partitions.at(row)));
         }
     }
@@ -856,9 +926,10 @@ void InstallerWindow::refreshPartitionEditorPreview()
 
     QStringList operations;
     for (int row = 0; row < partitions.size(); ++row) {
-        operations.append(QString("%1 %2 (%3)")
+        operations.append(QString("%1 %2 -> %3 (%4)")
                               .arg(partitionNodeName(drive.path, row),
                                    partitions.at(row).mountPoint,
+                                   partitions.at(row).localMountPoint,
                                    flagsText(partitions.at(row))));
     }
     partitionOperationsLabel_->setText(QString("%1 operation%2 pending")
@@ -894,10 +965,11 @@ void InstallerWindow::refreshPartitionEditorPreview()
         segment->setMinimumHeight(56);
         segment->setText(QString("%1\n%2 GiB").arg(partitionLabelText(partition.mountPoint),
                                                    QString::number(partition.sizeGiB, 'f', 2)));
-        segment->setToolTip(QString("%1\n%2\n%3\n%4")
+        segment->setToolTip(QString("%1\n%2\n%3\n%4\n%5")
                                 .arg(partitionNodeName(drive.path, row),
                                      partition.fileSystem,
                                      partition.mountPoint,
+                                     partition.localMountPoint,
                                      flagsText(partition)));
         connect(segment, &QToolButton::clicked, this, [this, row]() {
             partitionTable_->selectRow(row);
@@ -994,6 +1066,7 @@ bool InstallerWindow::validatePageTwo()
 
     bool hasRoot = false;
     QSet<QString> mountPoints;
+    QSet<QString> localMountPoints;
     for (const PlannedPartition &partition : partitions) {
         if (partition.mountPoint.isEmpty()) {
             QMessageBox::warning(this, "Invalid partition", "Each partition entry needs a mount point or `swap`.");
@@ -1006,6 +1079,19 @@ bool InstallerWindow::validatePageTwo()
         mountPoints.insert(partition.mountPoint);
         if (partition.mountPoint == "/") {
             hasRoot = true;
+        }
+        if (partition.mountPoint != "swap") {
+            if (partition.localMountPoint.isEmpty()) {
+                QMessageBox::warning(this, "Invalid partition", QString("Choose a local mount point for `%1`.").arg(partition.mountPoint));
+                return false;
+            }
+            if (localMountPoints.contains(partition.localMountPoint)) {
+                QMessageBox::warning(this,
+                                     "Duplicate local mount point",
+                                     QString("The local mount point `%1` is defined more than once.").arg(partition.localMountPoint));
+                return false;
+            }
+            localMountPoints.insert(partition.localMountPoint);
         }
     }
 
@@ -1232,6 +1318,7 @@ void InstallerWindow::startInstall()
     appendInstallLogLine("$ generate install artifacts");
     appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("final_setup.sh")));
     appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("partition.sh")));
+    appendInstallLogLine(QString("> %1").arg(QDir(runtimeScriptsDirectory).filePath("mount.sh")));
     const QString filesDirectory = QDir(QFileInfo(runtimeScriptsDirectory).absolutePath()).filePath("files");
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("hostname")));
     appendInstallLogLine(QString("> %1").arg(QDir(filesDirectory).filePath("clock")));
@@ -1496,6 +1583,9 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     if (!writeFile(QDir(stagedScriptsDirectory).filePath("partition.sh"), buildPartitionScript(), true)) {
         return false;
     }
+    if (!writeFile(QDir(stagedScriptsDirectory).filePath("mount.sh"), buildMountScript(), true)) {
+        return false;
+    }
     if (!writeFile(QDir(stagedFilesDirectory).filePath("hostname"), buildHostnameFile(), false)) {
         return false;
     }
@@ -1516,6 +1606,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"\n"
         "install -m 755 \"$STAGED_SCRIPTS/final_setup.sh\" \"$TARGET_SCRIPTS/final_setup.sh\"\n"
         "install -m 755 \"$STAGED_SCRIPTS/partition.sh\" \"$TARGET_SCRIPTS/partition.sh\"\n"
+        "install -m 755 \"$STAGED_SCRIPTS/mount.sh\" \"$TARGET_SCRIPTS/mount.sh\"\n"
         "install -m 644 \"$STAGED_FILES/hostname\" \"$TARGET_FILES/hostname\"\n"
         "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"\n"
         "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"\n"
@@ -1551,6 +1642,9 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
             return false;
         }
         if (!writeFile(QDir(targetScriptsDirectory).filePath("partition.sh"), buildPartitionScript(), true)) {
+            return false;
+        }
+        if (!writeFile(QDir(targetScriptsDirectory).filePath("mount.sh"), buildMountScript(), true)) {
             return false;
         }
         if (!writeFile(QDir(targetFilesDirectory).filePath("hostname"), buildHostnameFile(), false)) {
@@ -1933,6 +2027,63 @@ QString InstallerWindow::buildPartitionScript() const
     return lines.join('\n') + '\n';
 }
 
+QString InstallerWindow::buildMountScript() const
+{
+    const DriveInfo drive = currentDrive();
+    const QVector<PlannedPartition> partitions = collectPartitions();
+
+    QStringList lines;
+    lines << "#!/usr/bin/env bash";
+    lines << "";
+    lines << "set -euo pipefail";
+    lines << "";
+    lines << "echo \"step:Mounting filesystems\"";
+
+    const auto appendMountCommandsFor = [&lines, &drive, &partitions](const QString &mountPoint) {
+        for (int row = 0; row < partitions.size(); ++row) {
+            const PlannedPartition &partition = partitions.at(row);
+            if (partition.mountPoint != mountPoint) {
+                continue;
+            }
+
+            const QString devicePath = partitionNodeName(drive.path, row);
+            if (partition.mountPoint == "swap") {
+                lines << QString("swapon %1").arg(shellQuote(devicePath));
+                continue;
+            }
+
+            lines << QString("mkdir -p %1").arg(shellQuote(partition.localMountPoint));
+            lines << QString("mount %1 %2").arg(shellQuote(devicePath), shellQuote(partition.localMountPoint));
+        }
+    };
+
+    appendMountCommandsFor("/");
+    appendMountCommandsFor("/boot");
+    appendMountCommandsFor("/boot/efi");
+    appendMountCommandsFor("/home");
+    appendMountCommandsFor("/var");
+
+    for (int row = 0; row < partitions.size(); ++row) {
+        const PlannedPartition &partition = partitions.at(row);
+        if (partition.mountPoint == "/" ||
+            partition.mountPoint == "/boot" ||
+            partition.mountPoint == "/boot/efi" ||
+            partition.mountPoint == "/home" ||
+            partition.mountPoint == "/var" ||
+            partition.mountPoint == "swap") {
+            continue;
+        }
+
+        const QString devicePath = partitionNodeName(drive.path, row);
+        lines << QString("mkdir -p %1").arg(shellQuote(partition.localMountPoint));
+        lines << QString("mount %1 %2").arg(shellQuote(devicePath), shellQuote(partition.localMountPoint));
+    }
+
+    appendMountCommandsFor("swap");
+
+    return lines.join('\n') + '\n';
+}
+
 QString InstallerWindow::buildHostnameFile() const
 {
     return hostnameEdit_->text().trimmed() + '\n';
@@ -1989,8 +2140,9 @@ QString InstallerWindow::buildConfigText() const
     } else {
         lines << "Partitions:";
         for (const PlannedPartition &partition : partitions) {
-            lines << QString("  - mount=%1 fs=%2 size=%3 GiB format=%4")
+            lines << QString("  - mount=%1 local=%2 fs=%3 size=%4 GiB format=%5")
                          .arg(partition.mountPoint,
+                              partition.localMountPoint,
                               partition.fileSystem,
                               QString::number(partition.sizeGiB, 'f', 1),
                               partition.format ? "yes" : "no");

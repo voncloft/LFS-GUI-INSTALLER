@@ -20,6 +20,7 @@ class QTreeWidget;
 struct PlannedPartition
 {
     QString mountPoint;
+    QString localMountPoint;
     QString fileSystem;
     double sizeGiB = 0.0;
     bool format = true;
@@ -60,7 +61,11 @@ private:
     QWidget *buildStoragePage();
     QWidget *buildInstallPage();
     QWidget *buildFeaturesPage();
-    void addPartitionRow(const QString &mountPoint, const QString &fileSystem, double sizeGiB, bool format);
+    void addPartitionRow(const QString &mountPoint,
+                         const QString &localMountPoint,
+                         const QString &fileSystem,
+                         double sizeGiB,
+                         bool format);
     QVector<PlannedPartition> collectPartitions() const;
     QStringList collectSelectedFeatures() const;
     DriveInfo currentDrive() const;
@@ -81,6 +86,7 @@ private:
     void processInstallOutputLine(const QString &line);
     QString buildFinalSetupScript() const;
     QString buildPartitionScript() const;
+    QString buildMountScript() const;
     QString buildHostnameFile() const;
     QString buildClockFile() const;
     QString buildFstabFile() const;
@@ -100,6 +106,7 @@ private:
     QLabel *driveDetailsLabel_ = nullptr;
     QTreeWidget *deviceTree_ = nullptr;
     QComboBox *newPartitionMountCombo_ = nullptr;
+    QComboBox *newPartitionLocalMountCombo_ = nullptr;
     QComboBox *newPartitionFsCombo_ = nullptr;
     QDoubleSpinBox *newPartitionSizeSpin_ = nullptr;
     QCheckBox *newPartitionFormatCheck_ = nullptr;
