@@ -2392,6 +2392,142 @@ void InstallerWindow::startNextInstallScript()
         return;
     }
 
+    {
+        if (currentInstallScriptIndex_ < 0) {
+            return;
+        }
+
+        const QString driverScriptPath = QDir(currentRunDirectory_).filePath("generated-artifacts/install-driver.sh");
+        const QString bashExecutable = QStandardPaths::findExecutable("bash");
+        if (bashExecutable.isEmpty()) {
+            appendInstallLogLine("> unable to find `bash` in PATH");
+            markInstallFailed("Failed");
+            return;
+        }
+
+        if (installProcess_->state() == QProcess::NotRunning) {
+            const QFileInfo driverInfo(driverScriptPath);
+            if (!driverInfo.exists() || !driverInfo.isFile() || !driverInfo.isReadable()) {
+                appendInstallLogLine(QString("> script unavailable: %1").arg(driverScriptPath));
+                markInstallFailed("Failed");
+                return;
+            }
+
+            const QString scriptExecutable = QStandardPaths::findExecutable("script");
+            if (scriptExecutable.isEmpty()) {
+                appendInstallLogLine("> install driver requires `script` in PATH");
+                markInstallFailed("Failed");
+                return;
+            }
+
+            const QString ptyCommand = QString("%1 --noprofile --norc").arg(shellQuote(bashExecutable));
+            currentInstallScriptPath_.clear();
+            currentInstallEntryName_.clear();
+            installOutputBuffer_.clear();
+            pendingInstallStepText_.clear();
+            installProcess_->setWorkingDirectory(driverInfo.absolutePath());
+
+            QProcessEnvironment processEnvironment = QProcessEnvironment::systemEnvironment();
+            processEnvironment.remove("BASH_ENV");
+            processEnvironment.remove("ENV");
+            processEnvironment.insert("INSTALL_RUN_DIR", currentRunDirectory_);
+            installProcess_->setProcessEnvironment(processEnvironment);
+
+            QString program;
+            QStringList arguments;
+            if (geteuid() != 0) {
+                const QString sudoExecutable = QStandardPaths::findExecutable("sudo");
+                const QString envExecutable = QStandardPaths::findExecutable("env");
+                if (sudoExecutable.isEmpty() || envExecutable.isEmpty()) {
+                    appendInstallLogLine("> root access requires `sudo` and `env` in PATH");
+                    markInstallFailed("Failed");
+                    return;
+                }
+
+                program = sudoExecutable;
+                arguments = {
+                    "-n",
+                    envExecutable,
+                    QString("INSTALL_RUN_DIR=%1").arg(currentRunDirectory_),
+                    "BASH_ENV=",
+                    "ENV=",
+                    scriptExecutable,
+                    "-qefc",
+                    ptyCommand,
+                    "/dev/null"
+                };
+            } else {
+                program = scriptExecutable;
+                arguments = {"-qefc", ptyCommand, "/dev/null"};
+            }
+
+            installProcess_->start(program, arguments);
+            if (!installProcess_->waitForStarted(5000)) {
+                appendInstallLogLine("> failed to start install session");
+                markInstallFailed("Failed");
+                return;
+            }
+
+            QFile driverFile(driverScriptPath);
+            if (!driverFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                appendInstallLogLine(QString("> unable to read install session: %1").arg(driverScriptPath));
+                markInstallFailed("Failed");
+                return;
+            }
+
+            installProcess_->write(driverFile.readAll());
+        }
+
+        if (currentInstallScriptIndex_ >= installScriptPaths_.size()) {
+            currentInstallScriptPath_.clear();
+            currentInstallEntryName_.clear();
+            installProcess_->write("exit\nexit\n");
+            installProcess_->closeWriteChannel();
+            return;
+        }
+
+        const QString scriptPath = installScriptPaths_.at(currentInstallScriptIndex_);
+        const QFileInfo scriptInfo(scriptPath);
+        if (!scriptInfo.exists() || !scriptInfo.isFile() || !scriptInfo.isReadable()) {
+            appendInstallLogLine(QString("> script unavailable: %1").arg(scriptPath));
+            markInstallFailed("Failed");
+            return;
+        }
+
+        QFile scriptFile(scriptPath);
+        if (!scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            appendInstallLogLine(QString("> unable to read staged script: %1").arg(scriptPath));
+            markInstallFailed("Failed");
+            return;
+        }
+
+        QString scriptContents = QString::fromUtf8(scriptFile.readAll());
+        if (!scriptContents.endsWith('\n')) {
+            scriptContents.append('\n');
+        }
+
+        const QString stagedRoot = QDir(currentRunDirectory_).filePath("generated-artifacts");
+        const QString scriptEntry = installScriptEntryFromPath(scriptPath);
+        QStringList commandLines;
+        commandLines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + scriptEntry));
+        commandLines << QString("SCRIPT_DIR=%1").arg(shellQuote(scriptInfo.absolutePath()));
+        commandLines << "export SCRIPT_DIR";
+        commandLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
+        commandLines << "export PROJECT_ROOT";
+        commandLines << "set -euo pipefail";
+        commandLines << "set -x";
+        commandLines << scriptContents;
+        commandLines << "set +x";
+        commandLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptEntry));
+        commandLines << "";
+
+        currentInstallScriptPath_ = scriptPath;
+        currentInstallEntryName_.clear();
+        installProcess_->write(commandLines.join('\n').toUtf8());
+        installProcess_->write("\n");
+        return;
+    }
+
     if (currentInstallScriptIndex_ < 0 || currentInstallScriptIndex_ >= installScriptPaths_.size()) {
         installInProgress_ = false;
         installCompleted_ = true;
@@ -2583,6 +2719,29 @@ void InstallerWindow::handleInstallProcessFinished(int exitCode, QProcess::ExitS
         return;
     }
 
+    {
+        if (currentInstallScriptIndex_ < installScriptPaths_.size()) {
+            appendInstallLogLine("> install session ended before all scripts completed");
+            markInstallFailed("Failed");
+            return;
+        }
+
+        installInProgress_ = false;
+        installCompleted_ = true;
+        currentInstallScriptPath_.clear();
+        currentInstallEntryName_.clear();
+        if (installProgressBar_) {
+            if (totalInstallSteps_ > 0) {
+                installProgressBar_->setValue(totalInstallSteps_);
+            } else {
+                installProgressBar_->setValue(1);
+            }
+        }
+        setInstallStatus("Current Step: Complete", QColor("#1b5e20"));
+        updateNavigationState();
+        return;
+    }
+
     const QString driverScriptPath = QDir(currentRunDirectory_).filePath("generated-artifacts/install-driver.sh");
     if (QFileInfo(currentInstallScriptPath_).absoluteFilePath() == QFileInfo(driverScriptPath).absoluteFilePath()) {
         currentInstallScriptPath_.clear();
@@ -2654,6 +2813,10 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
             ++completedInstallSteps_;
             installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
         }
+        currentInstallScriptPath_.clear();
+        currentInstallEntryName_.clear();
+        ++currentInstallScriptIndex_;
+        startNextInstallScript();
         return;
     }
 
