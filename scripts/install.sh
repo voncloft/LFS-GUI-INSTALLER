@@ -9,7 +9,7 @@ chapter4/addlfsuser.sh
 keep_at_all_costs/login_lfs_user.sh
 chapter4/environment.sh
 keep_at_all_costs/source_bash_profile.sh
-universal/cd_to_sources.sh
+keep_at_all_costs/cd_to_sources.sh
 chapter5/binutils-pass1.sh
 chapter5/gcc-pass1.sh
 universal/cleanup.sh
@@ -36,9 +36,9 @@ chapter6/binutils-pass2.sh
 chapter6/gcc-pass2.sh
 universal/cleanup.sh
 chapter7/setting_up_chroot.sh
-chapter7/entering_chroot.sh
+keep_at_all_costs/entering_chroot.sh
 chapter7/setting_up_directories.sh
-chapter7/change_source_directory.sh
+keep_at_all_costs/change_source_directory.sh
 chapter7/gettext.sh
 chapter7/bison.sh
 chapter7/perl.sh
@@ -53,7 +53,7 @@ chapter8/install_system.sh
 universal/cleanup.sh
 chapter9/critiques.sh
 universal/cleanup.sh
-chapter10/linux.sh
+chapter10/kernel.sh
 chapter10/boot.sh
 chapter10/done.sh
 universal/cleanup.sh
