@@ -50,3 +50,9 @@ universal/cleanup.sh
 chapter8/scratchpkg.sh
 universal/cleanup.sh
 chapter8/install_system.sh
+universal/cleanup.sh
+chapter9/critiques.sh
+universal/cleanup.sh
+chapter10/linux.sh
+chapter10/boot.sh
+universal/cleanup.sh
