@@ -1,6 +1,6 @@
 echo "step:Binutils-pass 1"
 
-sh ../../tools/autountar.sh binutils
+autountar binutils
 
 cd binutils*/
 mkdir -v build
@@ -17,3 +17,4 @@ cd build
 
 make
 make install
+

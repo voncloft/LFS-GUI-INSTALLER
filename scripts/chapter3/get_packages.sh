@@ -12,4 +12,6 @@ chmod -v a+wt $LFS/sources
 #popd
 wget https://sourceware.org/pub/binutils/releases/binutils-2.46.0.tar.xz
 mv binutils*.tar.xz $LFS/sources
+cp ../../tools/autountar.sh $LFS/sources/autountar
+chmod +x $LFS/sources/autountar
 chown root:root $LFS/sources/*

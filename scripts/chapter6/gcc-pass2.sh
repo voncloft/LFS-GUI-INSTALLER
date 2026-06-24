@@ -1,7 +1,9 @@
-echo "step:GCC pass 1"
+name=gcc
+echo "step:Compiling toolchain component $name"
 
-autountar gcc
-cd gcc*/
+autountar "$name"
+cd $name*/
+
 tar -xf ../mpfr-4.2.2.tar.xz
 mv -v mpfr-4.2.2 mpfr
 tar -xf ../gmp-6.3.0.tar.xz
@@ -20,32 +22,27 @@ mkdir -v build
 cd       build
 
 ../configure                     \
+    --build=$(../config.guess)   \
+    --host=$LFS_TGT              \
     --target=$LFS_TGT            \
-    --prefix=$LFS/tools          \
-    --with-glibc-version=2.43    \
-    --with-sysroot=$LFS          \
-    --with-newlib                \
-    --without-headers            \
+    --prefix=/usr                \
+    --with-build-sysroot=$LFS    \
     --enable-default-pie         \
     --enable-default-ssp         \
-    --enable-initfini-array      \
     --disable-nls                \
-    --disable-shared             \
     --enable-multilib            \
     --with-multilib-list=m64,m32 \
-    --disable-decimal-float      \
-    --disable-threads            \
     --disable-libatomic          \
     --disable-libgomp            \
     --disable-libquadmath        \
+    --disable-libsanitizer       \
     --disable-libssp             \
     --disable-libvtv             \
-    --disable-libstdcxx          \
-    --enable-languages=c,c++
+    --enable-languages=c,c++     \
+    LDFLAGS_FOR_TARGET=-L$PWD/$LFS_TGT/libgcc \
+    target_configargs=gcc_cv_target_thread_file=posix
 
-make 
-make install
-
-cat ../gcc/{limitx,glimits,limity}.h  > \
-  $($LFS_TGT-gcc -print-file-name=include)/limits.h
+make
+make DESTDIR=$LFS install
+ln -sv gcc $LFS/usr/bin/cc
 

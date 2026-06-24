@@ -1,6 +1,6 @@
 echo "step:Glibc"
 
-tar xvf glibc*.tar.xz
+autountar glibc
 cd glibc*/
 
 ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64
