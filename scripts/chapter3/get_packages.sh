@@ -20,6 +20,6 @@ echo "/sources" > $LFS/sources/scratchpkg/scratchpkg.repo
 echo "SOURCE_DIR=/sources" >> $LFS/sources/scratchpkg/scratchpkg.conf
 tar cJf $LFS/sources/scratchpkg.tar.xz $LFS/sources/scratchpkg
 
-rm $LFS/sources/scratchpkg
+rm -rfv $LFS/sources/scratchpkg
 
 chown root:root $LFS/sources/*
