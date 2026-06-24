@@ -1,7 +1,7 @@
 name=gcc
 echo "step:Compiling toolchain component $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 tar -xf ../mpfr-4.2.2.tar.xz
@@ -45,4 +45,3 @@ cd       build
 make
 make DESTDIR=$LFS install
 ln -sv gcc $LFS/usr/bin/cc
-

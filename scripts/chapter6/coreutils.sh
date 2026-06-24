@@ -1,7 +1,7 @@
 name=coreutils
 echo "step:Compiling toolchain component: $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 ./configure --prefix=/usr                     \

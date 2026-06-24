@@ -1,7 +1,8 @@
-echo "step:Glibc"
+$name=glibc
+echo "step:Compiling toolchain component $name"
 
-autountar glibc
-cd glibc*/
+sh autountar $name
+cd $name*/
 
 ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64
 ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64/ld-lsb-x86-64.so.3

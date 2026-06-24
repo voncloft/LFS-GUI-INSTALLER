@@ -1,7 +1,7 @@
 name=bison
 echo "step:Installing $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 ./configure --prefix=/usr \

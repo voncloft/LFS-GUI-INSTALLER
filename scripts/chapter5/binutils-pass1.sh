@@ -1,8 +1,9 @@
-echo "step:Binutils-pass 1"
+name=binutils
+echo "step:Compiling toolchain component binutils-pass 1"
 
-sh autountar binutils
+sh autountar $name
 
-cd binutils*/
+cd $name*/
 mkdir -v build
 cd build
 

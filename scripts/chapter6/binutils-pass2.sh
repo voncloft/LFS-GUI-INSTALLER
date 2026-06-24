@@ -1,7 +1,7 @@
 name=binutils
 echo "step:Compiling toolchain component $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 sed '6031s/$add_dir//' -i ltmain.sh

@@ -1,7 +1,7 @@
 name=scratchpkg
 echo "step:Installing $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 ./install

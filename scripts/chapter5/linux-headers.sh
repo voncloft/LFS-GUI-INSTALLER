@@ -1,7 +1,8 @@
-echo "step:Linux API headers"
+name=linux
+echo "step:Compiling toolchain component linux API headers"
 
-autountar linux
-cd linux*/
+sh autountar $name
+cd $name*/
 
 make mrproper
 make headers

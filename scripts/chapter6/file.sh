@@ -1,7 +1,7 @@
 name=file
 echo "step:Compiling toolchain component $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 mkdir build

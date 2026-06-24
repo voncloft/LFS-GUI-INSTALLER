@@ -1,7 +1,7 @@
 name=util-linux
 echo "step:Installing $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 mkdir -pv /var/lib/hwclock
@@ -45,4 +45,3 @@ make
 make DESTDIR=$PWD/DESTDIR install
 cp -Rv DESTDIR/usr/lib32/* /usr/lib32
 rm -rf DESTDIR
-

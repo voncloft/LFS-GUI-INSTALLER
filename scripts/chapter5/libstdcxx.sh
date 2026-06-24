@@ -1,7 +1,8 @@
-echo "step:Libstdc++"
+name=gcc
+echo "step:Compiling toolchain component Libstdc++"
 
-autountar gcc
-cd gcc*/
+sh autountar $name
+cd $name*/
 
 mkdir -v build
 cd build

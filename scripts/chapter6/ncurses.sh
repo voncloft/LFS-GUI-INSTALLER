@@ -1,6 +1,6 @@
 echo "step:Compiling toolchain component ncurses"
 name=ncurses
-autountar $name
+sh autountar $name
 cd $name*/
 
 mkdir build

@@ -1,7 +1,7 @@
 name=gawk
 echo "step:Compiling toolchain component $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 sed -i 's/extras//' Makefile.in

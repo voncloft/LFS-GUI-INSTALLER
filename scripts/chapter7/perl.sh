@@ -1,7 +1,7 @@
 name=perl
 echo "step:Installing $name"
 
-autountar "$name"
+sh autountar "$name"
 cd $name*/
 
 sh Configure -des                                         \

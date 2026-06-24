@@ -1,7 +1,7 @@
 name=m4
 echo "step:Compiling toolchain compenent $name"
 
-autountar $name
+sh autountar $name
 cd $name*/
 
 ./configure --prefix=/usr   \
