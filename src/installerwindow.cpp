@@ -2164,6 +2164,8 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
 
     sessionLines << "set -euo pipefail";
     sessionLines << "unset BASH_ENV ENV";
+    sessionLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
+    sessionLines << "export PROJECT_ROOT";
 
     for (const QString &scriptPath : stagedInstallScriptPaths) {
         const QString scriptName = QDir(stagedScriptsDirectory).relativeFilePath(scriptPath);
