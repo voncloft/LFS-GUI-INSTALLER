@@ -1,5 +1,4 @@
-shopt -s expand_aliases
-
+export LFS=/mnt/lfs
 AUTOUNTAR_SCRIPT=
 
 if [ -n "${TARGET_SCRIPTS:-}" ]; then
@@ -19,4 +18,11 @@ if [ -z "${AUTOUNTAR_SCRIPT:-}" ]; then
 fi
 
 export AUTOUNTAR_SCRIPT
-alias autountar='sh "$AUTOUNTAR_SCRIPT"'
+autountar() {
+    if [ -z "${AUTOUNTAR_SCRIPT:-}" ] || [ ! -f "$AUTOUNTAR_SCRIPT" ]; then
+        echo "autountar helper is unavailable: ${AUTOUNTAR_SCRIPT:-unset}" >&2
+        return 1
+    fi
+
+    bash "$AUTOUNTAR_SCRIPT" "$@"
+}

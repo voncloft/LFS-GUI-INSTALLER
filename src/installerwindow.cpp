@@ -274,6 +274,43 @@ QString shellQuote(const QString &value)
     return QString("'%1'").arg(escaped);
 }
 
+QString normalizeInstallEntryText(QString entry)
+{
+    entry = entry.trimmed();
+    if (entry.isEmpty()) {
+        return {};
+    }
+
+    if ((entry.startsWith('"') && entry.endsWith('"')) || (entry.startsWith('\'') && entry.endsWith('\''))) {
+        entry = entry.mid(1, entry.size() - 2);
+    }
+
+    const QString cleaned = QDir::cleanPath(entry);
+    return cleaned == QStringLiteral(".") ? QString() : cleaned;
+}
+
+QString resolvedInstallEntryPath(const QString &scriptsDirectory, const QString &entry)
+{
+    const QString normalizedEntry = normalizeInstallEntryText(entry);
+    if (normalizedEntry.isEmpty()) {
+        return {};
+    }
+
+    return QDir::cleanPath(QFileInfo(QDir(scriptsDirectory).filePath(normalizedEntry)).absoluteFilePath());
+}
+
+bool isKeepAtAllCostsInstallEntry(const QString &scriptsDirectory, const QString &entry)
+{
+    const QString resolvedPath = resolvedInstallEntryPath(scriptsDirectory, entry);
+    if (resolvedPath.isEmpty()) {
+        return false;
+    }
+
+    const QString relativePath = QDir::cleanPath(QDir(scriptsDirectory).relativeFilePath(resolvedPath));
+    return relativePath == QStringLiteral("keep_at_all_costs")
+        || relativePath.startsWith(QStringLiteral("keep_at_all_costs/"));
+}
+
 bool ensureDirectoryExists(const QString &path, QString *errorMessage)
 {
     if (path.trimmed().isEmpty()) {
@@ -2256,22 +2293,18 @@ QStringList InstallerWindow::collectScriptPaths(const QString &scriptsDirectory)
 
     QStringList scriptPaths;
     while (!installListFile.atEnd()) {
-        QString line = QString::fromUtf8(installListFile.readLine()).trimmed();
+        const QString line = normalizeInstallEntryText(QString::fromUtf8(installListFile.readLine()));
         if (line.isEmpty() || line.startsWith('#')) {
             continue;
-        }
-
-        if ((line.startsWith('"') && line.endsWith('"')) || (line.startsWith('\'') && line.endsWith('\''))) {
-            line = line.mid(1, line.size() - 2);
         }
 
         if (!line.endsWith(".sh")) {
             continue;
         }
 
-        const QString scriptPath = QDir(scriptsDirectory).filePath(line);
+        const QString scriptPath = resolvedInstallEntryPath(scriptsDirectory, line);
         if (QFileInfo(scriptPath).isFile()) {
-            scriptPaths.append(QFileInfo(scriptPath).absoluteFilePath());
+            scriptPaths.append(scriptPath);
         }
     }
 
@@ -2280,21 +2313,18 @@ QStringList InstallerWindow::collectScriptPaths(const QString &scriptsDirectory)
 
 bool InstallerWindow::removeInstallListEntry(const QString &scriptEntry, QString *errorMessage) const
 {
-    const auto isKeepAtAllCostsEntry = [](const QString &entry) {
-        const QStringList parts = entry.split('/', Qt::SkipEmptyParts);
-        return parts.contains(QStringLiteral("keep_at_all_costs"));
-    };
-
-    if (isKeepAtAllCostsEntry(scriptEntry)) {
-        return true;
-    }
-
     const QString scriptsDirectory = findScriptsDirectory();
     if (scriptsDirectory.isEmpty()) {
         if (errorMessage) {
             *errorMessage = QStringLiteral("Unable to locate the project's `scripts` folder.");
         }
         return false;
+    }
+
+    const QString normalizedScriptEntry = normalizeInstallEntryText(scriptEntry);
+    const QString resolvedScriptEntry = resolvedInstallEntryPath(scriptsDirectory, normalizedScriptEntry);
+    if (isKeepAtAllCostsInstallEntry(scriptsDirectory, normalizedScriptEntry)) {
+        return true;
     }
 
     const QString installListPath = QDir(scriptsDirectory).filePath("install.sh");
@@ -2310,14 +2340,12 @@ bool InstallerWindow::removeInstallListEntry(const QString &scriptEntry, QString
     bool removed = false;
     while (!installListFile.atEnd()) {
         const QString originalLine = QString::fromUtf8(installListFile.readLine());
-        const QString trimmedLine = originalLine.trimmed();
-        QString normalizedLine = trimmedLine;
-        if ((normalizedLine.startsWith('"') && normalizedLine.endsWith('"')) ||
-            (normalizedLine.startsWith('\'') && normalizedLine.endsWith('\''))) {
-            normalizedLine = normalizedLine.mid(1, normalizedLine.size() - 2);
-        }
+        const QString normalizedLine = normalizeInstallEntryText(originalLine);
+        const QString resolvedLine = resolvedInstallEntryPath(scriptsDirectory, normalizedLine);
 
-        if (!removed && normalizedLine == scriptEntry) {
+        const bool matchesScriptEntry = (!resolvedScriptEntry.isEmpty() && !resolvedLine.isEmpty() && resolvedLine == resolvedScriptEntry)
+                                        || normalizedLine == normalizedScriptEntry;
+        if (!removed && matchesScriptEntry) {
             removed = true;
             continue;
         }
