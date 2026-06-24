@@ -2196,9 +2196,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         return false;
     }
 
-    const QStringList stagedInstallScriptPaths = collectScriptPaths(stagedScriptsDirectory);
     QStringList driverLines;
-    QStringList sessionLines;
     driverLines << "#!/usr/bin/env bash";
     driverLines << "set -euo pipefail";
     driverLines << "unset BASH_ENV ENV";
@@ -2215,40 +2213,6 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     driverLines << "install -m 644 \"$STAGED_FILES/hostname\" \"$TARGET_FILES/hostname\"";
     driverLines << "install -m 644 \"$STAGED_FILES/clock\" \"$TARGET_FILES/clock\"";
     driverLines << "install -m 644 \"$STAGED_FILES/fstab\" \"$TARGET_FILES/fstab\"";
-
-    sessionLines << "set -euo pipefail";
-    sessionLines << "unset BASH_ENV ENV";
-
-    for (const QString &scriptPath : stagedInstallScriptPaths) {
-        const QString scriptName = QDir(stagedScriptsDirectory).relativeFilePath(scriptPath);
-        const QString scriptDir = QFileInfo(scriptPath).absolutePath();
-        QFile scriptFile(scriptPath);
-        if (!scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            if (errorMessage) {
-                *errorMessage = QString("Unable to read `%1`.").arg(scriptPath);
-            }
-            return false;
-        }
-        QString scriptContents = QString::fromUtf8(scriptFile.readAll());
-        if (!scriptContents.endsWith('\n')) {
-            scriptContents.append('\n');
-        }
-        sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + scriptName));
-        sessionLines << QString("SCRIPT_DIR=%1").arg(shellQuote(scriptDir));
-        sessionLines << "export SCRIPT_DIR";
-        sessionLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
-        sessionLines << "export PROJECT_ROOT";
-        sessionLines << "set -euo pipefail";
-        sessionLines << "set -x";
-        sessionLines << scriptContents;
-        sessionLines << "set +x";
-        sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
-    }
-
-    sessionLines << "exit";
-    sessionLines << "exit";
-
-    driverLines << sessionLines;
 
     const QString driverScript = driverLines.join('\n');
     if (!writeFile(driverScriptPath, driverScript, true)) {
@@ -2537,6 +2501,41 @@ void InstallerWindow::startNextInstallScript()
         }
 
         installProcess_->write(driverFile.readAll());
+
+        const QString stagedRoot = QDir(currentRunDirectory_).filePath("generated-artifacts");
+        for (const QString &installScriptPath : std::as_const(installScriptPaths_)) {
+            QFile stagedScriptFile(installScriptPath);
+            if (!stagedScriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                appendInstallLogLine(QString("> unable to read staged script: %1").arg(installScriptPath));
+                markInstallFailed("Failed");
+                return;
+            }
+
+            QString scriptContents = QString::fromUtf8(stagedScriptFile.readAll());
+            if (!scriptContents.endsWith('\n')) {
+                scriptContents.append('\n');
+            }
+
+            const QFileInfo stagedScriptInfo(installScriptPath);
+            const QString scriptEntry = installScriptEntryFromPath(installScriptPath);
+            QStringList commandLines;
+            commandLines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + scriptEntry));
+            commandLines << QString("SCRIPT_DIR=%1").arg(shellQuote(stagedScriptInfo.absolutePath()));
+            commandLines << "export SCRIPT_DIR";
+            commandLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
+            commandLines << "export PROJECT_ROOT";
+            commandLines << "set -euo pipefail";
+            commandLines << "set -x";
+            commandLines << scriptContents.trimmed();
+            commandLines << "set +x";
+            commandLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptEntry));
+            commandLines << "";
+
+            installProcess_->write(commandLines.join('\n').toUtf8());
+            installProcess_->write("\n");
+        }
+
+        installProcess_->write("exit\nexit\n");
         installProcess_->closeWriteChannel();
     }
 }
