@@ -17,5 +17,8 @@ EOF
 cat >> ~/.bashrc << "EOF"
 export MAKEFLAGS=-j$(nproc)
 EOF
-printf "alias autountar='%s'\n" "$PROJECT_ROOT/tools/autountar.sh" >> ~/.bashrc
+if [ -n "${TARGET_SCRIPTS:-}" ]; then
+    AUTOUNTAR_PATH="$(cd -- "$TARGET_SCRIPTS/.." && pwd)/tools/autountar.sh"
+    printf "alias autountar='%s'\n" "$AUTOUNTAR_PATH" >> ~/.bashrc
+fi
 source ~/.bash_profile
