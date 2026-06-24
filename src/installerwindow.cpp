@@ -2562,6 +2562,10 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
     displayLine.remove(ansiEscapePattern);
     displayLine.replace('\t', "    ");
 
+    if (displayLine.contains("__SCRIPT_BEGIN__:") || displayLine.contains("__SCRIPT_DONE__:")) {
+        return;
+    }
+
     QString sanitizedLine;
     sanitizedLine.reserve(displayLine.size());
     for (const QChar character : std::as_const(displayLine)) {
