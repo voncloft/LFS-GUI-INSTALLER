@@ -17,4 +17,5 @@ EOF
 cat >> ~/.bashrc << "EOF"
 export MAKEFLAGS=-j$(nproc)
 EOF
+printf "alias autountar='%s'\n" "$PROJECT_ROOT/tools/autountar.sh" >> ~/.bashrc
 source ~/.bash_profile
