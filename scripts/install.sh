@@ -55,4 +55,5 @@ chapter9/critiques.sh
 universal/cleanup.sh
 chapter10/linux.sh
 chapter10/boot.sh
+chapter10/done.sh
 universal/cleanup.sh
