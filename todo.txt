@@ -1,0 +1,4 @@
+Test it out 
+Chapter 8 will install package manager then you just need scratch install blah blah blah
+
+problem is it needs to source the pkgbuilds for chapter 8

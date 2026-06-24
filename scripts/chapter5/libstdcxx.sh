@@ -1,6 +1,6 @@
 echo "step:Libstdc++"
 
-tar xvf gcc*.tar.xz
+autountar gcc
 cd gcc*/
 
 mkdir -v build

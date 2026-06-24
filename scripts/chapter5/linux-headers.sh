@@ -1,6 +1,6 @@
 echo "step:Linux API headers"
 
-tar xvf linux*.tar.xz
+autountar linux
 cd linux*/
 
 make mrproper

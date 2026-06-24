@@ -1,0 +1,15 @@
+name=bash
+echo "step:Compiling toolchain component $name"
+
+autountar "$name"
+cd $name*/
+
+./configure --prefix=/usr                      \
+            --build=$(sh support/config.guess) \
+            --host=$LFS_TGT                    \
+            --without-bash-malloc              \
+            --docdir=/usr/share/doc/bash-5.3
+
+make
+make DESTDIR=$LFS install
+ln -sv bash $LFS/bin/sh
