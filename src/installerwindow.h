@@ -80,12 +80,14 @@ private:
     void updateNavigationState();
     void setInstallStatus(const QString &message, const QColor &color);
     void resetInstallState(const QString &reason);
+    void markInstallFailed(const QString &reason);
     QString findScriptsDirectory() const;
     bool generateInstallArtifacts(const QString &sourceScriptsDirectory,
                                   QString *runtimeScriptsDirectory,
                                   QString *errorMessage) const;
     QStringList collectScriptPaths(const QString &scriptsDirectory) const;
     int countScriptSteps(const QStringList &scriptPaths) const;
+    bool removeInstallListEntry(const QString &scriptEntry, QString *errorMessage) const;
     void populateFeaturePackages();
     void applyFeatureFilters();
     void loadFeaturePackagesFromRepo();

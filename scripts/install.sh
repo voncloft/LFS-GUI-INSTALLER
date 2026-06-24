@@ -1,4 +1,4 @@
-prepare.sh
+keep_at_all_costs/prepare.sh
 chapter2/prereqs.sh
 partition.sh
 mount.sh
