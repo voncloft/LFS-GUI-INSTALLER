@@ -1,1 +1,1 @@
-tar xvf "$1".tar.*
+tar xvf "$1"*.tar.*
