@@ -1,4 +1,4 @@
-$name=glibc
+name=glibc
 echo "step:Compiling toolchain component $name"
 
 sh autountar $name

@@ -2576,6 +2576,12 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
         }
     }
 
+    static const QRegularExpression driverEchoedCommandPattern(
+        R"(^(?:.*[#$]\s+)?(?:set\s+-euo\s+pipefail|set\s+-x|set\s+\+x|echo\s+['"]?__SCRIPT_(?:BEGIN|DONE)__:.*|PROJECT_ROOT=.*|export\s+PROJECT_ROOT|source\s+.+/generated-artifacts/scripts/.+\.sh)\s*$)");
+    if (driverEchoedCommandPattern.match(sanitizedLine).hasMatch()) {
+        return;
+    }
+
     appendInstallLogLine(sanitizedLine);
 
     static const QRegularExpression tracedStepPattern(R"(^\+\s+echo\s+['"]?step:(.*?)['"]?\s*$)");

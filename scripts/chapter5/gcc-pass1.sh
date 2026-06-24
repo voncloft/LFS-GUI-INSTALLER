@@ -1,4 +1,4 @@
-$name=gcc
+name=gcc
 echo "step:Compiling toolchain component GCC pass 1"
 
 sh autountar $name
