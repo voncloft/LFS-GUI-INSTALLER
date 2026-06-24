@@ -49,3 +49,4 @@ chapter7/cleaningup.sh
 universal/cleanup.sh
 chapter8/scratchpkg.sh
 universal/cleanup.sh
+chapter8/install_system.sh
