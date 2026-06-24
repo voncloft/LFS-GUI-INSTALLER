@@ -2550,7 +2550,10 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
 
     static const QRegularExpression driverSourcePattern(R"(^\+\s+source\s+.+/generated-artifacts/scripts/.+\.sh\s*$)");
     static const QRegularExpression driverSetPlusXPattern(R"(^\+\s+set\s+\+x\s*$)");
-    if (driverSourcePattern.match(line).hasMatch() || driverSetPlusXPattern.match(line).hasMatch()) {
+    static const QRegularExpression driverMarkerEchoPattern(R"(^\+\s+echo\s+['"]?__SCRIPT_(BEGIN|DONE)__:.*$)");
+    if (driverSourcePattern.match(line).hasMatch() ||
+        driverSetPlusXPattern.match(line).hasMatch() ||
+        driverMarkerEchoPattern.match(line).hasMatch()) {
         return;
     }
 
