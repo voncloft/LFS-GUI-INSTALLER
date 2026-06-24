@@ -311,6 +311,18 @@ bool isKeepAtAllCostsInstallEntry(const QString &scriptsDirectory, const QString
         || relativePath.startsWith(QStringLiteral("keep_at_all_costs/"));
 }
 
+QString installScriptEntryFromPath(const QString &scriptPath)
+{
+    const QString normalizedPath = QDir::fromNativeSeparators(QFileInfo(scriptPath).absoluteFilePath());
+    static const QString marker = QStringLiteral("/scripts/");
+    const int markerIndex = normalizedPath.lastIndexOf(marker);
+    if (markerIndex >= 0) {
+        return normalizedPath.mid(markerIndex + marker.size());
+    }
+
+    return QFileInfo(scriptPath).fileName();
+}
+
 bool ensureDirectoryExists(const QString &path, QString *errorMessage)
 {
     if (path.trimmed().isEmpty()) {
@@ -2195,6 +2207,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     driverLines << QString("STAGED_ROOT=%1").arg(shellQuote(stagedRoot));
     driverLines << QString("TARGET_SCRIPTS=%1").arg(shellQuote(targetScriptsDirectory));
     driverLines << QString("TARGET_FILES=%1").arg(shellQuote(targetFilesDirectory));
+    driverLines << "export STAGED_SCRIPTS STAGED_FILES STAGED_ROOT TARGET_SCRIPTS TARGET_FILES";
     driverLines << "install -d \"$TARGET_SCRIPTS\" \"$TARGET_FILES\"";
     driverLines << "install -m 755 \"$STAGED_SCRIPTS/final_setup.sh\" \"$TARGET_SCRIPTS/final_setup.sh\"";
     driverLines << "install -m 755 \"$STAGED_SCRIPTS/partition.sh\" \"$TARGET_SCRIPTS/partition.sh\"";
@@ -2229,7 +2242,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         sessionLines << "set -x";
         sessionLines << scriptContents;
         sessionLines << "set +x";
-        sessionLines << "echo hey successful";
+        sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
     }
 
     sessionLines << "exit";
@@ -2631,18 +2644,12 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
         return;
     }
 
-    if (line.trimmed() == QStringLiteral("hey successful")) {
-        if (currentInstallEntryName_.isEmpty()) {
-            return;
-        }
-
-        appendInstallLogLine(QStringLiteral("hey successful"));
-        const QString completedEntryName = currentInstallEntryName_;
-        currentInstallEntryName_.clear();
+    if (line.startsWith("__SCRIPT_DONE__:")) {
+        currentInstallEntryName_ = line.mid(QString("__SCRIPT_DONE__:").size()).trimmed();
         QString updateError;
-        if (!removeInstallListEntry(completedEntryName, &updateError)) {
+        if (!removeInstallListEntry(currentInstallEntryName_, &updateError)) {
             appendInstallLogLine(QString("> warning: unable to update scripts/install.sh after `%1`: %2")
-                                     .arg(completedEntryName, updateError));
+                                     .arg(currentInstallEntryName_, updateError));
         }
         if (installProgressBar_ && totalInstallSteps_ > 0) {
             ++completedInstallSteps_;
