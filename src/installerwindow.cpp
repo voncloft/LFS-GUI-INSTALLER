@@ -2229,7 +2229,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         sessionLines << "set -x";
         sessionLines << scriptContents;
         sessionLines << "set +x";
-        sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + scriptName));
+        sessionLines << "echo hey successful";
     }
 
     sessionLines << "exit";
@@ -2472,7 +2472,9 @@ void InstallerWindow::startNextInstallScript()
             return;
         }
 
-        const QString ptyCommand = QString("%1 --noprofile --norc").arg(shellQuote(bashExecutable));
+        const QString ptyCommand = QString("%1 --noprofile --norc %2")
+                                       .arg(shellQuote(bashExecutable),
+                                            shellQuote(scriptPath));
 
         if (geteuid() != 0) {
         const QString sudoExecutable = QStandardPaths::findExecutable("sudo");
@@ -2509,23 +2511,6 @@ void InstallerWindow::startNextInstallScript()
     }
 
     installProcess_->start(program, arguments);
-    if (useInstallDriver) {
-        if (!installProcess_->waitForStarted(5000)) {
-            appendInstallLogLine("> failed to start install session");
-            markInstallFailed("Failed");
-            return;
-        }
-
-        QFile driverFile(scriptPath);
-        if (!driverFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            appendInstallLogLine(QString("> unable to read install session: %1").arg(scriptPath));
-            markInstallFailed("Failed");
-            return;
-        }
-
-        installProcess_->write(driverFile.readAll());
-        installProcess_->closeWriteChannel();
-    }
 }
 
 void InstallerWindow::handleInstallProcessOutput()
@@ -2631,12 +2616,18 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
         return;
     }
 
-    if (line.startsWith("__SCRIPT_DONE__:")) {
-        currentInstallEntryName_ = line.mid(QString("__SCRIPT_DONE__:").size()).trimmed();
+    if (line.trimmed() == QStringLiteral("hey successful")) {
+        if (currentInstallEntryName_.isEmpty()) {
+            return;
+        }
+
+        appendInstallLogLine(QStringLiteral("hey successful"));
+        const QString completedEntryName = currentInstallEntryName_;
+        currentInstallEntryName_.clear();
         QString updateError;
-        if (!removeInstallListEntry(currentInstallEntryName_, &updateError)) {
+        if (!removeInstallListEntry(completedEntryName, &updateError)) {
             appendInstallLogLine(QString("> warning: unable to update scripts/install.sh after `%1`: %2")
-                                     .arg(currentInstallEntryName_, updateError));
+                                     .arg(completedEntryName, updateError));
         }
         if (installProgressBar_ && totalInstallSteps_ > 0) {
             ++completedInstallSteps_;
