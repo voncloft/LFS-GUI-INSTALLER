@@ -6,7 +6,9 @@ chapter2/change_permissions.sh
 chapter3/get_packages.sh
 chapter4/directories.sh
 chapter4/addlfsuser.sh
+keep_at_all_costs/login_lfs_user.sh
 chapter4/environment.sh
+keep_at_all_costs/source_bash_profile.sh
 universal/cd_to_sources.sh
 chapter5/binutils-pass1.sh
 chapter5/gcc-pass1.sh
