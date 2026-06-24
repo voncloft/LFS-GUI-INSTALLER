@@ -2167,7 +2167,6 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
 
     for (const QString &scriptPath : stagedInstallScriptPaths) {
         const QString scriptName = QDir(stagedScriptsDirectory).relativeFilePath(scriptPath);
-        const QString scriptDir = QFileInfo(scriptPath).absolutePath();
         QFile scriptFile(scriptPath);
         if (!scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
             if (errorMessage) {
@@ -2180,10 +2179,6 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
             scriptContents.append('\n');
         }
         sessionLines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + scriptName));
-        sessionLines << QString("SCRIPT_DIR=%1").arg(shellQuote(scriptDir));
-        sessionLines << "export SCRIPT_DIR";
-        sessionLines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
-        sessionLines << "export PROJECT_ROOT";
         sessionLines << "set -euo pipefail";
         sessionLines << "set -x";
         sessionLines << scriptContents;
