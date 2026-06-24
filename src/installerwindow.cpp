@@ -2205,6 +2205,47 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
 
     sessionLines << "set -euo pipefail";
     sessionLines << "unset BASH_ENV ENV";
+    sessionLines << "remove_install_list_entry() {";
+    sessionLines << "    local entry=\"$1\"";
+    sessionLines << "    local install_list=\"$TARGET_SCRIPTS/install.sh\"";
+    sessionLines << "    local tmp_file";
+    sessionLines << "";
+    sessionLines << "    case \"$entry\" in";
+    sessionLines << "        keep_at_all_costs|keep_at_all_costs/*) return 0 ;;";
+    sessionLines << "    esac";
+    sessionLines << "";
+    sessionLines << "    if [ ! -f \"$install_list\" ]; then";
+    sessionLines << "        echo \"warning: install list missing: $install_list\" >&2";
+    sessionLines << "        return 1";
+    sessionLines << "    fi";
+    sessionLines << "";
+    sessionLines << "    tmp_file=\"$install_list.tmp.$$\"";
+    sessionLines << "    if ! awk -v target=\"$entry\" '";
+    sessionLines << "        BEGIN { removed = 0 }";
+    sessionLines << "        {";
+    sessionLines << "            original = $0";
+    sessionLines << "            normalized = $0";
+    sessionLines << "            sub(/^[[:space:]]+/, \"\", normalized)";
+    sessionLines << "            sub(/[[:space:]]+$/, \"\", normalized)";
+    sessionLines << "            if ((normalized ~ /^\".*\"$/) || (normalized ~ /^\\047.*\\047$/)) {";
+    sessionLines << "                normalized = substr(normalized, 2, length(normalized) - 2)";
+    sessionLines << "            }";
+    sessionLines << "            if (!removed && normalized == target) {";
+    sessionLines << "                removed = 1";
+    sessionLines << "                next";
+    sessionLines << "            }";
+    sessionLines << "            print original";
+    sessionLines << "        }";
+    sessionLines << "        END { exit removed ? 0 : 1 }";
+    sessionLines << "    ' \"$install_list\" > \"$tmp_file\"; then";
+    sessionLines << "        rm -f \"$tmp_file\"";
+    sessionLines << "        echo \"warning: install list entry not removed: $entry\" >&2";
+    sessionLines << "        return 1";
+    sessionLines << "    fi";
+    sessionLines << "";
+    sessionLines << "    cat \"$tmp_file\" > \"$install_list\"";
+    sessionLines << "    rm -f \"$tmp_file\"";
+    sessionLines << "}";
 
     for (const QString &scriptPath : stagedInstallScriptPaths) {
         const QString scriptName = QDir(stagedScriptsDirectory).relativeFilePath(scriptPath);
@@ -2229,6 +2270,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
         sessionLines << "set -x";
         sessionLines << scriptContents;
         sessionLines << "set +x";
+        sessionLines << QString("remove_install_list_entry %1").arg(shellQuote(scriptName));
         sessionLines << "echo hey successful";
     }
 
@@ -2622,13 +2664,7 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
         }
 
         appendInstallLogLine(QStringLiteral("hey successful"));
-        const QString completedEntryName = currentInstallEntryName_;
         currentInstallEntryName_.clear();
-        QString updateError;
-        if (!removeInstallListEntry(completedEntryName, &updateError)) {
-            appendInstallLogLine(QString("> warning: unable to update scripts/install.sh after `%1`: %2")
-                                     .arg(completedEntryName, updateError));
-        }
         if (installProgressBar_ && totalInstallSteps_ > 0) {
             ++completedInstallSteps_;
             installProgressBar_->setValue(qMin(completedInstallSteps_, totalInstallSteps_));
