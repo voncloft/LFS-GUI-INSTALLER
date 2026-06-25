@@ -14,8 +14,8 @@ chmod -v a+wt $LFS/sources
 #mv binutils*.tar.xz $LFS/sources
 
 
-wget -c https://ftp.osuosl.org/pub/lfs/lfs-packages/lfs-packages-13.0-rc1.tar --directory-prefix=$LFS/sources
-tar -xvf $LFS/sources/lfs-packages-13.0-rc1.tar -C $LFS/sources
+wget -c https://ftp.osuosl.org/pub/lfs/lfs-packages/lfs-packages-13.0.tar --directory-prefix=$LFS/sources
+tar -xvf $LFS/sources/lfs-packages-13.0.tar -C $LFS/sources
 
 cp ../../tools/autountar.sh $LFS/sources/autountar
 chmod +x $LFS/sources/autountar
