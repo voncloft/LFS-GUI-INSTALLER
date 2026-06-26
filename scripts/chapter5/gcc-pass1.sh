@@ -3,12 +3,12 @@ echo "step:Compiling toolchain component GCC pass 1"
 
 sh autountar $name
 cd $name*/
-tar -xf ../mpfr-$mpfr_version.tar.xz
-mv -v mpfr-$mpfr_version mpfr
-tar -xf ../gmp-$gmp_version.tar.xz
-mv -v gmp-$gmp_version gmp
-tar -xf ../mpc-$mpc_version.tar.xz
-mv -v mpc-$mpc_version mpc
+tar -xf ../mpfr-4.2.2.tar.xz
+mv -v mpfr-4.2.2 mpfr
+tar -xf ../gmp-6.3.0.tar.xz
+mv -v gmp-6.3.0 gmp
+tar -xf ../mpc-1.3.1.tar.xz
+mv -v mpc-1.3.1 mpc
 
 sed -e '/m64=/s/lib64/lib/' \
     -e '/m32=/s/m32=.*/m32=..\/lib32$(call if_multiarch,:i386-linux-gnu)/' \
@@ -23,7 +23,7 @@ cd       build
 ../configure                     \
     --target=$LFS_TGT            \
     --prefix=$LFS/tools          \
-    --with-glibc-version=$glibc_version    \
+    --with-glibc-version=2.43    \
     --with-sysroot=$LFS          \
     --with-newlib                \
     --without-headers            \
