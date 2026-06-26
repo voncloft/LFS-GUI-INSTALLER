@@ -1,0 +1,7 @@
+kernel-prereq-1.1-1
+drwxr-xr-x root/root    lib/
+drwxr-xr-x root/root    lib/firmware/
+-rw-r--r-- root/root    lib/firmware/NXP7164-2010-03-10.1.fw
+-rw-r--r-- root/root    lib/firmware/dvb-fe-tda10048-1.0.fw
+-rw-r--r-- root/root    lib/firmware/v4l-saa7164-1.0.2.fw
+-rw-r--r-- root/root    lib/firmware/v4l-saa7164-1.0.3.fw

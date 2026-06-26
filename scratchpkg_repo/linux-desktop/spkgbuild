@@ -1,0 +1,49 @@
+# description : linux kernel for desktop
+# depends : sof-firmware linux-firmware tuner-firmware
+name=linux-desktop
+version=$linux_version
+release=1
+
+source="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$version.tar.xz
+        .config"
+options="!checksum"
+
+build() {
+    cd linux-$version
+
+    make mrproper
+    cp $SRC/.config .
+
+    # Optionally run menuconfig if you want to customize
+    make menuconfig
+
+    make -j9
+
+    # Install kernel modules to packaging directory
+    mkdir -p $PKG/usr
+    make INSTALL_MOD_PATH=$PKG modules_install
+
+    # Install kernel image and related files
+    mkdir -p $PKG/boot
+    cp arch/x86/boot/bzImage $PKG/boot/vmlinuz-$version
+    cp System.map $PKG/boot/System.map
+    cp .config $PKG/boot/config-$version
+
+    make INSTALL_PATH=$PKG install
+
+    # Write kernel version file for modules directory
+    mkdir -p $PKG/lib/modules/$version
+    echo $version > $PKG/lib/modules/KERNELVERSION
+
+    # Copy full kernel source to persistent directory named by version
+    mkdir -p $PKG/usr/src/linux-$version
+    cp -rv . $PKG/usr/src/linux-$version
+
+    # Prepare the copied kernel source for external modules
+    cd $PKG/usr/src/linux-$version
+    make modules_prepare
+
+    # Create symlinks in modules directory to point to persistent kernel source
+    ln -sfn /usr/src/linux-$version $PKG/lib/modules/$version/build
+    ln -sfn /usr/src/linux-$version $PKG/lib/modules/$version/source
+}

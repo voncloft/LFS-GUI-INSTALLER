@@ -1,0 +1,84 @@
+#!/bin/bash
+
+BASE_DIR="/sources/Voncloft-OS-dev"
+REPORT_FILE="repo.txt"
+UPGRADE_SCRIPT="upgrade.sh"
+PACKAGE_LIST="packages.txt"
+
+# Fetch BLFS package list
+#curl -s "https://www.linuxfromscratch.org/blfs/view/svn/longindex.html" | \
+#  grep -oE '>[a-zA-Z0-9_.+-]+-[0-9][^<]*<' | \
+#  sed 's/[<>]//g' | \
+#  sort -u > "$PACKAGE_LIST"
+
+
+curl -s "https://www.linuxfromscratch.org/blfs/view/svn/index.html" | \
+  grep -oE '<a href="[^"]+">[a-zA-Z0-9_.+-]+-[0-9][^<]*</a>' | \
+  sed 's/.*>\(.*\)<\/a>/\1/' | \
+  sort -u > "$PACKAGE_LIST"
+# Initialize report and upgrade script
+echo "BLFS Package Version Report - $(date)" > "$REPORT_FILE"
+echo "#!/bin/bash" > "$UPGRADE_SCRIPT"
+echo "# Auto-generated script to upgrade spkgbuild versions" >> "$UPGRADE_SCRIPT"
+echo "" >> "$UPGRADE_SCRIPT"
+
+while read -r blfs_pkgver; do
+  pkgname=$(echo "$blfs_pkgver" | sed 's/-[0-9][0-9.]*.*$//')
+
+  # Exclude unwanted prefixes (case-insensitive)
+  shopt -s nocasematch
+  if [[ "$pkgname" =~ ^(kde-apps|kf|plasma) ]]; then
+    shopt -u nocasematch
+    continue
+  fi
+  shopt -u nocasematch
+
+  blfs_version=$(echo "$blfs_pkgver" | sed "s/^$pkgname-//")
+  lcname=$(echo "$pkgname" | tr 'A-Z' 'a-z')
+
+  # Find directory case-insensitive, excluding kde-apps, kf, plasma dirs
+  match_dir=""
+  while IFS= read -r dir; do
+    base=$(basename "$dir")
+    base_lc=$(echo "$base" | tr 'A-Z' 'a-z')
+    if [[ "$base_lc" == "$lcname" ]]; then
+      match_dir="$dir"
+      break
+    fi
+  done < <(find "$BASE_DIR" \( -iname kde-apps -o -iname kf -o -iname plasma \) -prune -o -type d -print)
+
+  if [[ -n "$match_dir" && -f "$match_dir/spkgbuild" ]]; then
+    spkgbuild_path="$match_dir/spkgbuild"
+
+    # Extract version= line, remove quotes, take first token only
+    local_version_line=$(grep -E '^version=' "$spkgbuild_path" | head -n1)
+    local_version_full=$(echo "$local_version_line" | sed -E 's/^version=//; s/^["'\'']//; s/["'\''].*$//')
+    local_version=$(echo "$local_version_full" | awk '{print $1}')
+
+    blfs_version_token=$(echo "$blfs_version" | awk '{print $1}')
+
+    if [[ "$local_version" == "$blfs_version_token" ]]; then
+      echo "$pkgname: MATCH (version $local_version, dir: ${match_dir#$BASE_DIR/})" >> "$REPORT_FILE"
+    else
+      echo "$pkgname: VERSION MISMATCH - local=$local_version, blfs=$blfs_version_token (dir: ${match_dir#$BASE_DIR/})" >> "$REPORT_FILE"
+
+      # Escape versions and path for sed
+      escaped_old=$(printf '%s\n' "$local_version" | sed 's/[&/\]/\\&/g')
+      escaped_new=$(printf '%s\n' "$blfs_version_token" | sed 's/[&/\]/\\&/g')
+      escaped_path=$(printf '%s\n' "$spkgbuild_path" | sed 's/ /\\ /g')
+
+      # sed replace exact old version (with optional quotes) with new version
+      #echo "sed -i 's/^version=[\"'\\\']\\?$escaped_old[\"'\\\']\\?/version=$escaped_new/' \"$escaped_path\"" >> "$UPGRADE_SCRIPT"
+        echo "sed -i 's/^version=$local_version/version=$blfs_version_token/' \"$escaped_path\"" >> "$UPGRADE_SCRIPT"
+
+    fi
+  else
+    echo "$pkgname: MISSING" >> "$REPORT_FILE"
+  fi
+done < "$PACKAGE_LIST"
+
+chmod +x "$UPGRADE_SCRIPT"
+echo "✅ Report saved to $REPORT_FILE"
+echo "🛠 Upgrade script saved to $UPGRADE_SCRIPT (not executed)"
+root [ /sandbox ]# 
+

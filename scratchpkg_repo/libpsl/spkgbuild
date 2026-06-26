@@ -1,0 +1,19 @@
+# description   : The libpsl package provides a library for accessing and resolving information from the Public Suffix List (PSL)
+# depends       : libidn2 libunistring
+
+name=libpsl
+version=0.21.5    
+release=1
+source="https://github.com/rockdaboot/libpsl/releases/download/0.21.5/libpsl-0.21.5.tar.gz"
+
+options="!checksum"
+
+build() {
+    cd $name-$version
+    
+    mkdir build 
+    cd    build 
+    meson setup --prefix=/usr --buildtype=release 
+    ninja
+    DESTDIR=$PKG ninja install
+}

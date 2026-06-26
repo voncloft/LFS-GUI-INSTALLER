@@ -1,0 +1,15 @@
+# description:	updates the packages in the repo from the blfs book
+# depends :	
+
+name=blfs-book-updater
+version=1
+relase=1
+
+source="bookupdater"
+options="!checksum"
+
+build()
+{
+	mkdir -$PKG/usr/bin
+	install -Dm755 $SRC/bookupdater $PKG/usr/bin/bookupdater
+}

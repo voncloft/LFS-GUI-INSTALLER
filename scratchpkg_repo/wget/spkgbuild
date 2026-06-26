@@ -1,0 +1,18 @@
+# description	: Utility useful for non-interactive downloading of files from the Web
+# depends	: libpsl
+
+name=wget
+version=1.25.0
+release=1
+source="https://ftp.gnu.org/gnu/$name/$name-$version.tar.gz"
+options="!checksum"
+
+build() {
+	cd $name-$version
+
+  	./configure --prefix=/usr \
+	            --sysconfdir=/etc \
+		    --with-ssl=openssl
+	make
+	make DESTDIR=$PKG install
+}

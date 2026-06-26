@@ -1,0 +1,13 @@
+sed -i -e s/^version=.*/version=2.45/g binutils/spkgbuild
+sed -i -e s/^version=.*/version=1.47.3/g e2fsprogs/spkgbuild
+sed -i -e s/^version=.*/version=15.2.0/g gcc/spkgbuild
+sed -i -e s/^version=.*/version=1.26/g gdbm/spkgbuild
+sed -i -e s/^version=.*/version=0.26/g gettext/spkgbuild
+sed -i -e s/^version=.*/version=2.42/g glibc/spkgbuild
+sed -i -e s/^version=.*/version=3.5.2/g libffi/spkgbuild
+sed -i -e s/^version=.*/version=6.15/g man-pages/spkgbuild
+sed -i -e s/^version=.*/version=1.8.3/g meson/spkgbuild
+sed -i -e s/^version=.*/version=1.13.1/g ninja/spkgbuild
+sed -i -e s/^version=.*/version=3.5.2/g openssl/spkgbuild
+sed -i -e s/^version=.*/version=5.42.0/g perl/spkgbuild
+sed -i -e s/^version=.*/version=3.13.6/g python/spkgbuild
