@@ -8,7 +8,7 @@ cd $name*/
             --host=$LFS_TGT                   \
             --build=$(build-aux/config.guess) \
             --disable-static                  \
-            --docdir=/usr/share/doc/xz-$xz_version
+            --docdir=/usr/share/doc/xz-$xz_utils_version
 
 make
 make DESTDIR=$LFS install
