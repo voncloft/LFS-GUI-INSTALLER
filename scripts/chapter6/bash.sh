@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=bash
 echo "step:Compiling toolchain component $name"
 
@@ -8,7 +10,7 @@ cd $name*/
             --build=$(sh support/config.guess) \
             --host=$LFS_TGT                    \
             --without-bash-malloc              \
-            --docdir=/usr/share/doc/bash-5.3
+            --docdir=/usr/share/doc/bash-$bash_version
 
 make
 make DESTDIR=$LFS install

@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=sed
 echo "step:Compiling toolchain component $name"
 

@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=gzip
 echo "step:Compiling toolchain component $name"
 

@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=findutils
 echo "step:Compiling toolchain component $name"
 

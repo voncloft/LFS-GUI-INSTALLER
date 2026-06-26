@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=texinfo
 echo "step:Installing $name"
 

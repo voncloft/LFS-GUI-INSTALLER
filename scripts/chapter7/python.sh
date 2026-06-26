@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=python
 echo "step:Installing $name"
 

@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=gettext
 echo "step:Installing $name"
 

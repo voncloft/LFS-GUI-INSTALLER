@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=gcc
 echo "step:Compiling toolchain component Libstdc++"
 
@@ -14,7 +16,7 @@ cd build
     --enable-multilib               \
     --disable-nls                   \
     --disable-libstdcxx-pch         \
-    --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/15.2.0
+    --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/$gcc_version
 
 make
 make DESTDIR=$LFS install

@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=glibc
 echo "step:Compiling toolchain component $name"
 
@@ -8,7 +10,7 @@ ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64
 ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64/ld-lsb-x86-64.so.3
 
 patch -Np1 -i ../glibc-fhs-1.patch
-patch -Np1 -i ../glibc-2.43-upstream_fixes-1.patch
+patch -Np1 -i ../glibc-$glibc_version-upstream_fixes-1.patch
 
 mkdir -v build
 cd build

@@ -1,3 +1,5 @@
+source ../universal/versions.sh
+
 name=binutils
 echo "step:Compiling toolchain component binutils-pass 1"
 
@@ -18,4 +20,3 @@ cd build
 
 make
 make install
-
