@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=grep
 echo "step:Compiling toolchain component $name"
 

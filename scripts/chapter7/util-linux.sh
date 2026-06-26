@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=util-linux
 echo "step:Installing $name"
 

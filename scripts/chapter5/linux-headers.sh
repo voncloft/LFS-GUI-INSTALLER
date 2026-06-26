@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=linux
 echo "step:Compiling toolchain component linux API headers"
 

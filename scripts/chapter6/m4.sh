@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=m4
 echo "step:Compiling toolchain compenent $name"
 

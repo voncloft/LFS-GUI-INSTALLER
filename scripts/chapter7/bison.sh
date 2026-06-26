@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=bison
 echo "step:Installing $name"
 

@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 echo "step:Compiling toolchain component ncurses"
 name=ncurses
 sh autountar $name

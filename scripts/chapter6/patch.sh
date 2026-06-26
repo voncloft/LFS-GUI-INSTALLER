@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=patch
 echo "step:Compiling toolchain component $name"
 

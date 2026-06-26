@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=gcc
 echo "step:Compiling toolchain component GCC pass 1"
 

@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=perl
 echo "step:Installing $name"
 

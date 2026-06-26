@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=diffutils
 echo "step:Compiling toolchain component $name"
 

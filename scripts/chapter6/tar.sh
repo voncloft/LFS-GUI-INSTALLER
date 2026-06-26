@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=tar
 echo "step:Compiling toolchain component $name"
 

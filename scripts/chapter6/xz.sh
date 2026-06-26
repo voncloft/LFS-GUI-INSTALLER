@@ -1,5 +1,3 @@
-source ../universal/versions.sh
-
 name=xz
 echo "step:Compiling toolchain component $name"
 
