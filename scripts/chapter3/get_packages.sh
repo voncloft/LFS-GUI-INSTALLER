@@ -18,7 +18,7 @@ wget -c https://ftp.osuosl.org/pub/lfs/lfs-packages/lfs-packages-13.0.tar --dire
 tar -xvf $LFS/sources/lfs-packages-13.0.tar -C $LFS/sources
 mv $LFS/sources/*/* $LFS/sources
 cp ../../tools/autountar.sh $LFS/sources/autountar
-cp ../universal/versions.sh $LFS/sources
+cp scripts/universal/versions.sh $LFS/sources
 chmod +x $LFS/sources/autountar
 
 git clone https://github.com/voncloft/scratchpkg.git
