@@ -74,6 +74,9 @@ chapter6/gcc-pass2.sh
 universal/cd_to_sources.sh
 universal/cleanup.sh
 chapter7/entering_chroot.sh
+###NEEDS TESTED BELOW FOR SCRATCHPKG###
+chapter7/import_variables.sh
+chapter7/
 chapter7/setting_up_directories.sh
 chapter7/change_source_directory.sh
 chapter7/gettext.sh
