@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QFile>
 #include <QProcess>
 #include <QColor>
 #include <QVector>
@@ -86,6 +87,15 @@ private:
                                   QString *errorMessage) const;
     QStringList collectScriptPaths(const QString &scriptsDirectory) const;
     int countScriptSteps(const QStringList &scriptPaths) const;
+    QString installScriptEntryName(const QString &scriptPath) const;
+    QString installLogPathForEntry(const QString &entryName) const;
+    bool prepareCurrentInstallLog(QString *errorMessage);
+    void closeCurrentInstallLog();
+    void appendCurrentInstallLogLine(const QString &line);
+    QString buildInstallSessionPrelude() const;
+    bool queueInstallCommand(const QString &command, const QString &context, QString *errorMessage);
+    bool queueInstallScriptChunk(const QString &scriptPath, QString *errorMessage);
+    bool startInstallShellSession(QString *errorMessage);
     void populateFeaturePackages();
     void applyFeatureFilters();
     void loadFeaturePackagesFromRepo();
@@ -157,11 +167,15 @@ private:
     QString currentInstallScriptPath_;
     QString currentInstallEntryName_;
     QString currentRuntimeScriptsDirectory_;
+    QString currentInstallLogRootDirectory_;
+    QFile currentInstallLogFile_;
     int currentInstallScriptIndex_ = -1;
     int totalInstallSteps_ = 0;
     int completedInstallSteps_ = 0;
     bool installCompleted_ = false;
     bool installInProgress_ = false;
+    bool installShellSessionStarted_ = false;
+    bool installSessionClosing_ = false;
     bool refreshingSummaries_ = false;
     QString currentRunDirectory_;
 };

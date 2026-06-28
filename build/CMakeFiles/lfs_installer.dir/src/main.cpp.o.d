@@ -366,8 +366,13 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o: \
  /usr/include/QtCore/qhash.h /usr/include/QtCore/qvarlengtharray.h \
  /usr/include/QtGui/qguiapplication_platform.h \
  /home/von/qt6\ projects/lfs_installer/src/installerwindow.h \
- /usr/include/QtCore/QProcess /usr/include/QtCore/qprocess.h \
- /usr/include/QtCore/qiodevice.h /usr/include/QtGui/QColor \
+ /usr/include/QtCore/QFile /usr/include/QtCore/qfile.h \
+ /usr/include/QtCore/qfiledevice.h /usr/include/QtCore/qiodevice.h \
+ /usr/include/c++/15.1.0/filesystem /usr/include/c++/15.1.0/bits/fs_fwd.h \
+ /usr/include/c++/15.1.0/bits/fs_path.h /usr/include/c++/15.1.0/codecvt \
+ /usr/include/c++/15.1.0/bits/fs_dir.h \
+ /usr/include/c++/15.1.0/bits/fs_ops.h /usr/include/QtCore/QProcess \
+ /usr/include/QtCore/qprocess.h /usr/include/QtGui/QColor \
  /usr/include/QtGui/qcolor.h /usr/include/QtCore/QVector \
  /usr/include/QtCore/qvector.h /usr/include/QtWidgets/QWidget \
  /usr/include/QtWidgets/qwidget.h /usr/include/QtGui/qaction.h \

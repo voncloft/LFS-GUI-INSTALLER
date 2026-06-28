@@ -1,5 +1,6 @@
 /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp: /home/von/qt6\ projects/lfs_installer/src/installerwindow.h \
   /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/moc_predefs.h \
+  /usr/include/QtCore/QFile \
   /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QVector \
   /usr/include/QtCore/q17memory.h \
@@ -39,6 +40,8 @@
   /usr/include/QtCore/qdebug.h \
   /usr/include/QtCore/qendian.h \
   /usr/include/QtCore/qexceptionhandling.h \
+  /usr/include/QtCore/qfile.h \
+  /usr/include/QtCore/qfiledevice.h \
   /usr/include/QtCore/qflags.h \
   /usr/include/QtCore/qfloat16.h \
   /usr/include/QtCore/qforeach.h \
@@ -394,6 +397,7 @@
   /usr/include/c++/15.1.0/ext/numeric_traits.h \
   /usr/include/c++/15.1.0/ext/string_conversions.h \
   /usr/include/c++/15.1.0/ext/type_traits.h \
+  /usr/include/c++/15.1.0/filesystem \
   /usr/include/c++/15.1.0/format \
   /usr/include/c++/15.1.0/functional \
   /usr/include/c++/15.1.0/initializer_list \

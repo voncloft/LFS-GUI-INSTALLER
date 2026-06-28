@@ -3,9 +3,9 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/stdc-predef.h \
  /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp \
  /home/von/qt6\ projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/../../../src/installerwindow.h \
- /usr/include/QtCore/QProcess /usr/include/QtCore/qprocess.h \
- /usr/include/QtCore/qcompare.h /usr/include/QtCore/qglobal.h \
- /usr/include/c++/15.1.0/type_traits \
+ /usr/include/QtCore/QFile /usr/include/QtCore/qfile.h \
+ /usr/include/QtCore/qfiledevice.h /usr/include/QtCore/qiodevice.h \
+ /usr/include/QtCore/qglobal.h /usr/include/c++/15.1.0/type_traits \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/c++config.h \
  /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/os_defines.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -180,7 +180,9 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/QtCore/qtenvironmentvariables.h \
  /usr/include/QtCore/qtresource.h /usr/include/QtCore/qttranslation.h \
  /usr/include/QtCore/qversiontagging.h \
- /usr/include/QtCore/qstdlibdetection.h \
+ /usr/include/QtCore/qiodevicebase.h /usr/include/QtCore/qobject.h \
+ /usr/include/QtCore/qobjectdefs.h /usr/include/QtCore/qnamespace.h \
+ /usr/include/QtCore/qcompare.h /usr/include/QtCore/qstdlibdetection.h \
  /usr/include/QtCore/qcomparehelpers.h \
  /usr/include/QtCore/q20type_traits.h /usr/include/c++/15.1.0/functional \
  /usr/include/c++/15.1.0/bits/stl_function.h \
@@ -208,9 +210,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/c++/15.1.0/bits/stl_vector.h \
  /usr/include/c++/15.1.0/bits/stl_bvector.h \
  /usr/include/c++/15.1.0/bits/vector.tcc /usr/include/c++/15.1.0/array \
- /usr/include/QtCore/qiodevice.h /usr/include/QtCore/qiodevicebase.h \
- /usr/include/QtCore/qobject.h /usr/include/QtCore/qobjectdefs.h \
- /usr/include/QtCore/qnamespace.h /usr/include/QtCore/qtmetamacros.h \
+ /usr/include/QtCore/qtmetamacros.h \
  /usr/include/QtCore/qobjectdefs_impl.h \
  /usr/include/QtCore/qfunctionaltools_impl.h \
  /usr/include/c++/15.1.0/memory \
@@ -332,12 +332,17 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: \
  /usr/include/c++/15.1.0/bits/chrono_io.h /usr/include/c++/15.1.0/iomanip \
  /usr/include/c++/15.1.0/bits/quoted_string.h /usr/include/QtCore/qspan.h \
  /usr/include/c++/15.1.0/cassert /usr/include/QtCore/q20iterator.h \
- /usr/include/QtCore/qshareddata.h /usr/include/QtGui/QColor \
- /usr/include/QtGui/qcolor.h /usr/include/QtGui/qtguiglobal.h \
- /usr/include/QtGui/qtgui-config.h /usr/include/QtGui/qtguiexports.h \
- /usr/include/QtGui/qrgb.h /usr/include/QtGui/qrgba64.h \
- /usr/include/QtCore/QVector /usr/include/QtCore/qvector.h \
- /usr/include/QtWidgets/QWidget /usr/include/QtWidgets/qwidget.h \
+ /usr/include/c++/15.1.0/filesystem /usr/include/c++/15.1.0/bits/fs_fwd.h \
+ /usr/include/c++/15.1.0/bits/fs_path.h /usr/include/c++/15.1.0/codecvt \
+ /usr/include/c++/15.1.0/bits/fs_dir.h \
+ /usr/include/c++/15.1.0/bits/fs_ops.h /usr/include/QtCore/QProcess \
+ /usr/include/QtCore/qprocess.h /usr/include/QtCore/qshareddata.h \
+ /usr/include/QtGui/QColor /usr/include/QtGui/qcolor.h \
+ /usr/include/QtGui/qtguiglobal.h /usr/include/QtGui/qtgui-config.h \
+ /usr/include/QtGui/qtguiexports.h /usr/include/QtGui/qrgb.h \
+ /usr/include/QtGui/qrgba64.h /usr/include/QtCore/QVector \
+ /usr/include/QtCore/qvector.h /usr/include/QtWidgets/QWidget \
+ /usr/include/QtWidgets/qwidget.h \
  /usr/include/QtWidgets/qtwidgetsglobal.h \
  /usr/include/QtWidgets/qtwidgets-config.h \
  /usr/include/QtWidgets/qtwidgetsexports.h \
