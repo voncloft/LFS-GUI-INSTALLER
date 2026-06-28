@@ -2287,40 +2287,57 @@ bool InstallerWindow::prepareCurrentInstallLog(QString *errorMessage)
         return false;
     }
 
-    const QFileInfo logRootInfo(currentInstallLogRootDirectory_);
-    if (logRootInfo.exists() && !logRootInfo.isDir()) {
-        if (errorMessage) {
-            *errorMessage = QString("Log root `%1` exists but is not a directory.")
-                                .arg(currentInstallLogRootDirectory_);
-        }
-        return false;
-    }
-
-    const QString logPath = installLogPathForEntry(currentInstallEntryName_);
     const QString relativeParent = QFileInfo(currentInstallEntryName_).path();
-    QDir logRoot(currentInstallLogRootDirectory_);
-    if (!relativeParent.isEmpty() && relativeParent != "." && !logRoot.mkpath(relativeParent)) {
-        if (errorMessage) {
-            *errorMessage = QString("Unable to create log directory `%1` under `%2`.")
-                                .arg(relativeParent, currentInstallLogRootDirectory_);
+    QString relativeLogPath = currentInstallEntryName_;
+    if (relativeLogPath.endsWith(".sh")) {
+        relativeLogPath.chop(3);
+    }
+    relativeLogPath += ".log";
+    const QString fallbackLogRootDirectory = QDir(currentRunDirectory_).filePath("logs");
+    const QStringList candidateRoots = {currentInstallLogRootDirectory_, fallbackLogRootDirectory};
+
+    QStringList failureReasons;
+    for (const QString &logRootPath : candidateRoots) {
+        const QFileInfo logRootInfo(logRootPath);
+        if (logRootInfo.exists() && !logRootInfo.isDir()) {
+            failureReasons.append(QString("`%1` exists but is not a directory").arg(logRootPath));
+            continue;
         }
-        return false;
+
+        QDir logRoot(logRootPath);
+        if (!relativeParent.isEmpty() && relativeParent != "." && !logRoot.mkpath(relativeParent)) {
+            failureReasons.append(QString("unable to create log directory `%1` under `%2`")
+                                      .arg(relativeParent, logRootPath));
+            continue;
+        }
+
+        const QString logPath = QDir(logRootPath).filePath(relativeLogPath);
+        currentInstallLogFile_.setFileName(logPath);
+        if (!currentInstallLogFile_.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+            failureReasons.append(QString("unable to open `%1` for writing").arg(logPath));
+            currentInstallLogFile_.setFileName(QString());
+            continue;
+        }
+
+        const QString header = QString("# Script: %1\n# Started: %2\n# Log Path: %3\n\n")
+                                   .arg(currentInstallEntryName_,
+                                        QDateTime::currentDateTime().toString(Qt::ISODate),
+                                        logPath);
+        currentInstallLogFile_.write(header.toUtf8());
+        currentInstallLogFile_.flush();
+
+        if (logRootPath != currentInstallLogRootDirectory_) {
+            appendInstallLogLine(QString("> project logs unavailable; using `%1`").arg(logPath));
+        }
+
+        return true;
     }
 
-    currentInstallLogFile_.setFileName(logPath);
-    if (!currentInstallLogFile_.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-        if (errorMessage) {
-            *errorMessage = QString("Unable to open `%1` for writing.").arg(logPath);
-        }
-        return false;
+    if (errorMessage) {
+        *errorMessage = QString("Unable to prepare install log for `%1`: %2")
+                            .arg(currentInstallEntryName_, failureReasons.join("; "));
     }
-
-    const QString header = QString("# Script: %1\n# Started: %2\n\n")
-                               .arg(currentInstallEntryName_,
-                                    QDateTime::currentDateTime().toString(Qt::ISODate));
-    currentInstallLogFile_.write(header.toUtf8());
-    currentInstallLogFile_.flush();
-    return true;
+    return false;
 }
 
 void InstallerWindow::closeCurrentInstallLog()
