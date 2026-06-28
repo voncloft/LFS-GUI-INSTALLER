@@ -1810,10 +1810,10 @@ void InstallerWindow::startInstall()
         QMessageBox::critical(this, "Install list empty", "No scripts were listed in `scripts/install.sh`.");
         return;
     }
-    if (!QDir().mkpath(currentInstallLogRootDirectory_)) {
+    if (!ensureGenericDirectory(currentInstallLogRootDirectory_, &artifactError)) {
         QMessageBox::critical(this,
                               "Log directory error",
-                              QString("Unable to create `%1`.").arg(currentInstallLogRootDirectory_));
+                              artifactError);
         return;
     }
 
@@ -2276,6 +2276,48 @@ QString InstallerWindow::installLogPathForEntry(const QString &entryName) const
     return QDir(currentInstallLogRootDirectory_).filePath(relativePath);
 }
 
+bool InstallerWindow::ensureGenericDirectory(const QString &path, QString *errorMessage) const
+{
+    const QFileInfo info(path);
+    if (info.exists() && !info.isDir()) {
+        if (errorMessage) {
+            *errorMessage = QString("`%1` exists but is not a directory.").arg(path);
+        }
+        return false;
+    }
+
+    QDir directory;
+    if (!directory.mkpath(path)) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to create directory `%1`.").arg(path);
+        }
+        return false;
+    }
+
+    setGenericPathPermissions(path, true, nullptr);
+
+    return true;
+}
+
+bool InstallerWindow::setGenericPathPermissions(const QString &path, bool executable, QString *errorMessage) const
+{
+    const QFileDevice::Permissions permissions = executable
+                                                     ? (QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
+                                                        | QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup
+                                                        | QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther)
+                                                     : (QFileDevice::ReadOwner | QFileDevice::WriteOwner
+                                                        | QFileDevice::ReadGroup | QFileDevice::WriteGroup
+                                                        | QFileDevice::ReadOther | QFileDevice::WriteOther);
+    if (!QFile::setPermissions(path, permissions)) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to set permissions on `%1`.").arg(path);
+        }
+        return false;
+    }
+
+    return true;
+}
+
 bool InstallerWindow::prepareCurrentInstallLog(QString *errorMessage)
 {
     closeCurrentInstallLog();
@@ -2298,17 +2340,19 @@ bool InstallerWindow::prepareCurrentInstallLog(QString *errorMessage)
 
     QStringList failureReasons;
     for (const QString &logRootPath : candidateRoots) {
-        const QFileInfo logRootInfo(logRootPath);
-        if (logRootInfo.exists() && !logRootInfo.isDir()) {
-            failureReasons.append(QString("`%1` exists but is not a directory").arg(logRootPath));
+        QString rootError;
+        if (!ensureGenericDirectory(logRootPath, &rootError)) {
+            failureReasons.append(rootError);
             continue;
         }
 
-        QDir logRoot(logRootPath);
-        if (!relativeParent.isEmpty() && relativeParent != "." && !logRoot.mkpath(relativeParent)) {
-            failureReasons.append(QString("unable to create log directory `%1` under `%2`")
-                                      .arg(relativeParent, logRootPath));
-            continue;
+        if (!relativeParent.isEmpty() && relativeParent != ".") {
+            const QString absoluteParent = QDir(logRootPath).filePath(relativeParent);
+            QString parentError;
+            if (!ensureGenericDirectory(absoluteParent, &parentError)) {
+                failureReasons.append(parentError);
+                continue;
+            }
         }
 
         const QString logPath = QDir(logRootPath).filePath(relativeLogPath);
@@ -2318,6 +2362,7 @@ bool InstallerWindow::prepareCurrentInstallLog(QString *errorMessage)
             currentInstallLogFile_.setFileName(QString());
             continue;
         }
+        setGenericPathPermissions(logPath, false, nullptr);
 
         const QString header = QString("# Script: %1\n# Started: %2\n# Log Path: %3\n\n")
                                    .arg(currentInstallEntryName_,

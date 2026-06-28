@@ -89,6 +89,8 @@ private:
     int countScriptSteps(const QStringList &scriptPaths) const;
     QString installScriptEntryName(const QString &scriptPath) const;
     QString installLogPathForEntry(const QString &entryName) const;
+    bool ensureGenericDirectory(const QString &path, QString *errorMessage) const;
+    bool setGenericPathPermissions(const QString &path, bool executable, QString *errorMessage) const;
     bool prepareCurrentInstallLog(QString *errorMessage);
     void closeCurrentInstallLog();
     void appendCurrentInstallLogLine(const QString &line);
