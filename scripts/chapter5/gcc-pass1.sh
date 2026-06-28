@@ -44,7 +44,7 @@ cd       build
     --disable-libstdcxx          \
     --enable-languages=c,c++
 
-make 
+make
 make install
 
 cat ../gcc/{limitx,glimits,limity}.h  > \
