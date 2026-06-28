@@ -2287,11 +2287,22 @@ bool InstallerWindow::prepareCurrentInstallLog(QString *errorMessage)
         return false;
     }
 
-    const QString logPath = installLogPathForEntry(currentInstallEntryName_);
-    QDir directory;
-    if (!directory.mkpath(QFileInfo(logPath).absolutePath())) {
+    const QFileInfo logRootInfo(currentInstallLogRootDirectory_);
+    if (logRootInfo.exists() && !logRootInfo.isDir()) {
         if (errorMessage) {
-            *errorMessage = QString("Unable to create `%1`.").arg(QFileInfo(logPath).absolutePath());
+            *errorMessage = QString("Log root `%1` exists but is not a directory.")
+                                .arg(currentInstallLogRootDirectory_);
+        }
+        return false;
+    }
+
+    const QString logPath = installLogPathForEntry(currentInstallEntryName_);
+    const QString relativeParent = QFileInfo(currentInstallEntryName_).path();
+    QDir logRoot(currentInstallLogRootDirectory_);
+    if (!relativeParent.isEmpty() && relativeParent != "." && !logRoot.mkpath(relativeParent)) {
+        if (errorMessage) {
+            *errorMessage = QString("Unable to create log directory `%1` under `%2`.")
+                                .arg(relativeParent, currentInstallLogRootDirectory_);
         }
         return false;
     }

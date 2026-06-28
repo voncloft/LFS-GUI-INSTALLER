@@ -5,6 +5,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /home/von/qt6 projects/lfs_installer/build/lfs_installer_autogen/mocs_compilation.cpp
  /home/von/qt6 projects/lfs_installer/src/installerwindow.h
  /home/von/qt6 projects/lfs_installer/build/lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp
+ /usr/include/QtCore/QFile
  /usr/include/QtCore/QProcess
  /usr/include/QtCore/QVector
  /usr/include/QtCore/q17memory.h
@@ -46,6 +47,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /usr/include/QtCore/qdebug.h
  /usr/include/QtCore/qendian.h
  /usr/include/QtCore/qexceptionhandling.h
+ /usr/include/QtCore/qfile.h
+ /usr/include/QtCore/qfiledevice.h
  /usr/include/QtCore/qflags.h
  /usr/include/QtCore/qfloat16.h
  /usr/include/QtCore/qforeach.h
@@ -302,6 +305,10 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /usr/include/c++/15.1.0/bits/exception_defines.h
  /usr/include/c++/15.1.0/bits/exception_ptr.h
  /usr/include/c++/15.1.0/bits/formatfwd.h
+ /usr/include/c++/15.1.0/bits/fs_dir.h
+ /usr/include/c++/15.1.0/bits/fs_fwd.h
+ /usr/include/c++/15.1.0/bits/fs_ops.h
+ /usr/include/c++/15.1.0/bits/fs_path.h
  /usr/include/c++/15.1.0/bits/functexcept.h
  /usr/include/c++/15.1.0/bits/functional_hash.h
  /usr/include/c++/15.1.0/bits/hash_bytes.h
@@ -399,6 +406,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /usr/include/c++/15.1.0/climits
  /usr/include/c++/15.1.0/clocale
  /usr/include/c++/15.1.0/cmath
+ /usr/include/c++/15.1.0/codecvt
  /usr/include/c++/15.1.0/compare
  /usr/include/c++/15.1.0/concepts
  /usr/include/c++/15.1.0/cstddef
@@ -419,6 +427,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o
  /usr/include/c++/15.1.0/ext/numeric_traits.h
  /usr/include/c++/15.1.0/ext/string_conversions.h
  /usr/include/c++/15.1.0/ext/type_traits.h
+ /usr/include/c++/15.1.0/filesystem
  /usr/include/c++/15.1.0/format
  /usr/include/c++/15.1.0/functional
  /usr/include/c++/15.1.0/initializer_list
@@ -1248,6 +1257,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
 CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /home/von/qt6 projects/lfs_installer/src/main.cpp
  /home/von/qt6 projects/lfs_installer/src/installerwindow.h
+ /usr/include/QtCore/QFile
  /usr/include/QtCore/QProcess
  /usr/include/QtCore/QVector
  /usr/include/QtCore/q17memory.h
@@ -1295,6 +1305,8 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /usr/include/QtCore/qendian.h
  /usr/include/QtCore/qeventloop.h
  /usr/include/QtCore/qexceptionhandling.h
+ /usr/include/QtCore/qfile.h
+ /usr/include/QtCore/qfiledevice.h
  /usr/include/QtCore/qflags.h
  /usr/include/QtCore/qfloat16.h
  /usr/include/QtCore/qforeach.h
@@ -1556,6 +1568,10 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /usr/include/c++/15.1.0/bits/exception_defines.h
  /usr/include/c++/15.1.0/bits/exception_ptr.h
  /usr/include/c++/15.1.0/bits/formatfwd.h
+ /usr/include/c++/15.1.0/bits/fs_dir.h
+ /usr/include/c++/15.1.0/bits/fs_fwd.h
+ /usr/include/c++/15.1.0/bits/fs_ops.h
+ /usr/include/c++/15.1.0/bits/fs_path.h
  /usr/include/c++/15.1.0/bits/functexcept.h
  /usr/include/c++/15.1.0/bits/functional_hash.h
  /usr/include/c++/15.1.0/bits/hash_bytes.h
@@ -1653,6 +1669,7 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /usr/include/c++/15.1.0/climits
  /usr/include/c++/15.1.0/clocale
  /usr/include/c++/15.1.0/cmath
+ /usr/include/c++/15.1.0/codecvt
  /usr/include/c++/15.1.0/compare
  /usr/include/c++/15.1.0/concepts
  /usr/include/c++/15.1.0/cstddef
@@ -1673,6 +1690,7 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o
  /usr/include/c++/15.1.0/ext/numeric_traits.h
  /usr/include/c++/15.1.0/ext/string_conversions.h
  /usr/include/c++/15.1.0/ext/type_traits.h
+ /usr/include/c++/15.1.0/filesystem
  /usr/include/c++/15.1.0/format
  /usr/include/c++/15.1.0/functional
  /usr/include/c++/15.1.0/initializer_list

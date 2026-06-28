@@ -309,6 +309,7 @@ lfs_installer_autogen/timestamp: /bin/cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets-release.cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets.cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsVersionlessTargets.cmake \
+  /usr/include/QtCore/QFile \
   /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QVector \
   /usr/include/QtCore/q17memory.h \
@@ -348,6 +349,8 @@ lfs_installer_autogen/timestamp: /bin/cmake \
   /usr/include/QtCore/qdebug.h \
   /usr/include/QtCore/qendian.h \
   /usr/include/QtCore/qexceptionhandling.h \
+  /usr/include/QtCore/qfile.h \
+  /usr/include/QtCore/qfiledevice.h \
   /usr/include/QtCore/qflags.h \
   /usr/include/QtCore/qfloat16.h \
   /usr/include/QtCore/qforeach.h \
@@ -703,6 +706,7 @@ lfs_installer_autogen/timestamp: /bin/cmake \
   /usr/include/c++/15.1.0/ext/numeric_traits.h \
   /usr/include/c++/15.1.0/ext/string_conversions.h \
   /usr/include/c++/15.1.0/ext/type_traits.h \
+  /usr/include/c++/15.1.0/filesystem \
   /usr/include/c++/15.1.0/format \
   /usr/include/c++/15.1.0/functional \
   /usr/include/c++/15.1.0/initializer_list \
@@ -1043,6 +1047,8 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /usr/include/c++/15.1.0/functional:
 
+/usr/include/c++/15.1.0/filesystem:
+
 /usr/include/c++/15.1.0/ext/type_traits.h:
 
 /usr/include/c++/15.1.0/ext/string_conversions.h:
@@ -1270,6 +1276,16 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 /usr/include/bits/types/timer_t.h:
 
 /usr/include/bits/types/struct_timeval.h:
+
+/usr/include/bits/types/struct_timespec.h:
+
+/usr/include/bits/types/struct_sched_param.h:
+
+/usr/include/c++/15.1.0/bits/stl_iterator_base_types.h:
+
+/usr/include/c++/15.1.0/bits/functional_hash.h:
+
+/usr/include/bits/types/struct_itimerspec.h:
 
 /lib/cmake/Qt6Network/Qt6NetworkPlugins.cmake:
 
@@ -1732,8 +1748,6 @@ lfs_installer_autogen/moc_predefs.h:
 /lib/cmake/Qt6Gui/Qt6QMngPluginConfig.cmake:
 
 /usr/include/QtGui/qpixelformat.h:
-
-/usr/include/bits/types/struct_timespec.h:
 
 /usr/include/bits/types/struct_tm.h:
 
@@ -2217,6 +2231,8 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 
 /usr/include/QtCore/qcontainerfwd.h:
 
+/usr/include/QtCore/qfile.h:
+
 /usr/include/wchar.h:
 
 /usr/include/QtCore/qcontainerinfo.h:
@@ -2240,6 +2256,12 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 /lib/cmake/Qt6Gui/Qt6QEvdevTouchScreenPluginConfig.cmake:
 
 /usr/include/QtCore/qendian.h:
+
+/usr/include/QtCore/qfiledevice.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/QtCore/qutf8stringview.h:
 
 /usr/include/QtCore/qflags.h:
 
@@ -2411,6 +2433,8 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 
 /usr/include/QtCore/qttranslation.h:
 
+/usr/include/QtCore/QFile:
+
 /usr/include/bits/types/FILE.h:
 
 /usr/share/cmake-4.0/Modules/CheckIncludeFileCXX.cmake:
@@ -2430,10 +2454,6 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 /usr/include/bits/locale.h:
 
 /usr/include/QtCore/qtypes.h:
-
-/usr/include/bits/types.h:
-
-/usr/include/QtCore/qutf8stringview.h:
 
 /usr/include/QtCore/qxptype_traits.h:
 
@@ -2604,11 +2624,3 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 /usr/include/bits/types/mbstate_t.h:
 
 /usr/include/bits/types/sigset_t.h:
-
-/usr/include/c++/15.1.0/bits/stl_iterator_base_types.h:
-
-/usr/include/c++/15.1.0/bits/functional_hash.h:
-
-/usr/include/bits/types/struct_itimerspec.h:
-
-/usr/include/bits/types/struct_sched_param.h:

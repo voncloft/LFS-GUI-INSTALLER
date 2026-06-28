@@ -310,6 +310,7 @@
  /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets-release.cmake
  /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets.cmake
  /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsVersionlessTargets.cmake
+ /usr/include/QtCore/QFile
  /usr/include/QtCore/QProcess
  /usr/include/QtCore/QVector
  /usr/include/QtCore/q17memory.h
@@ -349,6 +350,8 @@
  /usr/include/QtCore/qdebug.h
  /usr/include/QtCore/qendian.h
  /usr/include/QtCore/qexceptionhandling.h
+ /usr/include/QtCore/qfile.h
+ /usr/include/QtCore/qfiledevice.h
  /usr/include/QtCore/qflags.h
  /usr/include/QtCore/qfloat16.h
  /usr/include/QtCore/qforeach.h
@@ -704,6 +707,7 @@
  /usr/include/c++/15.1.0/ext/numeric_traits.h
  /usr/include/c++/15.1.0/ext/string_conversions.h
  /usr/include/c++/15.1.0/ext/type_traits.h
+ /usr/include/c++/15.1.0/filesystem
  /usr/include/c++/15.1.0/format
  /usr/include/c++/15.1.0/functional
  /usr/include/c++/15.1.0/initializer_list

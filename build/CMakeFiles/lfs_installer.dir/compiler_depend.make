@@ -4,6 +4,7 @@
 CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: lfs_installer_autogen/mocs_compilation.cpp \
   /home/von/qt6\ projects/lfs_installer/src/installerwindow.h \
   lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp \
+  /usr/include/QtCore/QFile \
   /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QVector \
   /usr/include/QtCore/q17memory.h \
@@ -45,6 +46,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: lfs_i
   /usr/include/QtCore/qdebug.h \
   /usr/include/QtCore/qendian.h \
   /usr/include/QtCore/qexceptionhandling.h \
+  /usr/include/QtCore/qfile.h \
+  /usr/include/QtCore/qfiledevice.h \
   /usr/include/QtCore/qflags.h \
   /usr/include/QtCore/qfloat16.h \
   /usr/include/QtCore/qforeach.h \
@@ -301,6 +304,10 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: lfs_i
   /usr/include/c++/15.1.0/bits/exception_defines.h \
   /usr/include/c++/15.1.0/bits/exception_ptr.h \
   /usr/include/c++/15.1.0/bits/formatfwd.h \
+  /usr/include/c++/15.1.0/bits/fs_dir.h \
+  /usr/include/c++/15.1.0/bits/fs_fwd.h \
+  /usr/include/c++/15.1.0/bits/fs_ops.h \
+  /usr/include/c++/15.1.0/bits/fs_path.h \
   /usr/include/c++/15.1.0/bits/functexcept.h \
   /usr/include/c++/15.1.0/bits/functional_hash.h \
   /usr/include/c++/15.1.0/bits/hash_bytes.h \
@@ -398,6 +405,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: lfs_i
   /usr/include/c++/15.1.0/climits \
   /usr/include/c++/15.1.0/clocale \
   /usr/include/c++/15.1.0/cmath \
+  /usr/include/c++/15.1.0/codecvt \
   /usr/include/c++/15.1.0/compare \
   /usr/include/c++/15.1.0/concepts \
   /usr/include/c++/15.1.0/cstddef \
@@ -418,6 +426,7 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o: lfs_i
   /usr/include/c++/15.1.0/ext/numeric_traits.h \
   /usr/include/c++/15.1.0/ext/string_conversions.h \
   /usr/include/c++/15.1.0/ext/type_traits.h \
+  /usr/include/c++/15.1.0/filesystem \
   /usr/include/c++/15.1.0/format \
   /usr/include/c++/15.1.0/functional \
   /usr/include/c++/15.1.0/initializer_list \
@@ -1245,6 +1254,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
 
 CMakeFiles/lfs_installer.dir/src/main.cpp.o: /home/von/qt6\ projects/lfs_installer/src/main.cpp \
   /home/von/qt6\ projects/lfs_installer/src/installerwindow.h \
+  /usr/include/QtCore/QFile \
   /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QVector \
   /usr/include/QtCore/q17memory.h \
@@ -1292,6 +1302,8 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o: /home/von/qt6\ projects/lfs_install
   /usr/include/QtCore/qendian.h \
   /usr/include/QtCore/qeventloop.h \
   /usr/include/QtCore/qexceptionhandling.h \
+  /usr/include/QtCore/qfile.h \
+  /usr/include/QtCore/qfiledevice.h \
   /usr/include/QtCore/qflags.h \
   /usr/include/QtCore/qfloat16.h \
   /usr/include/QtCore/qforeach.h \
@@ -1553,6 +1565,10 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o: /home/von/qt6\ projects/lfs_install
   /usr/include/c++/15.1.0/bits/exception_defines.h \
   /usr/include/c++/15.1.0/bits/exception_ptr.h \
   /usr/include/c++/15.1.0/bits/formatfwd.h \
+  /usr/include/c++/15.1.0/bits/fs_dir.h \
+  /usr/include/c++/15.1.0/bits/fs_fwd.h \
+  /usr/include/c++/15.1.0/bits/fs_ops.h \
+  /usr/include/c++/15.1.0/bits/fs_path.h \
   /usr/include/c++/15.1.0/bits/functexcept.h \
   /usr/include/c++/15.1.0/bits/functional_hash.h \
   /usr/include/c++/15.1.0/bits/hash_bytes.h \
@@ -1650,6 +1666,7 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o: /home/von/qt6\ projects/lfs_install
   /usr/include/c++/15.1.0/climits \
   /usr/include/c++/15.1.0/clocale \
   /usr/include/c++/15.1.0/cmath \
+  /usr/include/c++/15.1.0/codecvt \
   /usr/include/c++/15.1.0/compare \
   /usr/include/c++/15.1.0/concepts \
   /usr/include/c++/15.1.0/cstddef \
@@ -1670,6 +1687,7 @@ CMakeFiles/lfs_installer.dir/src/main.cpp.o: /home/von/qt6\ projects/lfs_install
   /usr/include/c++/15.1.0/ext/numeric_traits.h \
   /usr/include/c++/15.1.0/ext/string_conversions.h \
   /usr/include/c++/15.1.0/ext/type_traits.h \
+  /usr/include/c++/15.1.0/filesystem \
   /usr/include/c++/15.1.0/format \
   /usr/include/c++/15.1.0/functional \
   /usr/include/c++/15.1.0/initializer_list \
@@ -1970,12 +1988,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /home/von/qt6\ projects/lfs_installer/src/main.cpp:
 
-/usr/include/c++/15.1.0/filesystem:
-
-/usr/include/c++/15.1.0/bits/fs_path.h:
-
-/usr/include/c++/15.1.0/bits/fs_dir.h:
-
 /usr/include/QtWidgets/qtreewidgetitemiterator.h:
 
 /usr/include/QtWidgets/qtreewidget.h:
@@ -2154,12 +2166,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtCore/qitemselectionmodel.h:
 
-/usr/include/QtWidgets/QCheckBox:
-
-/usr/include/QtCore/qfiledevice.h:
-
-/usr/include/QtCore/qfile.h:
-
 /usr/include/QtWidgets/QToolButton:
 
 /usr/include/QtGui/qtextdocument.h:
@@ -2190,10 +2196,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtCore/q26numeric.h:
 
-/usr/include/c++/15.1.0/bits/fs_ops.h:
-
-/usr/include/QtCore/QVariant:
-
 /usr/include/QtCore/QString:
 
 /usr/include/QtCore/QStandardPaths:
@@ -2216,15 +2218,21 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtCore/QSaveFile:
 
-/usr/include/c++/15.1.0/bits/fs_fwd.h:
-
-/usr/include/QtCore/qdatetime.h:
-
-/usr/include/QtCore/QRegularExpression:
-
 /usr/include/QtCore/QRect:
 
 /usr/include/QtCore/QProcessEnvironment:
+
+/usr/include/QtCore/QMetaType:
+
+/usr/include/QtCore/QJsonValue:
+
+/usr/include/QtCore/QJsonObject:
+
+/usr/include/QtCore/QJsonArray:
+
+/usr/include/QtNetwork/qsslsocket.h:
+
+/usr/include/QtCore/QFlags:
 
 /usr/include/bits/types/struct_sched_param.h:
 
@@ -2354,12 +2362,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/c++/15.1.0/tr1/poly_hermite.tcc:
 
-/usr/include/c++/15.1.0/codecvt:
-
-/usr/include/bits/types/__fpos_t.h:
-
-/usr/include/c++/15.1.0/bits/unordered_set.h:
-
 /usr/include/QtGui/qguiapplication.h:
 
 /usr/include/asm/errno.h:
@@ -2377,10 +2379,6 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/c++/15.1.0/bits/nested_exception.h:
 
 /usr/include/QtWidgets/qsizepolicy.h:
-
-/usr/include/QtGui/qtextformat.h:
-
-/usr/include/bits/types/timer_t.h:
 
 /usr/include/bits/struct_mutex.h:
 
@@ -2434,6 +2432,12 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtGui/qwindowdefs.h:
 
+/usr/include/QtCore/qdatetime.h:
+
+/usr/include/QtCore/QRegularExpression:
+
+/usr/include/c++/15.1.0/bits/fs_fwd.h:
+
 /usr/include/QtGui/qcolor.h:
 
 /usr/include/c++/15.1.0/new:
@@ -2468,15 +2472,13 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/asm-generic/errno-base.h:
 
-/usr/include/QtCore/qvector.h:
+/usr/include/bits/types/mbstate_t.h:
 
-/usr/include/bits/types/__sigset_t.h:
+/usr/include/bits/types/__fpos_t.h:
 
-/usr/include/QtCore/qlatin1stringview.h:
+/usr/include/c++/15.1.0/bits/unordered_set.h:
 
-/usr/include/bits/types/wint_t.h:
-
-/usr/include/QtGui/qpixmap.h:
+/usr/include/c++/15.1.0/codecvt:
 
 /usr/include/QtCore/qendian.h:
 
@@ -2560,6 +2562,10 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtCore/qtconfiginclude.h:
 
+/usr/include/QtCore/qdatastream.h:
+
+/usr/include/QtCore/qchar.h:
+
 /usr/include/QtGui/qregion.h:
 
 /usr/include/QtWidgets/qtabbar.h:
@@ -2592,6 +2598,30 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtCore/qtformat_impl.h:
 
+/usr/include/bits/types/FILE.h:
+
+/usr/include/QtCore/QFile:
+
+/usr/include/QtCore/qspan.h:
+
+/usr/include/QtCore/qswap.h:
+
+/usr/include/QtGui/qtgui-config.h:
+
+/usr/include/c++/15.1.0/bits/formatfwd.h:
+
+/usr/include/QtCore/QIODevice:
+
+/usr/include/c++/15.1.0/list:
+
+/usr/include/c++/15.1.0/ext/atomicity.h:
+
+/lib/libharfbuzz.so.0:
+
+/usr/include/QtGui/qrawfont.h:
+
+/usr/include/QtCore/qtcore-config.h:
+
 /usr/include/asm-generic/bitsperlong.h:
 
 /usr/include/QtCore/qbytearrayview.h:
@@ -2616,6 +2646,16 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/errno.h:
 
+/usr/include/QtWidgets/QCheckBox:
+
+/usr/include/QtCore/qfiledevice.h:
+
+/usr/include/QtCore/qabstractitemmodel.h:
+
+/usr/include/c++/15.1.0/bits/stl_bvector.h:
+
+/usr/include/c++/15.1.0/bits/char_traits.h:
+
 /lib/libpcre2-16.so.0:
 
 /usr/include/QtGui/qfontmetrics.h:
@@ -2638,6 +2678,10 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 
 /usr/include/QtCore/qcompare.h:
 
+/usr/include/QtCore/QVariant:
+
+/usr/include/c++/15.1.0/bits/fs_ops.h:
+
 /usr/lib32/libresolv.so.2:
 
 /usr/include/bits/getopt_core.h:
@@ -2648,17 +2692,23 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 
 /usr/include/QtCore/qcomparehelpers.h:
 
+/usr/include/QtCore/qsharedpointer.h:
+
 /usr/include/QtCore/q23utility.h:
 
-/usr/include/QtCore/qabstractitemmodel.h:
+/usr/include/QtCore/qobjectdefs_impl.h:
 
-/usr/include/c++/15.1.0/bits/stl_bvector.h:
+/usr/include/c++/15.1.0/ext/string_conversions.h:
 
-/usr/include/c++/15.1.0/bits/char_traits.h:
+/usr/include/QtCore/qalgorithms.h:
 
 /lib/libxkbcommon.so.0:
 
 /usr/include/QtCore/qmetacontainer.h:
+
+/usr/include/c++/15.1.0/bits/charconv.h:
+
+/usr/include/QtCore/qiterator.h:
 
 /usr/include/QtCore/qmargins.h:
 
@@ -2669,6 +2719,10 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 /usr/include/bits/mathcalls-narrow.h:
 
 /usr/include/QtCore/qstringliteral.h:
+
+/usr/include/QtCore/qfile.h:
+
+/usr/include/QtCore/qcontainerfwd.h:
 
 /usr/include/QtGui/qeventpoint.h:
 
@@ -2690,30 +2744,6 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.0/include/stdint.h:
 
-/usr/include/QtCore/qswap.h:
-
-/usr/include/QtGui/qtgui-config.h:
-
-/usr/include/QtCore/qiterator.h:
-
-/usr/include/c++/15.1.0/bits/charconv.h:
-
-/usr/include/c++/15.1.0/bits/formatfwd.h:
-
-/usr/include/QtCore/QIODevice:
-
-/usr/include/c++/15.1.0/list:
-
-/usr/include/c++/15.1.0/ext/atomicity.h:
-
-/lib/libharfbuzz.so.0:
-
-/usr/include/QtGui/qrawfont.h:
-
-/usr/include/QtCore/qtcore-config.h:
-
-/usr/include/QtCore/qsharedpointer.h:
-
 /usr/include/c++/15.1.0/bits/std_mutex.h:
 
 /usr/include/c++/15.1.0/bits/stl_iterator.h:
@@ -2723,8 +2753,6 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 /usr/include/bits/stdint-least.h:
 
 /usr/include/QtCore/q20type_traits.h:
-
-/usr/include/bits/types/mbstate_t.h:
 
 /usr/include/QtCore/qtpreprocessorsupport.h:
 
@@ -2746,15 +2774,11 @@ lfs_installer_autogen/UVLADIE3JM/moc_installerwindow.cpp:
 
 /usr/include/QtCore/qmath.h:
 
-/usr/include/QtCore/qdatastream.h:
+/usr/include/QtCore/qvector.h:
 
-/usr/include/QtCore/qalgorithms.h:
+/usr/include/bits/types/__sigset_t.h:
 
-/usr/include/QtCore/qobjectdefs_impl.h:
-
-/usr/include/c++/15.1.0/ext/string_conversions.h:
-
-/usr/include/QtCore/qchar.h:
+/usr/include/QtCore/qlatin1stringview.h:
 
 /usr/include/c++/15.1.0/bits/locale_conv.h:
 
@@ -2768,13 +2792,13 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/QtCore/qlogging.h:
 
+/usr/include/c++/15.1.0/bits/fs_path.h:
+
 /usr/include/c++/15.1.0/bits/uses_allocator_args.h:
 
 /usr/include/c++/15.1.0/version:
 
 /usr/include/QtCore/qstringtokenizer.h:
-
-/usr/include/QtCore/QJsonArray:
 
 /usr/include/QtGui/qimage.h:
 
@@ -2790,6 +2814,10 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/QtCore/qstdlibdetection.h:
 
+/usr/include/QtCore/QList:
+
+/usr/include/bits/types/struct_timespec.h:
+
 /usr/include/QtGui/qpixelformat.h:
 
 /usr/include/QtNetwork/qtnetworkglobal.h:
@@ -2800,21 +2828,15 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/c++/15.1.0/stdlib.h:
 
-/usr/include/QtCore/qiterable.h:
-
 /usr/include/QtCore/qglobalstatic.h:
+
+/usr/include/QtCore/qiterable.h:
 
 /usr/include/QtCore/qoverload.h:
 
 /usr/include/bits/waitflags.h:
 
-/usr/include/QtCore/qcontainerfwd.h:
-
 /usr/include/c++/15.1.0/bits/enable_special_members.h:
-
-/usr/include/QtCore/qtmetamacros.h:
-
-/usr/include/bits/types/time_t.h:
 
 /usr/include/QtCore/qpoint.h:
 
@@ -2851,8 +2873,6 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/QtWidgets/QTreeWidgetItem:
 
 /usr/include/QtCore/qstringconverter_base.h:
-
-/usr/include/QtCore/qspan.h:
 
 /lib/libexpat.so.1:
 
@@ -2919,6 +2939,18 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/atomic_word.h:
 
 /usr/include/QtCore/qtresource.h:
+
+/usr/include/QtCore/qtmetamacros.h:
+
+/usr/include/bits/types/time_t.h:
+
+/usr/include/QtGui/qtextformat.h:
+
+/usr/include/bits/types/timer_t.h:
+
+/usr/include/QtGui/qpixmap.h:
+
+/usr/include/bits/types/wint_t.h:
 
 /usr/include/bits/uintn-identity.h:
 
@@ -3015,6 +3047,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/c++/15.1.0/unordered_set:
 
 /usr/include/linux/errno.h:
+
+/usr/include/c++/15.1.0/bits/fs_dir.h:
 
 /usr/include/QtCore/qscopeguard.h:
 
@@ -3262,6 +3296,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/c++/15.1.0/ext/type_traits.h:
 
+/usr/include/c++/15.1.0/filesystem:
+
 /usr/include/c++/15.1.0/debug/assertions.h:
 
 /usr/include/c++/15.1.0/format:
@@ -3430,8 +3466,6 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /usr/include/sys/syscall.h:
 
-/usr/include/QtCore/QJsonObject:
-
 /usr/include/sys/types.h:
 
 /lib/libbrotlidec.so.1:
@@ -3454,10 +3488,6 @@ lfs_installer_autogen/mocs_compilation.cpp:
 
 /home/von/qt6\ projects/lfs_installer/src/installerwindow.cpp:
 
-/usr/include/bits/types/FILE.h:
-
-/usr/include/QtCore/QFile:
-
 /usr/include/QtWidgets/qslider.h:
 
 /usr/include/QtWidgets/QToolBar:
@@ -3467,15 +3497,3 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/c++/15.1.0/typeinfo:
 
 /usr/include/QtCore/QFileInfo:
-
-/usr/include/QtNetwork/qsslsocket.h:
-
-/usr/include/QtCore/QFlags:
-
-/usr/include/QtCore/QJsonValue:
-
-/usr/include/bits/types/struct_timespec.h:
-
-/usr/include/QtCore/QList:
-
-/usr/include/QtCore/QMetaType:
