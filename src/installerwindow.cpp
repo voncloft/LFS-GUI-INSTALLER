@@ -3184,10 +3184,9 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
                             setupCommands = setupLines.join('\n');
 
                             QStringList cleanupLines;
-                            cleanupLines << QStringLiteral("if [ -n \"${source_dir:-}\" ] && [ -d \"$source_dir\" ]; then");
-                            cleanupLines << QStringLiteral("    cd \"$LFS/sources\"");
-                            cleanupLines << QStringLiteral("    rm -rf \"$source_dir\"");
-                            cleanupLines << QStringLiteral("fi");
+                            cleanupLines << QStringLiteral("cd \"$LFS/sources\"");
+                            cleanupLines << QStringLiteral("find . -maxdepth 1 -mindepth 1 -type d -name %1 -exec rm -rf {} +")
+                                                .arg(shellQuote(archiveBase + QStringLiteral("*")));
                             cleanupCommands = cleanupLines.join('\n');
                         }
                     }
