@@ -486,6 +486,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/qpushbutton.h \
  /usr/include/QtCore/QRegularExpression \
  /usr/include/QtCore/qregularexpression.h \
+ /usr/include/QtWidgets/QScrollBar /usr/include/QtWidgets/qscrollbar.h \
  /usr/include/QtWidgets/QStatusBar /usr/include/QtWidgets/qstatusbar.h \
  /usr/include/QtCore/QStandardPaths /usr/include/QtCore/qstandardpaths.h \
  /usr/include/QtWidgets/QToolBar /usr/include/QtWidgets/qtoolbar.h \

@@ -34,6 +34,7 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QScrollBar>
 #include <QStatusBar>
 #include <QStandardPaths>
 #include <QToolBar>
@@ -3591,8 +3592,12 @@ void InstallerWindow::appendInstallLogLine(const QString &line)
         return;
     }
 
+    QScrollBar *scrollBar = installLog_->verticalScrollBar();
+    const bool followTail = !scrollBar || scrollBar->value() >= scrollBar->maximum() - 1;
     installLog_->appendPlainText(line);
-    installLog_->centerCursor();
+    if (followTail && scrollBar) {
+        scrollBar->setValue(scrollBar->maximum());
+    }
 }
 
 void InstallerWindow::processInstallOutputLine(const QString &line)
@@ -3804,6 +3809,13 @@ QString InstallerWindow::buildMlfsDownloadScript(const QString &wgetListPath, co
     lines << QStringLiteral("fi");
     lines << QStringLiteral("find \"$bundle_root\" -mindepth 1 -maxdepth 1 -exec cp -an {} \"$LFS/sources/\" \\;");
     lines << QStringLiteral("rm -rf \"$BUNDLE_EXTRACT_DIR\"");
+    lines << QStringLiteral("cd \"$LFS/sources\"");
+    lines << QStringLiteral("if md5sum -c --status \"$MD5_LIST\"; then");
+    lines << QStringLiteral("    echo \"Bundle satisfied package list; skipping individual downloads\"");
+    lines << QStringLiteral("    install -m 755 \"$SOURCE_PROJECT_ROOT/tools/autountar.sh\" \"$LFS/sources/autountar\"");
+    lines << QStringLiteral("    chown root:root \"$LFS/sources\"/*");
+    lines << QStringLiteral("    exit 0");
+    lines << QStringLiteral("fi");
     lines << QStringLiteral("mapfile -t download_urls < \"$WGET_LIST\"");
     lines << QStringLiteral("failed_urls=()");
     lines << QStringLiteral("for url in \"${download_urls[@]}\"; do");
@@ -3837,7 +3849,6 @@ QString InstallerWindow::buildMlfsDownloadScript(const QString &wgetListPath, co
     lines << QStringLiteral("    printf '  %s\\n' \"${failed_urls[@]}\" >&2");
     lines << QStringLiteral("    exit 1");
     lines << QStringLiteral("fi");
-    lines << QStringLiteral("cd \"$LFS/sources\"");
     lines << QStringLiteral("md5sum -c \"$MD5_LIST\"");
     lines << QStringLiteral("install -m 755 \"$SOURCE_PROJECT_ROOT/tools/autountar.sh\" \"$LFS/sources/autountar\"");
     lines << QStringLiteral("chown root:root \"$LFS/sources\"/*");
