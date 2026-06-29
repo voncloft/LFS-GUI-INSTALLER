@@ -322,7 +322,7 @@ QString installShellHandoffHelpers()
 __codex_handoff_lfs() {
   local marker="$1"
   printf '%s\n' "$marker"
-  exec su - lfs
+  su - lfs
 }
 
 __codex_handoff_lfs_profile() {
@@ -334,7 +334,7 @@ __codex_handoff_lfs_profile() {
 __codex_handoff_chroot() {
   local marker="$1"
   printf '%s\n' "$marker"
-  exec chroot "$LFS" /usr/bin/env -i \
+  chroot "$LFS" /usr/bin/env -i \
       HOME=/root \
       TERM="$TERM" \
       PS1='(lfs chroot) \u:\w\$ ' \
@@ -3009,6 +3009,7 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
         if (noDump) {
             const bool allowedBoundary = command.startsWith(QStringLiteral("su - "))
                                          || command.startsWith(QStringLiteral("chroot \"$LFS\""))
+                                         || command == QStringLiteral("exit")
                                          || command == QStringLiteral("exec /usr/bin/bash --login")
                                          || (sectionId == QStringLiteral("ch-bootable-grub")
                                              && command.startsWith(QStringLiteral("grub-install ")));
@@ -3067,7 +3068,6 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
             || command.startsWith(QStringLiteral("mountpoint /sys/firmware/efi/efivars"))
             || command == QStringLiteral("mount /boot")
             || command.startsWith(QStringLiteral("umount "))
-            || command == QStringLiteral("exit")
             || command.startsWith(QStringLiteral("make menuconfig"))
             || command.startsWith(QStringLiteral("systemctl disable "))
             || command.startsWith(QStringLiteral("vim -c"))) {
