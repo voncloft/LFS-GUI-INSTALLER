@@ -3100,6 +3100,25 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
             continue;
         }
 
+        if (chapterNumber == 7) {
+            const QString relativePath = generatedMlfsScriptPath(chapterNumber, 0, QStringLiteral("return-to-root"));
+            const QString absolutePath = QDir(currentRuntimeScriptsDirectory_).filePath(relativePath);
+            if (!directory.mkpath(QFileInfo(absolutePath).absolutePath())) {
+                if (errorMessage) {
+                    *errorMessage = QStringLiteral("Unable to create `%1`.").arg(QFileInfo(absolutePath).absolutePath());
+                }
+                return false;
+            }
+            if (!writeGeneratedTextFile(absolutePath,
+                                        generatedMlfsScriptBody(QStringLiteral("Returning to root shell"),
+                                                                {QStringLiteral("if [ \"$(id -un)\" = \"lfs\" ]; then exit; fi")}),
+                                        true,
+                                        errorMessage)) {
+                return false;
+            }
+            mlfsToolchainScriptPaths_.append(absolutePath);
+        }
+
         int sectionNumber = 0;
         for (const QDomElement &section : directChildElements(chapter, QStringLiteral("sect1"))) {
             ++sectionNumber;
