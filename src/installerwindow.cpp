@@ -316,6 +316,94 @@ QString slugify(const QString &value)
     return slug;
 }
 
+QString installShellHandoffHelpers()
+{
+    return QStringLiteral(R"SH(
+__codex_handoff_lfs() {
+  local marker="$1"
+  su - lfs <<EOF
+printf '%s\n' "$marker"
+exec /bin/bash -i
+EOF
+}
+
+__codex_handoff_lfs_profile() {
+  local marker="$1"
+  exec env -i HOME="$HOME" TERM="$TERM" PS1='\u:\w\$ ' /bin/bash -i <<EOF
+printf '%s\n' "$marker"
+exec /bin/bash -i
+EOF
+}
+
+__codex_handoff_chroot() {
+  local marker="$1"
+  chroot "$LFS" /usr/bin/env -i \
+      HOME=/root \
+      TERM="$TERM" \
+      PS1='(lfs chroot) \u:\w\$ ' \
+      PATH=/usr/bin:/usr/sbin \
+      MAKEFLAGS="-j$(nproc)" \
+      TESTSUITEFLAGS="-j$(nproc)" \
+      /bin/bash --login <<EOF
+printf '%s\n' "$marker"
+exec /bin/bash --login
+EOF
+}
+
+__codex_handoff_login_bash() {
+  local marker="$1"
+  exec /usr/bin/bash --login <<EOF
+printf '%s\n' "$marker"
+exec /usr/bin/bash --login
+EOF
+}
+)SH");
+}
+
+QString rewriteInteractiveHandoffs(QString scriptContents,
+                                   const QString &entryName,
+                                   bool *inlineDoneMarker)
+{
+    bool usesInlineDoneMarker = false;
+    const QString doneMarker = shellQuote(QStringLiteral("__SCRIPT_DONE__:") + entryName);
+
+    const QRegularExpression chrootPattern(
+        QStringLiteral(R"CHROOT(chroot\s+"\$LFS"\s+/usr/bin/env\s+-i[\s\\\n]+HOME=/root[\s\\\n]+TERM="\$TERM"[\s\\\n]+PS1='\(lfs chroot\)\s+\\u:\\w\\\$ '[\s\\\n]+PATH=/usr/bin:/usr/sbin[\s\\\n]+MAKEFLAGS="-j\$\(nproc\)"[\s\\\n]+TESTSUITEFLAGS="-j\$\(nproc\)"[\s\\\n]+/bin/bash\s+--login)CHROOT"));
+    if (scriptContents.contains(chrootPattern)) {
+        scriptContents.replace(chrootPattern, QStringLiteral("__codex_handoff_chroot %1").arg(doneMarker));
+        usesInlineDoneMarker = true;
+    }
+
+    QStringList rewrittenLines;
+    const QStringList sourceLines = scriptContents.split(QLatin1Char('\n'));
+    rewrittenLines.reserve(sourceLines.size());
+    for (const QString &line : sourceLines) {
+        const QString trimmed = line.trimmed();
+        if (trimmed == QStringLiteral("su - lfs")) {
+            rewrittenLines << QStringLiteral("__codex_handoff_lfs %1").arg(doneMarker);
+            usesInlineDoneMarker = true;
+            continue;
+        }
+        if (trimmed == QStringLiteral("source ~/.bash_profile")) {
+            rewrittenLines << QStringLiteral("__codex_handoff_lfs_profile %1").arg(doneMarker);
+            usesInlineDoneMarker = true;
+            continue;
+        }
+        if (trimmed == QStringLiteral("exec /usr/bin/bash --login")
+            || trimmed == QStringLiteral("exec /bin/bash --login")) {
+            rewrittenLines << QStringLiteral("__codex_handoff_login_bash %1").arg(doneMarker);
+            usesInlineDoneMarker = true;
+            continue;
+        }
+        rewrittenLines << line;
+    }
+
+    if (inlineDoneMarker) {
+        *inlineDoneMarker = usesInlineDoneMarker;
+    }
+    return rewrittenLines.join(QLatin1Char('\n'));
+}
+
 struct MlfsCommand
 {
     QString text;
@@ -3196,13 +3284,18 @@ bool InstallerWindow::queueInstallScriptChunk(const QString &scriptPath, QString
     scriptContents.chop(1);
 
     const QString entryName = installScriptEntryName(scriptPath);
+    bool inlineDoneMarker = false;
+    scriptContents = rewriteInteractiveHandoffs(scriptContents, entryName, &inlineDoneMarker);
     QStringList lines;
     lines << QString("echo %1").arg(shellQuote("__SCRIPT_BEGIN__:" + entryName));
     lines << "set -euo pipefail";
+    lines << installShellHandoffHelpers().trimmed();
     lines << "set -x";
     lines << scriptContents;
-    lines << "set +x";
-    lines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + entryName));
+    if (!inlineDoneMarker) {
+        lines << "set +x";
+        lines << QString("echo %1").arg(shellQuote("__SCRIPT_DONE__:" + entryName));
+    }
 
     return queueInstallCommand(lines.join('\n') + '\n', entryName, errorMessage);
 }
