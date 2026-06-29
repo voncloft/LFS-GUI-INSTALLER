@@ -474,17 +474,22 @@ QString archiveBaseNameFromUrl(const QString &urlText)
 
 QString generatedMlfsScriptBody(const QString &stepTitle,
                                 const QStringList &commands,
-                                const QString &setupCommands = QString())
+                                const QString &setupCommands = QString(),
+                                const QString &cleanupCommands = QString())
 {
     QStringList lines;
     lines << QStringLiteral("#!/usr/bin/env bash");
     lines << QString();
     lines << QStringLiteral("echo %1").arg(shellQuote(QStringLiteral("step:") + stepTitle));
+    lines << QStringLiteral("unset source_dir cleanup_source_dir");
     if (!setupCommands.trimmed().isEmpty()) {
         lines << setupCommands.trimmed();
     }
     if (!commands.isEmpty()) {
         lines << commands;
+    }
+    if (!cleanupCommands.trimmed().isEmpty()) {
+        lines << cleanupCommands.trimmed();
     }
     return lines.join('\n') + '\n';
 }
@@ -3139,6 +3144,7 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
             }
 
             QString setupCommands;
+            QString cleanupCommands;
             if (section.attribute(QStringLiteral("role")) == QStringLiteral("wrap")) {
                 const QList<QDomElement> infoElements = directChildElements(section, QStringLiteral("sect1info"));
                 if (!infoElements.isEmpty()) {
@@ -3155,8 +3161,16 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
                                               .arg(shellQuote(archiveBase + QStringLiteral("*")));
                             setupLines << QStringLiteral("if [ -z \"$source_dir\" ]; then echo \"Unable to find extracted source for %1\" >&2; exit 1; fi")
                                               .arg(archiveBase);
+                            setupLines << QStringLiteral("cleanup_source_dir=\"$source_dir\"");
                             setupLines << QStringLiteral("cd \"$source_dir\"");
                             setupCommands = setupLines.join('\n');
+
+                            QStringList cleanupLines;
+                            cleanupLines << QStringLiteral("if [ -n \"${cleanup_source_dir:-}\" ] && [ -d \"$cleanup_source_dir\" ]; then");
+                            cleanupLines << QStringLiteral("    cd \"$LFS/sources\"");
+                            cleanupLines << QStringLiteral("    rm -rf \"$cleanup_source_dir\"");
+                            cleanupLines << QStringLiteral("fi");
+                            cleanupCommands = cleanupLines.join('\n');
                         }
                     }
                 }
@@ -3171,7 +3185,10 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
                 return false;
             }
             if (!writeGeneratedTextFile(absolutePath,
-                                        generatedMlfsScriptBody(title.isEmpty() ? slug : title, commands, setupCommands),
+                                        generatedMlfsScriptBody(title.isEmpty() ? slug : title,
+                                                                commands,
+                                                                setupCommands,
+                                                                cleanupCommands),
                                         true,
                                         errorMessage)) {
                 return false;
