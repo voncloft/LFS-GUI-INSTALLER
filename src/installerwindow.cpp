@@ -60,9 +60,8 @@
 namespace
 {
 constexpr auto kMlfsBookSentinel = "@MLFS_BOOK@";
-constexpr auto kMlfsBookRepositoryUrl = "https://git.linuxfromscratch.org/lfs.git";
+constexpr auto kMlfsBookRepositoryUrl = "https://github.com/lfs-book/lfs.git";
 constexpr auto kMlfsBookBranch = "multilib";
-constexpr auto kMlfsBookTag = "ml-13.0";
 constexpr auto kMlfsProfileRevision = "systemd";
 constexpr auto kLfsPackagesArchiveName = "lfs-packages-13.0.tar";
 constexpr auto kLfsPackagesArchiveUrl = "https://ftp.osuosl.org/pub/lfs/lfs-packages/lfs-packages-13.0.tar";
@@ -2791,6 +2790,8 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
     appendInstallLogLine(QStringLiteral("> cloning MLFS book source"));
     if (!runProcessAndCapture(gitExecutable,
                               {QStringLiteral("clone"),
+                               QStringLiteral("--depth"),
+                               QStringLiteral("1"),
                                QStringLiteral("--branch"),
                                QString::fromLatin1(kMlfsBookBranch),
                                QStringLiteral("--single-branch"),
@@ -2804,19 +2805,9 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
     if (!processOutput.trimmed().isEmpty()) {
         appendInstallLogLine(QString::fromLocal8Bit(processOutput).trimmed());
     }
-
-    appendInstallLogLine(QStringLiteral("> checking out MLFS tag %1").arg(QString::fromLatin1(kMlfsBookTag)));
-    if (!runProcessAndCapture(gitExecutable,
-                              {QStringLiteral("-C"),
-                               bookSourceDirectory,
-                               QStringLiteral("checkout"),
-                               QStringLiteral("--detach"),
-                               QString::fromLatin1(kMlfsBookTag)},
-                              currentRunDirectory_,
-                              &processOutput,
-                              errorMessage)) {
-        return false;
-    }
+    appendInstallLogLine(QStringLiteral("> using MLFS branch `%1` from `%2`")
+                             .arg(QString::fromLatin1(kMlfsBookBranch),
+                                  QString::fromLatin1(kMlfsBookRepositoryUrl)));
 
     appendInstallLogLine(QStringLiteral("> processing MLFS book scripts"));
     if (!runProcessAndCapture(bashExecutable,
@@ -3128,25 +3119,6 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
                 const QString rewritten = rewriteMlfsCommand(rawCommand.text, sectionId, rawCommand.noDump);
                 if (!rewritten.trimmed().isEmpty()) {
                     commands.append(rewritten.trimmed());
-                }
-            }
-            if (sectionId == QStringLiteral("ch-tools-gcc-pass1")
-                || sectionId == QStringLiteral("ch-tools-gcc-pass2")
-                || sectionId == QStringLiteral("ch-system-gcc")) {
-                for (int commandIndex = 0; commandIndex < commands.size(); ++commandIndex) {
-                    if (!commands.at(commandIndex).contains(QStringLiteral("gcc/config/i386/t-linux64"))) {
-                        continue;
-                    }
-
-                    QString command = commands.at(commandIndex);
-                    command += QStringLiteral("\n");
-                    command += QStringLiteral(
-                        "awk '!/mx32=/' gcc/config/i386/t-linux64 > gcc/config/i386/t-linux64.codex && \\\n"
-                        "sed -i 's|m64/m32/mx32|m64/m32|g; s|m64,m32,mx32|m64,m32|g; s|:x86_64-linux-gnux32||g' \\\n"
-                        "    gcc/config/i386/t-linux64.codex && \\\n"
-                        "mv gcc/config/i386/t-linux64.codex gcc/config/i386/t-linux64");
-                    commands[commandIndex] = command;
-                    break;
                 }
             }
             if (sectionId == QStringLiteral("ch-bootable-kernel") && !commands.isEmpty()) {
