@@ -420,9 +420,12 @@ void collectMlfsCommands(const QDomNode &node, bool insideNoDump, QList<MlfsComm
         const QDomElement element = node.toElement();
         const bool noDump = insideNoDump || element.attribute(QStringLiteral("role")) == QStringLiteral("nodump");
         if (nodeLocalName(element) == QStringLiteral("userinput")) {
-            const QString text = element.text().trimmed();
-            if (!text.isEmpty()) {
-                commands->append({text, noDump});
+            const QDomNode parentNode = node.parentNode();
+            if (parentNode.isElement() && nodeLocalName(parentNode.toElement()) == QStringLiteral("screen")) {
+                const QString text = element.text().trimmed();
+                if (!text.isEmpty()) {
+                    commands->append({text, noDump});
+                }
             }
             return;
         }

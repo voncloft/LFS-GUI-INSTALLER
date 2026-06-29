@@ -1,0 +1,62 @@
+# Script: chapter5/002-binutils-2-46-0-pass-1.sh
+# Started: 2026-06-29T04:28:57
+# Log Path: /home/kubuntu/Desktop/LFS-GUI-INSTALLER/run-20260629-042711/logs/chapter5/002-binutils-2-46-0-pass-1.log
+
+__codex_handoff_lfs() {
+  local marker="$1"
+  su - lfs <<EOF
+printf '%s\n' "$marker"
+exec /bin/bash -i
+EOF
+}
+__codex_handoff_lfs_profile() {
+  local marker="$1"
+  exec env -i HOME="$HOME" TERM="$TERM" PS1='\u:\w\$ ' /bin/bash -i <<EOF
+printf '%s\n' "$marker"
+exec /bin/bash -i
+EOF
+}
+__codex_handoff_chroot() {
+  local marker="$1"
+  chroot "$LFS" /usr/bin/env -i \
+      HOME=/root \
+      TERM="$TERM" \
+      PS1='(lfs chroot) \u:\w\$ ' \
+      PATH=/usr/bin:/usr/sbin \
+      MAKEFLAGS="-j$(nproc)" \
+      TESTSUITEFLAGS="-j$(nproc)" \
+      /bin/bash --login <<EOF
+printf '%s\n' "$marker"
+exec /bin/bash --login
+EOF
+}
+__codex_handoff_login_bash() {
+  local marker="$1"
+  exec /usr/bin/bash --login <<EOF
+printf '%s\n' "$marker"
+exec /usr/bin/bash --login
+EOF
+}
+#!/usr/bin/env bash
+echo 'step:Binutils-2.46.0 - Pass 1'
+cd "$LFS/sources"
+find . -maxdepth 1 -mindepth 1 -type d -name 'binutils-2.46.0*' -exec rm -rf {} +
+sh autountar 'binutils-2.46.0'
+source_dir=$(find . -maxdepth 1 -mindepth 1 -type d -name 'binutils-2.46.0*' | sort | head -n 1)
+if [ -z "$source_dir" ]; then echo "Unable to find extracted source for binutils-2.46.0" >&2; exit 1; fi
+cd "$source_dir"
+mkdir -v build
+cd       build
+time { ../configure ... && make
+      && make install; }
+../configure --prefix=$LFS/tools \
+             --with-sysroot=$LFS \
+             --target=$LFS_TGT   \
+             --disable-nls       \
+             --enable-gprofng=no \
+             --disable-werror    \
+             --enable-new-dtags  \
+             --enable-default-hash-style=gnu
+make
+make install
+root@kubuntu:/mnt/lfs/sources# exit
