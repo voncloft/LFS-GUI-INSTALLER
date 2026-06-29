@@ -2737,6 +2737,15 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
         return false;
     }
 
+    appendInstallLogLine(QStringLiteral("> generating MLFS conditional entities"));
+    if (!runProcessAndCapture(bashExecutable,
+                              {QStringLiteral("git-version.sh"), QStringLiteral("systemd")},
+                              bookSourceDirectory,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+
     appendInstallLogLine(QStringLiteral("> profiling MLFS book XML"));
     if (!runProcessAndCapture(xsltprocExecutable,
                               {QStringLiteral("--xinclude"),
