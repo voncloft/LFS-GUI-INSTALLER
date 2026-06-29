@@ -482,14 +482,27 @@ QString generatedMlfsScriptBody(const QString &stepTitle,
     lines << QString();
     lines << QStringLiteral("echo %1").arg(shellQuote(QStringLiteral("step:") + stepTitle));
     lines << QStringLiteral("unset source_dir cleanup_source_dir");
+    if (!cleanupCommands.trimmed().isEmpty()) {
+        lines << QStringLiteral("__codex_cleanup_generated_package() {");
+        lines << QStringLiteral("    local status=$?");
+        lines << QStringLiteral("    trap - EXIT");
+        lines << QStringLiteral("    if [ \"$status\" -eq 0 ]; then");
+        for (const QString &cleanupLine : cleanupCommands.split(QLatin1Char('\n'))) {
+            if (cleanupLine.trimmed().isEmpty()) {
+                continue;
+            }
+            lines << QStringLiteral("        %1").arg(cleanupLine);
+        }
+        lines << QStringLiteral("    fi");
+        lines << QStringLiteral("    return \"$status\"");
+        lines << QStringLiteral("}");
+        lines << QStringLiteral("trap __codex_cleanup_generated_package EXIT");
+    }
     if (!setupCommands.trimmed().isEmpty()) {
         lines << setupCommands.trimmed();
     }
     if (!commands.isEmpty()) {
         lines << commands;
-    }
-    if (!cleanupCommands.trimmed().isEmpty()) {
-        lines << cleanupCommands.trimmed();
     }
     return lines.join('\n') + '\n';
 }
