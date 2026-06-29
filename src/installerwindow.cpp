@@ -321,18 +321,12 @@ QString installShellHandoffHelpers()
     return QStringLiteral(R"SH(
 __codex_handoff_lfs() {
   local marker="$1"
-  su - lfs <<EOF
-printf '%s\n' "$marker"
-exec /bin/bash -i
-EOF
+  su - lfs -c "printf '%s\n' \"$marker\"; exec /bin/bash -i"
 }
 
 __codex_handoff_lfs_profile() {
   local marker="$1"
-  exec env -i HOME="$HOME" TERM="$TERM" PS1='\u:\w\$ ' /bin/bash -i <<EOF
-printf '%s\n' "$marker"
-exec /bin/bash -i
-EOF
+  exec env -i HOME="$HOME" TERM="$TERM" PS1='\u:\w\$ ' /bin/bash -i -c "printf '%s\n' \"$marker\"; exec /bin/bash -i"
 }
 
 __codex_handoff_chroot() {
@@ -344,18 +338,12 @@ __codex_handoff_chroot() {
       PATH=/usr/bin:/usr/sbin \
       MAKEFLAGS="-j$(nproc)" \
       TESTSUITEFLAGS="-j$(nproc)" \
-      /bin/bash --login <<EOF
-printf '%s\n' "$marker"
-exec /bin/bash --login
-EOF
+      /bin/bash --login -c "printf '%s\n' \"$marker\"; exec /bin/bash --login"
 }
 
 __codex_handoff_login_bash() {
   local marker="$1"
-  exec /usr/bin/bash --login <<EOF
-printf '%s\n' "$marker"
-exec /usr/bin/bash --login
-EOF
+  exec /usr/bin/bash --login -c "printf '%s\n' \"$marker\"; exec /usr/bin/bash --login"
 }
 )SH");
 }
