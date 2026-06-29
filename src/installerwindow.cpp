@@ -3000,8 +3000,19 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
     };
 
     const QDomElement root = bookDocument.documentElement();
+    QList<QDomElement> bookChapters;
+    for (const QDomElement &part : directChildElements(root, QStringLiteral("part"))) {
+        const QList<QDomElement> chaptersInPart = directChildElements(part, QStringLiteral("chapter"));
+        for (const QDomElement &chapter : chaptersInPart) {
+            bookChapters.append(chapter);
+        }
+    }
+    if (bookChapters.isEmpty()) {
+        bookChapters = directChildElements(root, QStringLiteral("chapter"));
+    }
+
     int chapterNumber = 0;
-    for (const QDomElement &chapter : directChildElements(root, QStringLiteral("chapter"))) {
+    for (const QDomElement &chapter : bookChapters) {
         ++chapterNumber;
         if (chapterNumber < 4 || chapterNumber > 10) {
             continue;
