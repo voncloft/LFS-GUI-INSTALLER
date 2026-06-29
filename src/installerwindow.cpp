@@ -64,6 +64,8 @@ constexpr auto kMlfsBookRepositoryUrl = "https://git.linuxfromscratch.org/lfs.gi
 constexpr auto kMlfsBookBranch = "multilib";
 constexpr auto kMlfsBookTag = "ml-13.0";
 constexpr auto kMlfsProfileRevision = "systemd";
+constexpr auto kLfsPackagesArchiveName = "lfs-packages-13.0.tar";
+constexpr auto kLfsPackagesArchiveUrl = "https://ftp.osuosl.org/pub/lfs/lfs-packages/lfs-packages-13.0.tar";
 
 QString humanSize(quint64 bytes)
 {
@@ -3691,12 +3693,32 @@ QString InstallerWindow::buildMlfsDownloadScript(const QString &wgetListPath, co
     lines << QStringLiteral("echo %1").arg(shellQuote(QStringLiteral("step:Downloading MLFS source packages")));
     lines << QStringLiteral("mkdir -pv \"$LFS/sources\"");
     lines << QStringLiteral("chmod -v a+wt \"$LFS/sources\"");
+    lines << QStringLiteral("BUNDLE_URL=%1").arg(shellQuote(QString::fromLatin1(kLfsPackagesArchiveUrl)));
+    lines << QStringLiteral("BUNDLE_ARCHIVE=\"$LFS/sources/%1\"").arg(QString::fromLatin1(kLfsPackagesArchiveName));
+    lines << QStringLiteral("BUNDLE_EXTRACT_DIR=\"$LFS/sources/.bundle-extract\"");
     lines << QStringLiteral("WGET_LIST=%1").arg(shellQuote(wgetListPath));
     lines << QStringLiteral("MD5_LIST=%1").arg(shellQuote(md5ListPath));
+    lines << QStringLiteral("if [ ! -f \"$BUNDLE_ARCHIVE\" ]; then");
+    lines << QStringLiteral("    wget -c \"$BUNDLE_URL\" --directory-prefix=\"$LFS/sources\"");
+    lines << QStringLiteral("fi");
+    lines << QStringLiteral("rm -rf \"$BUNDLE_EXTRACT_DIR\"");
+    lines << QStringLiteral("mkdir -p \"$BUNDLE_EXTRACT_DIR\"");
+    lines << QStringLiteral("tar -xf \"$BUNDLE_ARCHIVE\" -C \"$BUNDLE_EXTRACT_DIR\"");
+    lines << QStringLiteral("bundle_root=$(find \"$BUNDLE_EXTRACT_DIR\" -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)");
+    lines << QStringLiteral("if [ -z \"$bundle_root\" ]; then");
+    lines << QStringLiteral("    bundle_root=\"$BUNDLE_EXTRACT_DIR\"");
+    lines << QStringLiteral("fi");
+    lines << QStringLiteral("find \"$bundle_root\" -mindepth 1 -maxdepth 1 -exec cp -an {} \"$LFS/sources/\" \\;");
+    lines << QStringLiteral("rm -rf \"$BUNDLE_EXTRACT_DIR\"");
     lines << QStringLiteral("mapfile -t download_urls < \"$WGET_LIST\"");
     lines << QStringLiteral("failed_urls=()");
     lines << QStringLiteral("for url in \"${download_urls[@]}\"; do");
     lines << QStringLiteral("    if [ -z \"$url\" ]; then");
+    lines << QStringLiteral("        continue");
+    lines << QStringLiteral("    fi");
+    lines << QStringLiteral("    file_name=\"${url##*/}\"");
+    lines << QStringLiteral("    file_name=\"${file_name%%\\?*}\"");
+    lines << QStringLiteral("    if [ -n \"$file_name\" ] && [ -f \"$LFS/sources/$file_name\" ]; then");
     lines << QStringLiteral("        continue");
     lines << QStringLiteral("    fi");
     lines << QStringLiteral("    if ! wget --continue --directory-prefix=\"$LFS/sources\" --tries=20 --timeout=30 \"$url\"; then");
