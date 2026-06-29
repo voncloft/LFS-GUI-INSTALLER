@@ -94,6 +94,8 @@ private:
     bool prepareCurrentInstallLog(QString *errorMessage);
     void closeCurrentInstallLog();
     void appendCurrentInstallLogLine(const QString &line);
+    bool prepareMlfsBookArtifacts(QString *errorMessage);
+    bool expandMlfsSentinelEntry(const QString &sentinel, QString *errorMessage);
     QString buildInstallSessionPrelude() const;
     bool queueInstallCommand(const QString &command, const QString &context, QString *errorMessage);
     bool queueInstallScriptChunk(const QString &scriptPath, QString *errorMessage);
@@ -109,11 +111,13 @@ private:
     void processInstallOutputLine(const QString &line);
     QString buildFeatureOutputText() const;
     QString buildFinalSetupScript() const;
+    QString buildMlfsDownloadScript(const QString &wgetListPath, const QString &md5ListPath) const;
     QString buildPartitionScript() const;
     QString buildMountScript() const;
     QString buildHostnameFile() const;
     QString buildClockFile() const;
     QString buildFstabFile() const;
+    QString targetBuildDirectory() const;
     QString buildConfigText() const;
     QByteArray buildConfigJson(bool pretty) const;
 
@@ -169,8 +173,11 @@ private:
     QString currentInstallScriptPath_;
     QString currentInstallEntryName_;
     QString currentRuntimeScriptsDirectory_;
+    QString currentSourceProjectRootDirectory_;
     QString currentInstallLogRootDirectory_;
     QFile currentInstallLogFile_;
+    QStringList mlfsDownloadScriptPaths_;
+    QStringList mlfsToolchainScriptPaths_;
     int currentInstallScriptIndex_ = -1;
     int totalInstallSteps_ = 0;
     int completedInstallSteps_ = 0;
@@ -178,6 +185,7 @@ private:
     bool installInProgress_ = false;
     bool installShellSessionStarted_ = false;
     bool installSessionClosing_ = false;
+    bool mlfsArtifactsPrepared_ = false;
     bool refreshingSummaries_ = false;
     QString currentRunDirectory_;
 };

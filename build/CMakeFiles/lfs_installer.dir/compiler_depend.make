@@ -888,6 +888,11 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/qtwidgetsexports.h \
   /usr/include/QtWidgets/qtwidgetsglobal.h \
   /usr/include/QtWidgets/qwidget.h \
+  /usr/include/QtXml/QDomDocument \
+  /usr/include/QtXml/qdom.h \
+  /usr/include/QtXml/qtxml-config.h \
+  /usr/include/QtXml/qtxmlexports.h \
+  /usr/include/QtXml/qtxmlglobal.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
@@ -1843,6 +1848,7 @@ lfs_installer: /lib/libQt6DBus.so.6 \
   /usr/lib/libQt6Gui.so.6.9.1 \
   /usr/lib/libQt6Network.so.6.9.1 \
   /usr/lib/libQt6Widgets.so.6.9.1 \
+  /usr/lib/libQt6Xml.so.6.9.1 \
   /usr/lib/libc.so.6 \
   /usr/lib/libc_nonshared.a \
   /usr/lib/libgthread-2.0.so.0 \
@@ -1987,6 +1993,10 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/QtWidgets/QApplication:
 
 /home/von/qt6\ projects/lfs_installer/src/main.cpp:
+
+/usr/include/QtXml/qtxml-config.h:
+
+/usr/include/QtXml/qdom.h:
 
 /usr/include/QtWidgets/qtreewidgetitemiterator.h:
 
@@ -2398,6 +2408,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtGui/qpalette.h:
 
+/usr/lib/libQt6Xml.so.6.9.1:
+
 /usr/include/c++/15.1.0/bits/utility.h:
 
 /usr/include/QtGui/qpaintdevice.h:
@@ -2536,6 +2548,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/c++/15.1.0/bits/streambuf.tcc:
 
+/usr/include/QtXml/QDomDocument:
+
 /usr/include/QtCore/q20memory.h:
 
 /usr/include/c++/15.1.0/bits/range_access.h:
@@ -2657,6 +2671,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 /usr/include/c++/15.1.0/bits/char_traits.h:
 
 /lib/libpcre2-16.so.0:
+
+/usr/include/QtXml/qtxmlexports.h:
 
 /usr/include/QtGui/qfontmetrics.h:
 
@@ -2801,6 +2817,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /usr/include/QtCore/qstringtokenizer.h:
 
 /usr/include/QtGui/qimage.h:
+
+/usr/include/QtXml/qtxmlglobal.h:
 
 /usr/include/c++/15.1.0/cassert:
 

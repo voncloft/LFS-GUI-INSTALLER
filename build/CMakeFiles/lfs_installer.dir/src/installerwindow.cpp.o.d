@@ -401,15 +401,18 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: \
  /usr/include/QtWidgets/qfiledialog.h /usr/include/QtCore/qdir.h \
  /usr/include/QtCore/qurl.h /usr/include/QtWidgets/qdialog.h \
  /usr/include/QtCore/QFileInfo /usr/include/QtCore/qfileinfo.h \
- /usr/include/QtWidgets/QFormLayout /usr/include/QtWidgets/qformlayout.h \
- /usr/include/QtWidgets/QLayout /usr/include/QtWidgets/qlayout.h \
- /usr/include/QtWidgets/qlayoutitem.h /usr/include/QtWidgets/qboxlayout.h \
- /usr/include/QtWidgets/qlayout.h /usr/include/QtWidgets/qgridlayout.h \
- /usr/include/QtGui/QFontDatabase /usr/include/QtGui/qfontdatabase.h \
- /usr/include/QtWidgets/QFrame /usr/include/QtWidgets/qframe.h \
- /usr/include/QtWidgets/QGroupBox /usr/include/QtWidgets/qgroupbox.h \
- /usr/include/QtWidgets/QGridLayout /usr/include/QtWidgets/qgridlayout.h \
- /usr/include/QtWidgets/QHeaderView /usr/include/QtWidgets/qheaderview.h \
+ /usr/include/QtXml/QDomDocument /usr/include/QtXml/qdom.h \
+ /usr/include/QtXml/qtxmlglobal.h /usr/include/QtXml/qtxml-config.h \
+ /usr/include/QtXml/qtxmlexports.h /usr/include/QtWidgets/QFormLayout \
+ /usr/include/QtWidgets/qformlayout.h /usr/include/QtWidgets/QLayout \
+ /usr/include/QtWidgets/qlayout.h /usr/include/QtWidgets/qlayoutitem.h \
+ /usr/include/QtWidgets/qboxlayout.h /usr/include/QtWidgets/qlayout.h \
+ /usr/include/QtWidgets/qgridlayout.h /usr/include/QtGui/QFontDatabase \
+ /usr/include/QtGui/qfontdatabase.h /usr/include/QtWidgets/QFrame \
+ /usr/include/QtWidgets/qframe.h /usr/include/QtWidgets/QGroupBox \
+ /usr/include/QtWidgets/qgroupbox.h /usr/include/QtWidgets/QGridLayout \
+ /usr/include/QtWidgets/qgridlayout.h /usr/include/QtWidgets/QHeaderView \
+ /usr/include/QtWidgets/qheaderview.h \
  /usr/include/QtWidgets/qabstractitemview.h \
  /usr/include/QtWidgets/qabstractscrollarea.h \
  /usr/include/QtCore/qitemselectionmodel.h \

@@ -7,6 +7,7 @@ lfs_installer: \
   CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o \
   /usr/lib/libQt6Widgets.so.6.9.1 \
   /usr/lib/libQt6Network.so.6.9.1 \
+  /usr/lib/libQt6Xml.so.6.9.1 \
   /usr/lib/libQt6Gui.so.6.9.1 \
   /usr/lib64/libGLX.so \
   /usr/lib64/libOpenGL.so \
@@ -115,6 +116,8 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o:
 /usr/lib/libQt6Widgets.so.6.9.1:
 
 /usr/lib/libQt6Network.so.6.9.1:
+
+/usr/lib/libQt6Xml.so.6.9.1:
 
 /usr/lib/libQt6Gui.so.6.9.1:
 

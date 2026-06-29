@@ -890,6 +890,11 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o
  /usr/include/QtWidgets/qtwidgetsexports.h
  /usr/include/QtWidgets/qtwidgetsglobal.h
  /usr/include/QtWidgets/qwidget.h
+ /usr/include/QtXml/QDomDocument
+ /usr/include/QtXml/qdom.h
+ /usr/include/QtXml/qtxml-config.h
+ /usr/include/QtXml/qtxmlexports.h
+ /usr/include/QtXml/qtxmlglobal.h
  /usr/include/alloca.h
  /usr/include/asm-generic/bitsperlong.h
  /usr/include/asm-generic/errno-base.h
@@ -1847,6 +1852,7 @@ lfs_installer
  /usr/lib/libQt6Gui.so.6.9.1
  /usr/lib/libQt6Network.so.6.9.1
  /usr/lib/libQt6Widgets.so.6.9.1
+ /usr/lib/libQt6Xml.so.6.9.1
  /usr/lib/libc.so.6
  /usr/lib/libc_nonshared.a
  /usr/lib/libgthread-2.0.so.0

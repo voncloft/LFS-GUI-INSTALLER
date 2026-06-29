@@ -84,8 +84,8 @@ clean: CMakeFiles/lfs_installer_autogen.dir/clean
 # Target rules for target CMakeFiles/lfs_installer.dir
 
 # All Build rule for target.
-CMakeFiles/lfs_installer.dir/all: CMakeFiles/lfs_installer_autogen_timestamp_deps.dir/all
 CMakeFiles/lfs_installer.dir/all: CMakeFiles/lfs_installer_autogen.dir/all
+CMakeFiles/lfs_installer.dir/all: CMakeFiles/lfs_installer_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lfs_installer.dir/build.make CMakeFiles/lfs_installer.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lfs_installer.dir/build.make CMakeFiles/lfs_installer.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/home/von/qt6 projects/lfs_installer/build/CMakeFiles" --progress-num=1,2,3,4 "Built target lfs_installer"

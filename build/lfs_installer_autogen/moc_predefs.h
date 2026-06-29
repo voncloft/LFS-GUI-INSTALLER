@@ -183,6 +183,7 @@
 #define __PTRDIFF_MAX__ 0x7fffffffffffffffL
 #define __amd64 1
 #define __DEC64X_MAX__ 9.999999999999999999999999999999999E6144D64x
+#define QT_XML_LIB 1
 #define __ATOMIC_HLE_ACQUIRE 65536
 #define __GNUG__ 15
 #define __LONG_LONG_MAX__ 0x7fffffffffffffffLL

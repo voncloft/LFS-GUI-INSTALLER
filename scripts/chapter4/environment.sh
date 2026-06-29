@@ -13,7 +13,7 @@ PATH=/usr/bin
 if [ ! -L /bin ]; then PATH=/bin:$PATH; fi
 PATH=$LFS/tools/bin:$PATH
 CONFIG_SITE=$LFS/usr/share/config.site
-export LFS LC_ALL LFS_TGT LFS_TGT32 PATH
+export LFS LC_ALL LFS_TGT LFS_TGT32 PATH CONFIG_SITE
 EOF
 cat >> ~/.bashrc << "EOF"
 #export MAKEFLAGS=-j$(nproc)

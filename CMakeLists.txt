@@ -8,7 +8,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network Xml)
 
 qt_add_executable(lfs_installer
     src/main.cpp
@@ -16,4 +16,4 @@ qt_add_executable(lfs_installer
     src/installerwindow.h
 )
 
-target_link_libraries(lfs_installer PRIVATE Qt6::Widgets Qt6::Network)
+target_link_libraries(lfs_installer PRIVATE Qt6::Widgets Qt6::Network Qt6::Xml)

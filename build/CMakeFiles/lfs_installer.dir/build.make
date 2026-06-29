@@ -130,6 +130,7 @@ lfs_installer: CMakeFiles/lfs_installer.dir/build.make
 lfs_installer: CMakeFiles/lfs_installer.dir/compiler_depend.ts
 lfs_installer: /usr/lib/libQt6Widgets.so.6.9.1
 lfs_installer: /usr/lib/libQt6Network.so.6.9.1
+lfs_installer: /usr/lib/libQt6Xml.so.6.9.1
 lfs_installer: /usr/lib/libQt6Gui.so.6.9.1
 lfs_installer: /usr/lib64/libGLX.so
 lfs_installer: /usr/lib64/libOpenGL.so

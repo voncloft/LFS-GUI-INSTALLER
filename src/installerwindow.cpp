@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
+#include <QDomDocument>
 #include <QFormLayout>
 #include <QFontDatabase>
 #include <QFrame>
@@ -58,6 +59,12 @@
 
 namespace
 {
+constexpr auto kMlfsBookSentinel = "@MLFS_BOOK@";
+constexpr auto kMlfsBookRepositoryUrl = "https://git.linuxfromscratch.org/lfs.git";
+constexpr auto kMlfsBookBranch = "multilib";
+constexpr auto kMlfsBookTag = "ml-13.0";
+constexpr auto kMlfsProfileRevision = "m32";
+
 QString humanSize(quint64 bytes)
 {
     static const QStringList units = {"B", "KiB", "MiB", "GiB", "TiB"};
@@ -272,6 +279,221 @@ QString shellQuote(const QString &value)
     QString escaped = value;
     escaped.replace('\'', "'\"'\"'");
     return QString("'%1'").arg(escaped);
+}
+
+QString nodeLocalName(const QDomNode &node)
+{
+    if (!node.localName().isEmpty()) {
+        return node.localName();
+    }
+    return node.nodeName();
+}
+
+QList<QDomElement> directChildElements(const QDomElement &parent, const QString &localName = {})
+{
+    QList<QDomElement> result;
+    for (QDomNode child = parent.firstChild(); !child.isNull(); child = child.nextSibling()) {
+        if (!child.isElement()) {
+            continue;
+        }
+
+        const QDomElement element = child.toElement();
+        if (!localName.isEmpty() && nodeLocalName(element) != localName) {
+            continue;
+        }
+        result.append(element);
+    }
+    return result;
+}
+
+QString slugify(const QString &value)
+{
+    QString slug = value.toLower().trimmed();
+    slug.replace(QRegularExpression(QStringLiteral("[^a-z0-9]+")), QStringLiteral("-"));
+    slug.remove(QRegularExpression(QStringLiteral("^-+|-+$")));
+    return slug;
+}
+
+struct MlfsCommand
+{
+    QString text;
+    bool noDump = false;
+};
+
+void collectMlfsCommands(const QDomNode &node, bool insideNoDump, QList<MlfsCommand> *commands)
+{
+    if (!commands) {
+        return;
+    }
+
+    if (node.isElement()) {
+        const QDomElement element = node.toElement();
+        const bool noDump = insideNoDump || element.attribute(QStringLiteral("role")) == QStringLiteral("nodump");
+        if (nodeLocalName(element) == QStringLiteral("userinput")) {
+            const QString text = element.text().trimmed();
+            if (!text.isEmpty()) {
+                commands->append({text, noDump});
+            }
+            return;
+        }
+
+        for (QDomNode child = element.firstChild(); !child.isNull(); child = child.nextSibling()) {
+            collectMlfsCommands(child, noDump, commands);
+        }
+        return;
+    }
+
+    for (QDomNode child = node.firstChild(); !child.isNull(); child = child.nextSibling()) {
+        collectMlfsCommands(child, insideNoDump, commands);
+    }
+}
+
+QString sectionTitle(const QDomElement &section)
+{
+    const QList<QDomElement> titles = directChildElements(section, QStringLiteral("title"));
+    if (titles.isEmpty()) {
+        return {};
+    }
+    return titles.constFirst().text().trimmed();
+}
+
+QString generatedMlfsScriptPath(int chapterNumber, int sectionNumber, const QString &slug)
+{
+    const QString chapterDirectory = QStringLiteral("mlfs-generated/chapter%1").arg(chapterNumber);
+    const QString fileName = QStringLiteral("%1-%2.sh")
+                                 .arg(sectionNumber, 3, 10, QChar('0'))
+                                 .arg(slug);
+    return QDir(chapterDirectory).filePath(fileName);
+}
+
+QString archiveBaseNameFromUrl(const QString &urlText)
+{
+    const QString fileName = QFileInfo(QUrl(urlText.trimmed()).path()).fileName();
+    QString base = fileName;
+    const QStringList suffixes = {
+        QStringLiteral(".tar.xz"),
+        QStringLiteral(".tar.gz"),
+        QStringLiteral(".tar.bz2"),
+        QStringLiteral(".tar.zst"),
+        QStringLiteral(".tar.lz"),
+        QStringLiteral(".tar.lz4")
+    };
+    for (const QString &suffix : suffixes) {
+        if (base.endsWith(suffix)) {
+            base.chop(suffix.size());
+            break;
+        }
+    }
+    return base;
+}
+
+QString generatedMlfsScriptBody(const QString &stepTitle,
+                                const QStringList &commands,
+                                const QString &setupCommands = QString())
+{
+    QStringList lines;
+    lines << QStringLiteral("#!/usr/bin/env bash");
+    lines << QString();
+    lines << QStringLiteral("echo %1").arg(shellQuote(QStringLiteral("step:") + stepTitle));
+    if (!setupCommands.trimmed().isEmpty()) {
+        lines << setupCommands.trimmed();
+    }
+    if (!commands.isEmpty()) {
+        lines << commands;
+    }
+    return lines.join('\n') + '\n';
+}
+
+bool writeGeneratedTextFile(const QString &path,
+                            const QString &contents,
+                            bool executable,
+                            QString *errorMessage)
+{
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to open `%1` for writing.").arg(path);
+        }
+        return false;
+    }
+
+    QString normalized = contents;
+    if (!normalized.endsWith('\n')) {
+        normalized.append('\n');
+    }
+
+    if (file.write(normalized.toUtf8()) < 0) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to write `%1`.").arg(path);
+        }
+        return false;
+    }
+
+    if (!file.commit()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Failed to finalize `%1`.").arg(path);
+        }
+        return false;
+    }
+
+    const QFileDevice::Permissions permissions = executable
+                                                     ? (QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
+                                                        | QFileDevice::ReadGroup | QFileDevice::ExeGroup
+                                                        | QFileDevice::ReadOther | QFileDevice::ExeOther)
+                                                     : (QFileDevice::ReadOwner | QFileDevice::WriteOwner
+                                                        | QFileDevice::ReadGroup | QFileDevice::ReadOther);
+    if (!QFile::setPermissions(path, permissions)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to set permissions on `%1`.").arg(path);
+        }
+        return false;
+    }
+
+    return true;
+}
+
+bool runProcessAndCapture(const QString &program,
+                          const QStringList &arguments,
+                          const QString &workingDirectory,
+                          QByteArray *output,
+                          QString *errorMessage)
+{
+    QProcess process;
+    process.setProgram(program);
+    process.setArguments(arguments);
+    process.setWorkingDirectory(workingDirectory);
+    process.setProcessChannelMode(QProcess::MergedChannels);
+    process.start();
+    if (!process.waitForStarted()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Failed to start `%1`.").arg(program);
+        }
+        return false;
+    }
+
+    if (!process.waitForFinished(-1)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Timed out while running `%1`.").arg(program);
+        }
+        return false;
+    }
+
+    const QByteArray mergedOutput = process.readAll();
+    if (output) {
+        *output = mergedOutput;
+    }
+
+    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
+        if (errorMessage) {
+            const QString details = QString::fromLocal8Bit(mergedOutput).trimmed();
+            *errorMessage = details.isEmpty()
+                                ? QStringLiteral("`%1` failed.").arg(program)
+                                : QStringLiteral("`%1` failed: %2").arg(program, details);
+        }
+        return false;
+    }
+
+    return true;
 }
 
 bool ensureDirectoryExists(const QString &path, QString *errorMessage)
@@ -1805,6 +2027,7 @@ void InstallerWindow::startInstall()
 
     installScriptPaths_ = collectScriptPaths(runtimeScriptsDirectory);
     currentRuntimeScriptsDirectory_ = runtimeScriptsDirectory;
+    currentSourceProjectRootDirectory_ = QFileInfo(scriptsDirectory).dir().absolutePath();
     currentInstallLogRootDirectory_ = QDir(QFileInfo(scriptsDirectory).dir().absolutePath()).filePath("logs");
     if (installScriptPaths_.isEmpty()) {
         QMessageBox::critical(this, "Install list empty", "No scripts were listed in `scripts/install.sh`.");
@@ -1829,6 +2052,9 @@ void InstallerWindow::startInstall()
     pendingInstallStepText_.clear();
     currentInstallScriptPath_.clear();
     currentInstallEntryName_.clear();
+    mlfsDownloadScriptPaths_.clear();
+    mlfsToolchainScriptPaths_.clear();
+    mlfsArtifactsPrepared_ = false;
     currentInstallScriptIndex_ = 0;
     completedInstallSteps_ = 0;
     totalInstallSteps_ = installScriptPaths_.size();
@@ -2097,8 +2323,7 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
     };
 
     QDirIterator scriptIterator(sourceScriptsDirectory,
-                                QStringList() << "*.sh",
-                                QDir::Files | QDir::Readable,
+                                QDir::Files | QDir::Readable | QDir::NoDotAndDotDot,
                                 QDirIterator::Subdirectories);
     while (scriptIterator.hasNext()) {
         const QString sourcePath = scriptIterator.next();
@@ -2122,7 +2347,12 @@ bool InstallerWindow::generateInstallArtifacts(const QString &sourceScriptsDirec
             return false;
         }
 
-        if (!writeFile(stagedPath, QString::fromUtf8(sourceFile.readAll()), true)) {
+        const QFileInfo sourceInfo(sourcePath);
+        const bool executable = sourceInfo.permission(QFileDevice::ExeOwner)
+                                || sourceInfo.permission(QFileDevice::ExeGroup)
+                                || sourceInfo.permission(QFileDevice::ExeOther)
+                                || sourceInfo.suffix() == QStringLiteral("sh");
+        if (!writeFile(stagedPath, QString::fromUtf8(sourceFile.readAll()), executable)) {
             return false;
         }
     }
@@ -2222,6 +2452,11 @@ QStringList InstallerWindow::collectScriptPaths(const QString &scriptsDirectory)
             line = line.mid(1, line.size() - 2);
         }
 
+        if (line == QLatin1String(kMlfsBookSentinel)) {
+            scriptPaths.append(line);
+            continue;
+        }
+
         if (!line.endsWith(".sh")) {
             continue;
         }
@@ -2263,7 +2498,12 @@ QString InstallerWindow::installScriptEntryName(const QString &scriptPath) const
         return QFileInfo(scriptPath).fileName();
     }
 
-    return QDir(currentRuntimeScriptsDirectory_).relativeFilePath(scriptPath);
+    QString relativePath = QDir(currentRuntimeScriptsDirectory_).relativeFilePath(scriptPath);
+    const QString generatedPrefix = QStringLiteral("mlfs-generated/");
+    if (relativePath.startsWith(generatedPrefix)) {
+        relativePath.remove(0, generatedPrefix.size());
+    }
+    return relativePath;
 }
 
 QString InstallerWindow::installLogPathForEntry(const QString &entryName) const
@@ -2405,6 +2645,478 @@ void InstallerWindow::appendCurrentInstallLogLine(const QString &line)
     currentInstallLogFile_.flush();
 }
 
+bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
+{
+    if (mlfsArtifactsPrepared_) {
+        return true;
+    }
+
+    const QString gitExecutable = QStandardPaths::findExecutable(QStringLiteral("git"));
+    const QString bashExecutable = QStandardPaths::findExecutable(QStringLiteral("bash"));
+    const QString xsltprocExecutable = QStandardPaths::findExecutable(QStringLiteral("xsltproc"));
+    const QString xmllintExecutable = QStandardPaths::findExecutable(QStringLiteral("xmllint"));
+    if (gitExecutable.isEmpty() || bashExecutable.isEmpty() || xsltprocExecutable.isEmpty() || xmllintExecutable.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("MLFS generation requires `git`, `bash`, `xsltproc`, and `xmllint` in PATH.");
+        }
+        return false;
+    }
+
+    const QString generatedRoot = QDir(currentRuntimeScriptsDirectory_).filePath(QStringLiteral("mlfs-generated"));
+    const QString bookSourceDirectory = QDir(currentRunDirectory_).filePath(QStringLiteral("mlfs-book-source"));
+    const QString bookWorkDirectory = QDir(currentRunDirectory_).filePath(QStringLiteral("mlfs-book-work"));
+    const QString profiledXmlPath = QDir(bookWorkDirectory).filePath(QStringLiteral("book-profiled.xml"));
+    const QString fullXmlPath = QDir(bookWorkDirectory).filePath(QStringLiteral("book-full.xml"));
+    const QString wgetListPath = QDir(bookWorkDirectory).filePath(QStringLiteral("wget-list"));
+    const QString md5ListPath = QDir(bookWorkDirectory).filePath(QStringLiteral("md5sums"));
+
+    if (QFileInfo(generatedRoot).exists() && !QDir(generatedRoot).removeRecursively()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to clear `%1`.").arg(generatedRoot);
+        }
+        return false;
+    }
+    if (QFileInfo(bookWorkDirectory).exists() && !QDir(bookWorkDirectory).removeRecursively()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to clear `%1`.").arg(bookWorkDirectory);
+        }
+        return false;
+    }
+    if (QFileInfo(bookSourceDirectory).exists() && !QDir(bookSourceDirectory).removeRecursively()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to clear `%1`.").arg(bookSourceDirectory);
+        }
+        return false;
+    }
+
+    QDir directory;
+    if (!directory.mkpath(generatedRoot) || !directory.mkpath(bookWorkDirectory)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to create the MLFS generation workspace.");
+        }
+        return false;
+    }
+
+    QByteArray processOutput;
+    appendInstallLogLine(QStringLiteral("> cloning MLFS book source"));
+    if (!runProcessAndCapture(gitExecutable,
+                              {QStringLiteral("clone"),
+                               QStringLiteral("--branch"),
+                               QString::fromLatin1(kMlfsBookBranch),
+                               QStringLiteral("--single-branch"),
+                               QString::fromLatin1(kMlfsBookRepositoryUrl),
+                               bookSourceDirectory},
+                              currentRunDirectory_,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+    if (!processOutput.trimmed().isEmpty()) {
+        appendInstallLogLine(QString::fromLocal8Bit(processOutput).trimmed());
+    }
+
+    appendInstallLogLine(QStringLiteral("> checking out MLFS tag %1").arg(QString::fromLatin1(kMlfsBookTag)));
+    if (!runProcessAndCapture(gitExecutable,
+                              {QStringLiteral("-C"),
+                               bookSourceDirectory,
+                               QStringLiteral("checkout"),
+                               QStringLiteral("--detach"),
+                               QString::fromLatin1(kMlfsBookTag)},
+                              currentRunDirectory_,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+
+    appendInstallLogLine(QStringLiteral("> processing MLFS book scripts"));
+    if (!runProcessAndCapture(bashExecutable,
+                              {QStringLiteral("process-scripts.sh")},
+                              bookSourceDirectory,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+
+    appendInstallLogLine(QStringLiteral("> profiling MLFS book XML"));
+    if (!runProcessAndCapture(xsltprocExecutable,
+                              {QStringLiteral("--xinclude"),
+                               QStringLiteral("--stringparam"),
+                               QStringLiteral("profile.revision"),
+                               QString::fromLatin1(kMlfsProfileRevision),
+                               QStringLiteral("--output"),
+                               profiledXmlPath,
+                               QStringLiteral("stylesheets/lfs-xsl/profile.xsl"),
+                               QStringLiteral("index.xml")},
+                              bookSourceDirectory,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+
+    appendInstallLogLine(QStringLiteral("> validating profiled MLFS XML"));
+    if (!runProcessAndCapture(xmllintExecutable,
+                              {QStringLiteral("--postvalid"),
+                               QStringLiteral("--output"),
+                               fullXmlPath,
+                               profiledXmlPath},
+                              bookSourceDirectory,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+
+    appendInstallLogLine(QStringLiteral("> generating MLFS source manifests"));
+    if (!runProcessAndCapture(xsltprocExecutable,
+                              {QStringLiteral("--output"),
+                               wgetListPath,
+                               QStringLiteral("stylesheets/wget-list.xsl"),
+                               fullXmlPath},
+                              bookSourceDirectory,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+    if (!runProcessAndCapture(xsltprocExecutable,
+                              {QStringLiteral("--output"),
+                               md5ListPath,
+                               QStringLiteral("stylesheets/md5sum.xsl"),
+                               fullXmlPath},
+                              bookSourceDirectory,
+                              &processOutput,
+                              errorMessage)) {
+        return false;
+    }
+
+    QFile xmlFile(fullXmlPath);
+    if (!xmlFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to read `%1`.").arg(fullXmlPath);
+        }
+        return false;
+    }
+
+    QDomDocument bookDocument;
+    const QDomDocument::ParseResult parseResult =
+        bookDocument.setContent(&xmlFile, QDomDocument::ParseOption::UseNamespaceProcessing);
+    if (!parseResult) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to parse `%1` at %2:%3: %4")
+                                .arg(fullXmlPath)
+                                .arg(parseResult.errorLine)
+                                .arg(parseResult.errorColumn)
+                                .arg(parseResult.errorMessage);
+        }
+        return false;
+    }
+
+    mlfsDownloadScriptPaths_.clear();
+    mlfsToolchainScriptPaths_.clear();
+
+    const QString downloadScriptRelativePath = QStringLiteral("mlfs-generated/chapter3/download-sources.sh");
+    const QString downloadScriptAbsolutePath = QDir(currentRuntimeScriptsDirectory_).filePath(downloadScriptRelativePath);
+    if (!directory.mkpath(QFileInfo(downloadScriptAbsolutePath).absolutePath())) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unable to create `%1`.").arg(QFileInfo(downloadScriptAbsolutePath).absolutePath());
+        }
+        return false;
+    }
+    if (!writeGeneratedTextFile(downloadScriptAbsolutePath,
+                                buildMlfsDownloadScript(wgetListPath, md5ListPath),
+                                true,
+                                errorMessage)) {
+        return false;
+    }
+    mlfsDownloadScriptPaths_.append(downloadScriptAbsolutePath);
+
+    const DriveInfo drive = currentDrive();
+    const QVector<PlannedPartition> partitions = collectPartitions();
+    const QString hostname = hostnameEdit_->text().trimmed().isEmpty() ? QStringLiteral("lfs")
+                                                                       : hostnameEdit_->text().trimmed();
+    const QString fqdn = hostname + QStringLiteral(".localdomain");
+    const QString timezone = timeZoneCombo_->currentText().trimmed();
+    const QString defaultDrivePath = drive.path.isEmpty() ? QStringLiteral("/dev/sda") : drive.path;
+    const QRegularExpression unresolvedPlaceholderPattern(QStringLiteral(R"(<[^>\n]+>)"));
+    const auto partitionIndexForMountPoint = [&partitions](const QString &mountPoint) -> int {
+        for (int index = 0; index < partitions.size(); ++index) {
+            if (partitions.at(index).mountPoint == mountPoint) {
+                return index;
+            }
+        }
+        return -1;
+    };
+    const int rootPartitionIndex = partitionIndexForMountPoint(QStringLiteral("/"));
+    const int bootPartitionIndex = partitionIndexForMountPoint(QStringLiteral("/boot"));
+    const int efiPartitionIndex = partitionIndexForMountPoint(QStringLiteral("/boot/efi"));
+    const QString rootPartitionNode = rootPartitionIndex >= 0 ? partitionNodeName(defaultDrivePath, rootPartitionIndex)
+                                                              : QStringLiteral("/dev/sda2");
+    const QString rootFileSystem = rootPartitionIndex >= 0 ? fstabFileSystem(partitions.at(rootPartitionIndex))
+                                                           : QStringLiteral("ext4");
+    const int grubPartitionIndex = bootPartitionIndex >= 0 ? bootPartitionIndex : rootPartitionIndex;
+    const QString grubRootSpecifier = QStringLiteral("(hd0,%1)").arg(grubPartitionIndex >= 0 ? grubPartitionIndex + 1 : 2);
+
+    QString detectedKernelVersion;
+    const auto buildHostsCommand = [&hostname, &fqdn]() -> QString {
+        QStringList lines;
+        lines << QStringLiteral("cat > /etc/hosts <<'EOF'");
+        lines << QStringLiteral("# Begin /etc/hosts");
+        lines << QString();
+        lines << QStringLiteral("127.0.0.1 localhost.localdomain localhost");
+        lines << QStringLiteral("127.0.1.1 %1 %2").arg(fqdn, hostname);
+        lines << QStringLiteral("::1       localhost ip6-localhost ip6-loopback");
+        lines << QStringLiteral("ff02::1   ip6-allnodes");
+        lines << QStringLiteral("ff02::2   ip6-allrouters");
+        lines << QString();
+        lines << QStringLiteral("# End /etc/hosts");
+        lines << QStringLiteral("EOF");
+        return lines.join('\n');
+    };
+    const auto buildGrubConfigCommand = [&]() -> QString {
+        const QString kernelVersion = detectedKernelVersion.isEmpty() ? QStringLiteral("linux") : detectedKernelVersion;
+        const QString kernelPath = bootPartitionIndex >= 0 ? QStringLiteral("/vmlinuz-%1").arg(kernelVersion)
+                                                           : QStringLiteral("/boot/vmlinuz-%1").arg(kernelVersion);
+
+        QStringList lines;
+        lines << QStringLiteral("cat > /boot/grub/grub.cfg <<'EOF'");
+        lines << QStringLiteral("# Begin /boot/grub/grub.cfg");
+        lines << QStringLiteral("set default=0");
+        lines << QStringLiteral("set timeout=5");
+        lines << QString();
+        lines << QStringLiteral("insmod part_gpt");
+        lines << QStringLiteral("insmod ext2");
+        lines << QString();
+        lines << QStringLiteral("set root=%1").arg(grubRootSpecifier);
+        lines << QString();
+        lines << QStringLiteral("# For UEFI");
+        lines << QStringLiteral("insmod efi_gop");
+        lines << QStringLiteral("insmod efi_uga");
+        lines << QString();
+        lines << QStringLiteral("set gfxpayload=1024x768x32");
+        lines << QString();
+        lines << QStringLiteral("menuentry \"GNU/Linux, Linux %1\" {").arg(kernelVersion);
+        lines << QStringLiteral("        linux   %1 root=%2 ro").arg(kernelPath, rootPartitionNode);
+        lines << QStringLiteral("}");
+        lines << QStringLiteral("EOF");
+        return lines.join('\n');
+    };
+    const auto rewriteMlfsCommand = [&](QString command,
+                                        const QString &sectionId,
+                                        bool noDump) -> QString {
+        command = command.trimmed();
+        if (command.isEmpty()) {
+            return {};
+        }
+
+        if (sectionId == QStringLiteral("ch-bootable-fstab") || sectionId == QStringLiteral("ch-config-clock")) {
+            return {};
+        }
+
+        if (noDump) {
+            const bool allowedBoundary = command.startsWith(QStringLiteral("su - "))
+                                         || command.startsWith(QStringLiteral("chroot \"$LFS\""))
+                                         || command == QStringLiteral("exec /usr/bin/bash --login")
+                                         || (sectionId == QStringLiteral("ch-bootable-grub")
+                                             && command.startsWith(QStringLiteral("grub-install ")));
+            if (!allowedBoundary) {
+                return {};
+            }
+        }
+
+        if (sectionId == QStringLiteral("ch-config-network")) {
+            if (command.contains(QStringLiteral("/etc/systemd/network/"))
+                || command.contains(QStringLiteral("/etc/resolv.conf"))
+                || command.startsWith(QStringLiteral("systemctl disable "))) {
+                return {};
+            }
+            if (command.contains(QStringLiteral("/etc/hostname"))) {
+                return QStringLiteral("echo %1 > /etc/hostname").arg(shellQuote(hostname));
+            }
+            if (command.startsWith(QStringLiteral("cat > /etc/hosts <<"))) {
+                return buildHostsCommand();
+            }
+        }
+
+        if (sectionId == QStringLiteral("ch-config-locale")) {
+            command.replace(QStringLiteral("<ll>_<CC>.<charmap><@modifiers>"), QStringLiteral("en_US.UTF-8"));
+            if (command.startsWith(QStringLiteral("localectl "))) {
+                return {};
+            }
+        }
+
+        if (sectionId == QStringLiteral("ch-bootable-grub")) {
+            if (command.startsWith(QStringLiteral("grub-install "))) {
+                if (efiPartitionIndex >= 0) {
+                    return QStringLiteral("grub-install --target=x86_64-efi --removable");
+                }
+                return QStringLiteral("grub-install %1 --target=i386-pc").arg(shellQuote(defaultDrivePath));
+            }
+            if (command.startsWith(QStringLiteral("cat > /boot/grub/grub.cfg <<"))) {
+                return buildGrubConfigCommand();
+            }
+        }
+
+        command.replace(QStringLiteral("<lfs>"), hostname);
+        command.replace(QStringLiteral("<HOSTNAME>"), hostname);
+        command.replace(QStringLiteral("<FQDN>"), fqdn);
+        command.replace(QStringLiteral("<Your Domain Name>"), QStringLiteral("localdomain"));
+        command.replace(QStringLiteral("<ll>_<CC>.<charmap><@modifiers>"), QStringLiteral("en_US.UTF-8"));
+        command.replace(QStringLiteral("TIMEZONE"), timezone);
+
+        if (command.startsWith(QStringLiteral("passwd "))
+            || command.startsWith(QStringLiteral("timedatectl "))
+            || command.startsWith(QStringLiteral("locale -a"))
+            || command.startsWith(QStringLiteral("LC_ALL="))
+            || command.startsWith(QStringLiteral("grub-mkrescue"))
+            || command.startsWith(QStringLiteral("xorriso "))
+            || command.startsWith(QStringLiteral("efibootmgr "))
+            || command.startsWith(QStringLiteral("mountpoint /sys/firmware/efi/efivars"))
+            || command == QStringLiteral("mount /boot")
+            || command.startsWith(QStringLiteral("umount "))
+            || command == QStringLiteral("exit")
+            || command.startsWith(QStringLiteral("make menuconfig"))
+            || command.startsWith(QStringLiteral("systemctl disable "))
+            || command.startsWith(QStringLiteral("vim -c"))) {
+            return {};
+        }
+
+        if (unresolvedPlaceholderPattern.match(command).hasMatch()) {
+            return {};
+        }
+
+        return command;
+    };
+
+    const QDomElement root = bookDocument.documentElement();
+    int chapterNumber = 0;
+    for (const QDomElement &chapter : directChildElements(root, QStringLiteral("chapter"))) {
+        ++chapterNumber;
+        if (chapterNumber < 4 || chapterNumber > 10) {
+            continue;
+        }
+
+        int sectionNumber = 0;
+        for (const QDomElement &section : directChildElements(chapter, QStringLiteral("sect1"))) {
+            ++sectionNumber;
+            const QString sectionId = section.attribute(QStringLiteral("id"));
+            const QString title = sectionTitle(section);
+            if (sectionId == QStringLiteral("ch-bootable-fstab")) {
+                continue;
+            }
+            if (sectionId == QStringLiteral("ch-bootable-kernel") && title.startsWith(QStringLiteral("Linux-"))) {
+                detectedKernelVersion = title.mid(QStringLiteral("Linux-").size());
+            }
+
+            QList<MlfsCommand> rawCommands;
+            collectMlfsCommands(section, false, &rawCommands);
+
+            QStringList commands;
+            for (const MlfsCommand &rawCommand : rawCommands) {
+                const QString rewritten = rewriteMlfsCommand(rawCommand.text, sectionId, rawCommand.noDump);
+                if (!rewritten.trimmed().isEmpty()) {
+                    commands.append(rewritten.trimmed());
+                }
+            }
+            if (sectionId == QStringLiteral("ch-bootable-kernel") && !commands.isEmpty()) {
+                const int insertIndex = commands.constFirst().startsWith(QStringLiteral("make mrproper")) ? 1 : 0;
+                commands.insert(insertIndex, QStringLiteral("if [ ! -f .config ]; then make defconfig; fi"));
+            }
+            if (commands.isEmpty()) {
+                continue;
+            }
+
+            QString slug = slugify(title);
+            if (slug.isEmpty()) {
+                slug = QStringLiteral("section-%1").arg(sectionNumber, 3, 10, QChar('0'));
+            }
+
+            QString setupCommands;
+            if (section.attribute(QStringLiteral("role")) == QStringLiteral("wrap")) {
+                const QList<QDomElement> infoElements = directChildElements(section, QStringLiteral("sect1info"));
+                if (!infoElements.isEmpty()) {
+                    const QList<QDomElement> addressElements = directChildElements(infoElements.constFirst(), QStringLiteral("address"));
+                    if (!addressElements.isEmpty()) {
+                        const QString archiveBase = archiveBaseNameFromUrl(addressElements.constFirst().text().trimmed());
+                        if (!archiveBase.isEmpty()) {
+                            QStringList setupLines;
+                            setupLines << QStringLiteral("cd \"$LFS/sources\"");
+                            setupLines << QStringLiteral("find . -maxdepth 1 -mindepth 1 -type d -name %1 -exec rm -rf {} +")
+                                              .arg(shellQuote(archiveBase + QStringLiteral("*")));
+                            setupLines << QStringLiteral("sh autountar %1").arg(shellQuote(archiveBase));
+                            setupLines << QStringLiteral("source_dir=$(find . -maxdepth 1 -mindepth 1 -type d -name %1 | sort | head -n 1)")
+                                              .arg(shellQuote(archiveBase + QStringLiteral("*")));
+                            setupLines << QStringLiteral("if [ -z \"$source_dir\" ]; then echo \"Unable to find extracted source for %1\" >&2; exit 1; fi")
+                                              .arg(archiveBase);
+                            setupLines << QStringLiteral("cd \"$source_dir\"");
+                            setupCommands = setupLines.join('\n');
+                        }
+                    }
+                }
+            }
+
+            const QString relativePath = generatedMlfsScriptPath(chapterNumber, sectionNumber, slug);
+            const QString absolutePath = QDir(currentRuntimeScriptsDirectory_).filePath(relativePath);
+            if (!directory.mkpath(QFileInfo(absolutePath).absolutePath())) {
+                if (errorMessage) {
+                    *errorMessage = QStringLiteral("Unable to create `%1`.").arg(QFileInfo(absolutePath).absolutePath());
+                }
+                return false;
+            }
+            if (!writeGeneratedTextFile(absolutePath,
+                                        generatedMlfsScriptBody(title.isEmpty() ? slug : title, commands, setupCommands),
+                                        true,
+                                        errorMessage)) {
+                return false;
+            }
+            mlfsToolchainScriptPaths_.append(absolutePath);
+        }
+    }
+
+    if (mlfsToolchainScriptPaths_.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("The MLFS book did not produce any runnable generated scripts.");
+        }
+        return false;
+    }
+
+    mlfsArtifactsPrepared_ = true;
+    appendInstallLogLine(QStringLiteral("> prepared %1 MLFS book scripts").arg(mlfsToolchainScriptPaths_.size()));
+    return true;
+}
+
+bool InstallerWindow::expandMlfsSentinelEntry(const QString &sentinel, QString *errorMessage)
+{
+    if (!prepareMlfsBookArtifacts(errorMessage)) {
+        return false;
+    }
+
+    QStringList replacements;
+    if (sentinel == QLatin1String(kMlfsBookSentinel)) {
+        replacements = mlfsDownloadScriptPaths_;
+        replacements.append(mlfsToolchainScriptPaths_);
+    }
+    if (replacements.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("No generated scripts are available for `%1`.").arg(sentinel);
+        }
+        return false;
+    }
+
+    installScriptPaths_.removeAt(currentInstallScriptIndex_);
+    for (int index = replacements.size() - 1; index >= 0; --index) {
+        installScriptPaths_.insert(currentInstallScriptIndex_, replacements.at(index));
+    }
+
+    totalInstallSteps_ += replacements.size() - 1;
+    if (installProgressBar_) {
+        installProgressBar_->setRange(0, qMax(totalInstallSteps_, 1));
+        installProgressBar_->setValue(completedInstallSteps_);
+    }
+
+    appendInstallLogLine(QStringLiteral("> expanded `%1` into %2 generated script(s)")
+                             .arg(sentinel)
+                             .arg(replacements.size()));
+    return true;
+}
+
 QString InstallerWindow::buildInstallSessionPrelude() const
 {
     const QString stagedRoot = QFileInfo(currentRuntimeScriptsDirectory_).dir().absolutePath();
@@ -2413,6 +3125,8 @@ QString InstallerWindow::buildInstallSessionPrelude() const
     lines << "unset BASH_ENV ENV";
     lines << QString("PROJECT_ROOT=%1").arg(shellQuote(stagedRoot));
     lines << "export PROJECT_ROOT";
+    lines << QString("SOURCE_PROJECT_ROOT=%1").arg(shellQuote(currentSourceProjectRootDirectory_));
+    lines << "export SOURCE_PROJECT_ROOT";
     lines << QString("INSTALL_RUN_DIR=%1").arg(shellQuote(currentRunDirectory_));
     lines << "export INSTALL_RUN_DIR";
 
@@ -2583,6 +3297,21 @@ void InstallerWindow::startNextInstallScript()
     }
 
     const QString scriptPath = installScriptPaths_.at(currentInstallScriptIndex_);
+    if (scriptPath == QLatin1String(kMlfsBookSentinel)) {
+        setInstallStatus("Current Step: Preparing MLFS book scripts", QColor("#1b5e20"));
+        if (!expandMlfsSentinelEntry(scriptPath, &errorMessage)) {
+            installInProgress_ = false;
+            installCompleted_ = false;
+            appendInstallLogLine(QString("> %1").arg(errorMessage));
+            setInstallStatus("Current Step: Failed", QColor("#b71c1c"));
+            updateNavigationState();
+            return;
+        }
+
+        startNextInstallScript();
+        return;
+    }
+
     const QFileInfo scriptInfo(scriptPath);
     if (!scriptInfo.exists() || !scriptInfo.isFile() || !scriptInfo.isReadable()) {
         installInProgress_ = false;
@@ -2835,23 +3564,114 @@ void InstallerWindow::processInstallOutputLine(const QString &line)
 
 QString InstallerWindow::buildFinalSetupScript() const
 {
+    const QString targetRoot = targetBuildDirectory();
+    const QString hostname = hostnameEdit_->text().trimmed().isEmpty() ? QStringLiteral("lfs")
+                                                                       : hostnameEdit_->text().trimmed();
+    const QString fqdn = hostname + QStringLiteral(".localdomain");
     const QString username = usernameEdit_->text().trimmed();
     const QString password = passwordEdit_->text();
+    const QString timezone = timeZoneCombo_->currentText().trimmed();
 
     QStringList lines;
     lines << "#!/usr/bin/env bash";
     lines << "";
     lines << "set -euo pipefail";
     lines << "";
-    lines << "SCRIPT_DIR=\"$(cd -- \"$(dirname -- \"$0\")\" && pwd)\"";
-    lines << "FILES_DIR=\"$SCRIPT_DIR/../files\"";
+    lines << QString("TARGET_ROOT=%1").arg(shellQuote(targetRoot));
+    lines << "FILES_DIR=\"${PROJECT_ROOT}/files\"";
+    lines << "MOUNTED_POINTS=()";
     lines << "";
-    lines << "echo \"step:Finalizing setup\"";
-    lines << QString("useradd -m %1").arg(shellQuote(username));
-    lines << QString("printf '%s\\n' %1 | chpasswd").arg(shellQuote(username + ":" + password));
-    lines << "install -Dm644 \"$FILES_DIR/hostname\" /etc/hostname";
-    lines << "install -Dm644 \"$FILES_DIR/clock\" /etc/sysconfig/clock";
-    lines << "install -Dm644 \"$FILES_DIR/fstab\" /etc/fstab";
+    lines << "mount_bind() {";
+    lines << "  local source_path=\"$1\"";
+    lines << "  local target_path=\"$2\"";
+    lines << "  mkdir -p \"$target_path\"";
+    lines << "  if mountpoint -q \"$target_path\"; then";
+    lines << "    return";
+    lines << "  fi";
+    lines << "  mount --bind \"$source_path\" \"$target_path\"";
+    lines << "  MOUNTED_POINTS=(\"$target_path\" \"${MOUNTED_POINTS[@]}\")";
+    lines << "}";
+    lines << "";
+    lines << "mount_virtual() {";
+    lines << "  local fs_type=\"$1\"";
+    lines << "  local source_name=\"$2\"";
+    lines << "  local target_path=\"$3\"";
+    lines << "  mkdir -p \"$target_path\"";
+    lines << "  if mountpoint -q \"$target_path\"; then";
+    lines << "    return";
+    lines << "  fi";
+    lines << "  mount -t \"$fs_type\" \"$source_name\" \"$target_path\"";
+    lines << "  MOUNTED_POINTS=(\"$target_path\" \"${MOUNTED_POINTS[@]}\")";
+    lines << "}";
+    lines << "";
+    lines << "cleanup() {";
+    lines << "  local mount_point";
+    lines << "  for mount_point in \"${MOUNTED_POINTS[@]}\"; do";
+    lines << "    umount -lf \"$mount_point\" >/dev/null 2>&1 || true";
+    lines << "  done";
+    lines << "}";
+    lines << "trap cleanup EXIT";
+    lines << "";
+    lines << "echo \"step:Finalizing target system\"";
+    lines << "if [ ! -d \"$TARGET_ROOT\" ]; then";
+    lines << "  echo \"Target root does not exist: $TARGET_ROOT\" >&2";
+    lines << "  exit 1";
+    lines << "fi";
+    lines << "if [ ! -x \"$TARGET_ROOT/bin/bash\" ]; then";
+    lines << "  echo \"Target root is missing /bin/bash: $TARGET_ROOT\" >&2";
+    lines << "  exit 1";
+    lines << "fi";
+    lines << "mount_bind /dev \"$TARGET_ROOT/dev\"";
+    lines << "mount_bind /dev/pts \"$TARGET_ROOT/dev/pts\"";
+    lines << "mount_virtual proc proc \"$TARGET_ROOT/proc\"";
+    lines << "mount_virtual sysfs sysfs \"$TARGET_ROOT/sys\"";
+    lines << "mount_virtual tmpfs tmpfs \"$TARGET_ROOT/run\"";
+    lines << "install -Dm644 \"$FILES_DIR/hostname\" \"$TARGET_ROOT/etc/hostname\"";
+    lines << "install -Dm644 \"$FILES_DIR/fstab\" \"$TARGET_ROOT/etc/fstab\"";
+    lines << QString("chroot \"$TARGET_ROOT\" /usr/bin/env -i HOME=/root TERM=\"${TERM:-xterm}\" PATH=/usr/bin:/usr/sbin:/bin:/sbin HOSTNAME_VALUE=%1 FQDN_VALUE=%2 TIMEZONE_VALUE=%3 /bin/bash <<'EOF'")
+                 .arg(shellQuote(hostname), shellQuote(fqdn), shellQuote(timezone));
+    lines << "set -euo pipefail";
+    lines << "if [ -n \"$TIMEZONE_VALUE\" ] && [ -e \"/usr/share/zoneinfo/$TIMEZONE_VALUE\" ]; then";
+    lines << "  ln -sf \"/usr/share/zoneinfo/$TIMEZONE_VALUE\" /etc/localtime";
+    lines << "fi";
+    lines << "cat > /etc/hosts <<EOF_HOSTS";
+    lines << "# Begin /etc/hosts";
+    lines << "";
+    lines << "127.0.0.1 localhost.localdomain localhost";
+    lines << "$([ -n \"$HOSTNAME_VALUE\" ] && printf '127.0.1.1 %s %s\n' \"$FQDN_VALUE\" \"$HOSTNAME_VALUE\")";
+    lines << "::1       localhost ip6-localhost ip6-loopback";
+    lines << "ff02::1   ip6-allnodes";
+    lines << "ff02::2   ip6-allrouters";
+    lines << "";
+    lines << "# End /etc/hosts";
+    lines << "EOF_HOSTS";
+    lines << QString("if ! id -u %1 >/dev/null 2>&1; then useradd -m %1; fi")
+                 .arg(shellQuote(username));
+    lines << QString("printf '%s\\n' %1 | chpasswd")
+                 .arg(shellQuote(username + ":" + password));
+    lines << "EOF";
+
+    return lines.join('\n') + '\n';
+}
+
+QString InstallerWindow::buildMlfsDownloadScript(const QString &wgetListPath, const QString &md5ListPath) const
+{
+    const QString targetRoot = targetBuildDirectory();
+
+    QStringList lines;
+    lines << QStringLiteral("#!/usr/bin/env bash");
+    lines << QString();
+    lines << QStringLiteral("LFS=%1").arg(shellQuote(targetRoot));
+    lines << QStringLiteral("export LFS");
+    lines << QStringLiteral("echo %1").arg(shellQuote(QStringLiteral("step:Downloading MLFS source packages")));
+    lines << QStringLiteral("mkdir -pv \"$LFS/sources\"");
+    lines << QStringLiteral("chmod -v a+wt \"$LFS/sources\"");
+    lines << (QStringLiteral("wget --input-file=") + shellQuote(wgetListPath)
+              + QStringLiteral(" --continue --directory-prefix=\"$LFS/sources\" --tries=20 --timeout=30"));
+    lines << QStringLiteral("cd \"$LFS/sources\"");
+    lines << QStringLiteral("md5sum -c %1").arg(shellQuote(md5ListPath));
+    lines << QStringLiteral("install -m 755 \"$SOURCE_PROJECT_ROOT/tools/autountar.sh\" \"$LFS/sources/autountar\"");
+    lines << QStringLiteral("chown root:root \"$LFS/sources\"/*");
 
     return lines.join('\n') + '\n';
 }
@@ -2968,7 +3788,7 @@ QString InstallerWindow::buildHostnameFile() const
 
 QString InstallerWindow::buildClockFile() const
 {
-    return QString("ZONE=\"%1\"\n").arg(timeZoneCombo_->currentText().trimmed());
+    return timeZoneCombo_->currentText().trimmed() + '\n';
 }
 
 QString InstallerWindow::buildFstabFile() const
@@ -2994,6 +3814,18 @@ QString InstallerWindow::buildFstabFile() const
     }
 
     return lines.join('\n') + '\n';
+}
+
+QString InstallerWindow::targetBuildDirectory() const
+{
+    const QVector<PlannedPartition> partitions = collectPartitions();
+    for (const PlannedPartition &partition : partitions) {
+        if (partition.mountPoint == "/" && !partition.localMountPoint.trimmed().isEmpty()) {
+            return partition.localMountPoint.trimmed();
+        }
+    }
+
+    return QStringLiteral("/mnt/lfs");
 }
 
 QString InstallerWindow::buildConfigText() const

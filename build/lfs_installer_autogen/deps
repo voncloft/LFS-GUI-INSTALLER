@@ -306,6 +306,21 @@ lfs_installer_autogen/timestamp: \
 	/lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets-release.cmake \
 	/lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets.cmake \
 	/lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsVersionlessTargets.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlAdditionalTargetInfo.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlConfig.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlConfigVersion.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlConfigVersionImpl.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlDependencies.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlTargets-release.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlTargets.cmake \
+	/lib/cmake/Qt6Xml/Qt6XmlVersionlessAliasTargets.cmake \
+	/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateAdditionalTargetInfo.cmake \
+	/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfig.cmake \
+	/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersion.cmake \
+	/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersionImpl.cmake \
+	/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateDependencies.cmake \
+	/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateTargets.cmake \
+	/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateVersionlessAliasTargets.cmake \
 	/usr/include/QtCore/QFile \
 	/usr/include/QtCore/QProcess \
 	/usr/include/QtCore/QVector \

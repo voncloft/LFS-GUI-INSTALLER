@@ -309,6 +309,21 @@ lfs_installer_autogen/timestamp: /bin/cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets-release.cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsTargets.cmake \
   /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsVersionlessTargets.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlAdditionalTargetInfo.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlConfig.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlConfigVersion.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlConfigVersionImpl.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlDependencies.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlTargets-release.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlTargets.cmake \
+  /lib/cmake/Qt6Xml/Qt6XmlVersionlessAliasTargets.cmake \
+  /lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateAdditionalTargetInfo.cmake \
+  /lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfig.cmake \
+  /lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersion.cmake \
+  /lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersionImpl.cmake \
+  /lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateDependencies.cmake \
+  /lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateTargets.cmake \
+  /lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateVersionlessAliasTargets.cmake \
   /usr/include/QtCore/QFile \
   /usr/include/QtCore/QProcess \
   /usr/include/QtCore/QVector \
@@ -1145,13 +1160,7 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /usr/include/c++/15.1.0/bits/shared_ptr_atomic.h:
 
-/usr/lib/cmake/Qt6/QtPublicToolHelpers.cmake:
-
-/usr/include/c++/15.1.0/bits/shared_ptr.h:
-
 /usr/include/c++/15.1.0/bits/requires_hosted.h:
-
-/usr/include/c++/15.1.0/bits/ranges_util.h:
 
 /usr/include/c++/15.1.0/bits/ranges_uninitialized.h:
 
@@ -1287,6 +1296,36 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /usr/include/bits/types/struct_itimerspec.h:
 
+/usr/include/bits/types/sigset_t.h:
+
+/usr/lib/cmake/Qt6/QtPublicSbomPythonHelpers.cmake:
+
+/usr/include/bits/types/locale_t.h:
+
+/usr/include/bits/types/error_t.h:
+
+/usr/include/bits/types/cookie_io_functions_t.h:
+
+/usr/include/bits/types/clockid_t.h:
+
+/usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/c++config.h:
+
+/usr/include/bits/types/clock_t.h:
+
+/usr/include/bits/types/__sigset_t.h:
+
+/usr/include/c++/15.1.0/charconv:
+
+/usr/include/bits/types/__mbstate_t.h:
+
+/usr/include/c++/15.1.0/bits/unordered_set.h:
+
+/usr/include/bits/types/__fpos_t.h:
+
+/usr/include/bits/types/__fpos64_t.h:
+
+/usr/include/bits/types/__FILE.h:
+
 /lib/cmake/Qt6Network/Qt6NetworkPlugins.cmake:
 
 /lib/cmake/Qt6Network/Qt6NetworkConfigVersionImpl.cmake:
@@ -1298,8 +1337,6 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 /usr/include/c++/15.1.0/tr1/poly_laguerre.tcc:
 
 /lib/cmake/Qt6GuiTools/Qt6GuiToolsConfigVersionImpl.cmake:
-
-/usr/include/QtCore/q23utility.h:
 
 /lib/cmake/Qt6GuiTools/Qt6GuiToolsConfigVersion.cmake:
 
@@ -1318,6 +1355,8 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 /usr/include/c++/15.1.0/ext/aligned_buffer.h:
 
 /lib/cmake/Qt6Widgets/Qt6WidgetsConfigVersionImpl.cmake:
+
+/lib/cmake/Qt6Xml/Qt6XmlTargets-release.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QXcbGlxIntegrationPluginConfig.cmake:
 
@@ -1413,8 +1452,6 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /lib/cmake/Qt6Gui/Qt6GuiTargets.cmake:
 
-/usr/include/QtGui/qicon.h:
-
 /lib/cmake/Qt6Gui/Qt6QOffscreenIntegrationPluginTargets-release.cmake:
 
 /usr/include/c++/15.1.0/algorithm:
@@ -1425,13 +1462,9 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /usr/include/QtCore/qvector.h:
 
-/usr/include/bits/types/__sigset_t.h:
-
 /usr/include/c++/15.1.0/bits/chrono_io.h:
 
 /lib/cmake/Qt6Gui/Qt6QMngPluginTargets.cmake:
-
-/lib/cmake/Qt6Gui/Qt6QMinimalIntegrationPluginTargets-release.cmake:
 
 /lib/cmake/Qt6/Qt6ConfigExtras.cmake:
 
@@ -1485,8 +1518,6 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /lib/cmake/Qt6Gui/Qt6QJp2PluginTargets-release.cmake:
 
-/lib/cmake/Qt6Gui/Qt6QIbusPlatformInputContextPluginConfig.cmake:
-
 /lib/cmake/Qt6Gui/Qt6QJp2PluginAdditionalTargetInfo.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QMinimalEglIntegrationPluginAdditionalTargetInfo.cmake:
@@ -1494,6 +1525,8 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 /usr/include/c++/15.1.0/bits/stl_function.h:
 
 /usr/include/c++/15.1.0/bits/exception_defines.h:
+
+/lib/cmake/Qt6Xml/Qt6XmlConfigVersionImpl.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QIbusPlatformInputContextPluginAdditionalTargetInfo.cmake:
 
@@ -1503,15 +1536,13 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /lib/cmake/Qt6Gui/Qt6QLinuxFbIntegrationPluginTargets-release.cmake:
 
+/lib/cmake/Qt6Xml/Qt6XmlConfig.cmake:
+
 /usr/include/bits/byteswap.h:
 
 /lib/cmake/Qt6Gui/Qt6QPdfPluginAdditionalTargetInfo.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QMinimalIntegrationPluginAdditionalTargetInfo.cmake:
-
-/usr/include/c++/15.1.0/charconv:
-
-/usr/include/bits/types/__mbstate_t.h:
 
 /lib/cmake/Qt6Gui/Qt6QICNSPluginTargets.cmake:
 
@@ -1531,6 +1562,8 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /lib/cmake/Qt6DBus/Qt6DBusMacros.cmake:
 
+/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersion.cmake:
+
 /lib/cmake/Qt6Gui/Qt6QTgaPluginTargets-release.cmake:
 
 /usr/include/c++/15.1.0/bits/hash_bytes.h:
@@ -1543,19 +1576,9 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /usr/include/bits/posix1_lim.h:
 
-/usr/include/c++/15.1.0/x86_64-pc-linux-gnu/bits/c++config.h:
-
-/usr/include/bits/types/clock_t.h:
-
 /lib/cmake/Qt6DBus/Qt6DBusConfigVersion.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QWebpPluginAdditionalTargetInfo.cmake:
-
-/usr/lib/cmake/Qt6/QtPublicSbomPythonHelpers.cmake:
-
-/usr/include/bits/types/locale_t.h:
-
-/usr/include/bits/types/__fpos64_t.h:
 
 /lib/cmake/Qt6DBusTools/Qt6DBusToolsConfigVersionImpl.cmake:
 
@@ -1576,8 +1599,6 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 /usr/include/bits/wctype-wchar.h:
 
 /usr/include/bits/stdint-intn.h:
-
-/usr/include/bits/types/clockid_t.h:
 
 /lib/cmake/Qt6Gui/Qt6QWaylandIntegrationPluginAdditionalTargetInfo.cmake:
 
@@ -1677,7 +1698,9 @@ lfs_installer_autogen/timestamp: /bin/cmake \
 
 /usr/include/QtCore/qprocessordetection.h:
 
-/usr/include/bits/types/__FILE.h:
+/lib/cmake/Qt6Gui/Qt6QIbusPlatformInputContextPluginConfig.cmake:
+
+/lib/cmake/Qt6Xml/Qt6XmlConfigVersion.cmake:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.0/include/stdarg.h:
 
@@ -1727,6 +1750,10 @@ lfs_installer_autogen/moc_predefs.h:
 
 /usr/include/QtCore/qiterable.h:
 
+/usr/include/bits/types/mbstate_t.h:
+
+/lib/cmake/Qt6Network/Qt6NetworkDependencies.cmake:
+
 /lib/cmake/Qt6CoreTools/Qt6CoreToolsTargets.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QWaylandIntegrationPluginTargets.cmake:
@@ -1762,6 +1789,10 @@ lfs_installer_autogen/moc_predefs.h:
 /lib/cmake/Qt6Gui/Qt6QGtk3ThemePluginAdditionalTargetInfo.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QWbmpPluginAdditionalTargetInfo.cmake:
+
+/usr/include/QtGui/qicon.h:
+
+/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfig.cmake:
 
 /usr/include/linux/errno.h:
 
@@ -1839,8 +1870,6 @@ lfs_installer_autogen/moc_predefs.h:
 
 /usr/include/asm/posix_types_64.h:
 
-/lib/cmake/Qt6Gui/Qt6QGtk3ThemePluginTargets-release.cmake:
-
 /lib/cmake/Qt6Gui/Qt6QTuioTouchPluginTargets.cmake:
 
 /lib/cmake/Qt6Gui/Qt6GuiTargets-release.cmake:
@@ -1850,6 +1879,10 @@ lfs_installer_autogen/moc_predefs.h:
 /lib/cmake/Qt6Gui/Qt6QTuioTouchPluginConfig.cmake:
 
 /usr/include/QtCore/qtcoreglobal.h:
+
+/usr/include/bits/types/struct___jmp_buf_tag.h:
+
+/lib/cmake/Qt6Gui/Qt6QVncIntegrationPluginTargets-release.cmake:
 
 /lib/cmake/Qt6WidgetsTools/Qt6WidgetsToolsAdditionalTargetInfo.cmake:
 
@@ -1950,6 +1983,10 @@ CMakeFiles/4.0.3/CMakeSystem.cmake:
 /lib/cmake/Qt6GuiPrivate/Qt6GuiPrivateConfig.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QEglFSX11IntegrationPluginTargets-release.cmake:
+
+/lib/cmake/Qt6Gui/Qt6QGtk3ThemePluginTargets-release.cmake:
+
+/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateDependencies.cmake:
 
 /usr/include/QtCore/qbytearraylist.h:
 
@@ -2089,6 +2126,8 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 
 /lib/cmake/Qt6Gui/Qt6QJpegPluginAdditionalTargetInfo.cmake:
 
+/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateVersionlessAliasTargets.cmake:
+
 /lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateConfigVersionImpl.cmake:
 
 /lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateVersionlessAliasTargets.cmake:
@@ -2162,6 +2201,30 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 /usr/include/QtCore/qobject.h:
 
 /usr/include/QtWidgets/qtwidgets-config.h:
+
+/lib/cmake/Qt6Gui/Qt6QMinimalIntegrationPluginTargets-release.cmake:
+
+/lib/cmake/Qt6Xml/Qt6XmlAdditionalTargetInfo.cmake:
+
+/lib/cmake/Qt6Xml/Qt6XmlDependencies.cmake:
+
+/lib/cmake/Qt6Xml/Qt6XmlTargets.cmake:
+
+/usr/lib/cmake/Qt6/QtPublicToolHelpers.cmake:
+
+/usr/include/c++/15.1.0/bits/shared_ptr.h:
+
+/lib/cmake/Qt6Xml/Qt6XmlVersionlessAliasTargets.cmake:
+
+/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateAdditionalTargetInfo.cmake:
+
+/usr/include/c++/15.1.0/bits/ranges_util.h:
+
+/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersionImpl.cmake:
+
+/usr/include/QtCore/q23utility.h:
+
+/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateTargets.cmake:
 
 /usr/include/QtCore/qobject_impl.h:
 
@@ -2365,8 +2428,6 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 
 /usr/include/QtCore/qstring.h:
 
-/usr/include/bits/types/error_t.h:
-
 /usr/include/wctype.h:
 
 /usr/include/QtCore/qstringalgorithms.h:
@@ -2471,10 +2532,6 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 
 /usr/include/QtGui/qbitmap.h:
 
-/lib/cmake/Qt6Gui/Qt6QVncIntegrationPluginTargets-release.cmake:
-
-/usr/include/bits/types/struct___jmp_buf_tag.h:
-
 /usr/include/c++/15.1.0/concepts:
 
 /usr/include/QtGui/qbrush.h:
@@ -2565,10 +2622,6 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 
 /usr/include/asm/unistd_64.h:
 
-/usr/include/c++/15.1.0/bits/unordered_set.h:
-
-/usr/include/bits/types/__fpos_t.h:
-
 /usr/include/c++/15.1.0/bits/stl_algobase.h:
 
 /usr/include/assert.h:
@@ -2616,11 +2669,3 @@ CMakeFiles/4.0.3/CMakeCXXCompiler.cmake:
 /usr/include/bits/stdlib-float.h:
 
 /usr/include/bits/thread-shared-types.h:
-
-/usr/include/bits/types/cookie_io_functions_t.h:
-
-/lib/cmake/Qt6Network/Qt6NetworkDependencies.cmake:
-
-/usr/include/bits/types/mbstate_t.h:
-
-/usr/include/bits/types/sigset_t.h:

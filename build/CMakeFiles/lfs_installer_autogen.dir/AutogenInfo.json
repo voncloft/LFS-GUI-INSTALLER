@@ -497,7 +497,24 @@
 		"/lib/cmake/Qt6Network/Qt6QTlsBackendOpenSSLPluginTargets.cmake",
 		"/lib/cmake/Qt6Network/Qt6QTlsBackendOpenSSLPluginTargets-release.cmake",
 		"/lib/cmake/Qt6Network/Qt6QTlsBackendOpenSSLPluginAdditionalTargetInfo.cmake",
-		"/lib/cmake/Qt6Network/Qt6NetworkVersionlessAliasTargets.cmake"
+		"/lib/cmake/Qt6Network/Qt6NetworkVersionlessAliasTargets.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlConfigVersion.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlConfigVersionImpl.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlConfig.cmake",
+		"/usr/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlDependencies.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlTargets.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlTargets-release.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlAdditionalTargetInfo.cmake",
+		"/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersion.cmake",
+		"/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfigVersionImpl.cmake",
+		"/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateConfig.cmake",
+		"/usr/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake",
+		"/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateDependencies.cmake",
+		"/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateTargets.cmake",
+		"/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateAdditionalTargetInfo.cmake",
+		"/lib/cmake/Qt6XmlPrivate/Qt6XmlPrivateVersionlessAliasTargets.cmake",
+		"/lib/cmake/Qt6Xml/Qt6XmlVersionlessAliasTargets.cmake"
 	],
 	"CMAKE_SOURCE_DIR" : "/home/von/qt6 projects/lfs_installer",
 	"CROSS_CONFIG" : false,
@@ -521,7 +538,8 @@
 		"QT_GUI_LIB",
 		"QT_NETWORK_LIB",
 		"QT_NO_DEBUG",
-		"QT_WIDGETS_LIB"
+		"QT_WIDGETS_LIB",
+		"QT_XML_LIB"
 	],
 	"MOC_DEPEND_FILTERS" : 
 	[
@@ -537,6 +555,7 @@
 		"/usr/include/QtWidgets",
 		"/usr/include/QtGui",
 		"/usr/include/QtNetwork",
+		"/usr/include/QtXml",
 		"/usr/include",
 		"/usr/include/c++/15.1.0",
 		"/usr/include/c++/15.1.0/x86_64-pc-linux-gnu",
