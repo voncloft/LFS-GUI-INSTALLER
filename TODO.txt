@@ -1,2 +1,2 @@
 Put scratchpkg back in for chroot
-
+Fix chapter 7 for changing permissions as root to continue
