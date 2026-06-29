@@ -63,7 +63,7 @@ constexpr auto kMlfsBookSentinel = "@MLFS_BOOK@";
 constexpr auto kMlfsBookRepositoryUrl = "https://git.linuxfromscratch.org/lfs.git";
 constexpr auto kMlfsBookBranch = "multilib";
 constexpr auto kMlfsBookTag = "ml-13.0";
-constexpr auto kMlfsProfileRevision = "m32";
+constexpr auto kMlfsProfileRevision = "systemd";
 
 QString humanSize(quint64 bytes)
 {
@@ -2739,7 +2739,8 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
 
     appendInstallLogLine(QStringLiteral("> generating MLFS conditional entities"));
     if (!runProcessAndCapture(bashExecutable,
-                              {QStringLiteral("git-version.sh"), QStringLiteral("systemd")},
+                              {QStringLiteral("git-version.sh"),
+                               QString::fromLatin1(kMlfsProfileRevision)},
                               bookSourceDirectory,
                               &processOutput,
                               errorMessage)) {
@@ -2748,7 +2749,8 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
 
     appendInstallLogLine(QStringLiteral("> profiling MLFS book XML"));
     if (!runProcessAndCapture(xsltprocExecutable,
-                              {QStringLiteral("--xinclude"),
+                              {QStringLiteral("--nonet"),
+                               QStringLiteral("--xinclude"),
                                QStringLiteral("--stringparam"),
                                QStringLiteral("profile.revision"),
                                QString::fromLatin1(kMlfsProfileRevision),
@@ -2764,7 +2766,10 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
 
     appendInstallLogLine(QStringLiteral("> validating profiled MLFS XML"));
     if (!runProcessAndCapture(xmllintExecutable,
-                              {QStringLiteral("--postvalid"),
+                              {QStringLiteral("--nonet"),
+                               QStringLiteral("--encode"),
+                               QStringLiteral("UTF-8"),
+                               QStringLiteral("--postvalid"),
                                QStringLiteral("--output"),
                                fullXmlPath,
                                profiledXmlPath},
