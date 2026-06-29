@@ -825,6 +825,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/QPlainTextEdit \
   /usr/include/QtWidgets/QProgressBar \
   /usr/include/QtWidgets/QPushButton \
+  /usr/include/QtWidgets/QScrollBar \
   /usr/include/QtWidgets/QSpinBox \
   /usr/include/QtWidgets/QSplitter \
   /usr/include/QtWidgets/QStackedWidget \
@@ -866,6 +867,7 @@ CMakeFiles/lfs_installer.dir/src/installerwindow.cpp.o: /home/von/qt6\ projects/
   /usr/include/QtWidgets/qprogressbar.h \
   /usr/include/QtWidgets/qpushbutton.h \
   /usr/include/QtWidgets/qrubberband.h \
+  /usr/include/QtWidgets/qscrollbar.h \
   /usr/include/QtWidgets/qsizepolicy.h \
   /usr/include/QtWidgets/qslider.h \
   /usr/include/QtWidgets/qspinbox.h \
@@ -2022,6 +2024,8 @@ CMakeFiles/lfs_installer.dir/lfs_installer_autogen/mocs_compilation.cpp.o:
 
 /usr/include/QtWidgets/qspinbox.h:
 
+/usr/include/QtWidgets/qscrollbar.h:
+
 /usr/include/QtWidgets/qrubberband.h:
 
 /usr/include/QtWidgets/qmessagebox.h:
@@ -2895,6 +2899,8 @@ lfs_installer_autogen/mocs_compilation.cpp:
 /lib/libexpat.so.1:
 
 /usr/include/QtWidgets/qprogressbar.h:
+
+/usr/include/QtWidgets/QScrollBar:
 
 /usr/include/bits/wchar.h:
 
