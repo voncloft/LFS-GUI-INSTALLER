@@ -3130,6 +3130,26 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
                     commands.append(rewritten.trimmed());
                 }
             }
+            if (sectionId == QStringLiteral("ch-tools-gcc-pass1")
+                || sectionId == QStringLiteral("ch-tools-gcc-pass2")
+                || sectionId == QStringLiteral("ch-system-gcc")) {
+                for (int commandIndex = 0; commandIndex < commands.size(); ++commandIndex) {
+                    if (!commands.at(commandIndex).contains(QStringLiteral("gcc/config/i386/t-linux64"))) {
+                        continue;
+                    }
+
+                    QString command = commands.at(commandIndex);
+                    command += QStringLiteral("\n");
+                    command += QStringLiteral(
+                        "sed -e 's/m64\\\\/m32\\\\/mx32/m64\\\\/m32/' \\\n"
+                        "    -e 's/m64,m32,mx32/m64,m32/' \\\n"
+                        "    -e '/mx32=/d' \\\n"
+                        "    -e 's/:x86_64-linux-gnux32//g' \\\n"
+                        "    -i gcc/config/i386/t-linux64");
+                    commands[commandIndex] = command;
+                    break;
+                }
+            }
             if (sectionId == QStringLiteral("ch-bootable-kernel") && !commands.isEmpty()) {
                 const int insertIndex = commands.constFirst().startsWith(QStringLiteral("make mrproper")) ? 1 : 0;
                 commands.insert(insertIndex, QStringLiteral("if [ ! -f .config ]; then make defconfig; fi"));
