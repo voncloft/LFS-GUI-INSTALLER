@@ -481,28 +481,15 @@ QString generatedMlfsScriptBody(const QString &stepTitle,
     lines << QStringLiteral("#!/usr/bin/env bash");
     lines << QString();
     lines << QStringLiteral("echo %1").arg(shellQuote(QStringLiteral("step:") + stepTitle));
-    lines << QStringLiteral("unset source_dir cleanup_source_dir");
-    if (!cleanupCommands.trimmed().isEmpty()) {
-        lines << QStringLiteral("__codex_cleanup_generated_package() {");
-        lines << QStringLiteral("    local status=$?");
-        lines << QStringLiteral("    trap - EXIT");
-        lines << QStringLiteral("    if [ \"$status\" -eq 0 ]; then");
-        for (const QString &cleanupLine : cleanupCommands.split(QLatin1Char('\n'))) {
-            if (cleanupLine.trimmed().isEmpty()) {
-                continue;
-            }
-            lines << QStringLiteral("        %1").arg(cleanupLine);
-        }
-        lines << QStringLiteral("    fi");
-        lines << QStringLiteral("    return \"$status\"");
-        lines << QStringLiteral("}");
-        lines << QStringLiteral("trap __codex_cleanup_generated_package EXIT");
-    }
+    lines << QStringLiteral("unset source_dir");
     if (!setupCommands.trimmed().isEmpty()) {
         lines << setupCommands.trimmed();
     }
     if (!commands.isEmpty()) {
         lines << commands;
+    }
+    if (!cleanupCommands.trimmed().isEmpty()) {
+        lines << cleanupCommands.trimmed();
     }
     return lines.join('\n') + '\n';
 }
@@ -3154,11 +3141,10 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
                     QString command = commands.at(commandIndex);
                     command += QStringLiteral("\n");
                     command += QStringLiteral(
-                        "sed -e 's/m64\\\\/m32\\\\/mx32/m64\\\\/m32/' \\\n"
-                        "    -e 's/m64,m32,mx32/m64,m32/' \\\n"
-                        "    -e '/mx32=/d' \\\n"
-                        "    -e 's/:x86_64-linux-gnux32//g' \\\n"
-                        "    -i gcc/config/i386/t-linux64");
+                        "awk '!/mx32=/' gcc/config/i386/t-linux64 > gcc/config/i386/t-linux64.codex && \\\n"
+                        "sed -i 's|m64/m32/mx32|m64/m32|g; s|m64,m32,mx32|m64,m32|g; s|:x86_64-linux-gnux32||g' \\\n"
+                        "    gcc/config/i386/t-linux64.codex && \\\n"
+                        "mv gcc/config/i386/t-linux64.codex gcc/config/i386/t-linux64");
                     commands[commandIndex] = command;
                     break;
                 }
@@ -3194,14 +3180,13 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
                                               .arg(shellQuote(archiveBase + QStringLiteral("*")));
                             setupLines << QStringLiteral("if [ -z \"$source_dir\" ]; then echo \"Unable to find extracted source for %1\" >&2; exit 1; fi")
                                               .arg(archiveBase);
-                            setupLines << QStringLiteral("cleanup_source_dir=\"$source_dir\"");
                             setupLines << QStringLiteral("cd \"$source_dir\"");
                             setupCommands = setupLines.join('\n');
 
                             QStringList cleanupLines;
-                            cleanupLines << QStringLiteral("if [ -n \"${cleanup_source_dir:-}\" ] && [ -d \"$cleanup_source_dir\" ]; then");
+                            cleanupLines << QStringLiteral("if [ -n \"${source_dir:-}\" ] && [ -d \"$source_dir\" ]; then");
                             cleanupLines << QStringLiteral("    cd \"$LFS/sources\"");
-                            cleanupLines << QStringLiteral("    rm -rf \"$cleanup_source_dir\"");
+                            cleanupLines << QStringLiteral("    rm -rf \"$source_dir\"");
                             cleanupLines << QStringLiteral("fi");
                             cleanupCommands = cleanupLines.join('\n');
                         }
