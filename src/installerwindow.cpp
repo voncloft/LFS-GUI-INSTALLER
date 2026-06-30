@@ -61,11 +61,15 @@
 namespace
 {
 constexpr auto kMlfsBookSentinel = "@MLFS_BOOK@";
-constexpr auto kMlfsBookRepositoryUrl = "https://github.com/lfs-book/lfs.git";
-constexpr auto kMlfsBookBranch = "multilib";
+constexpr auto kOfficialMlfsBookRepositoryUrl = "https://github.com/lfs-book/lfs.git";
+constexpr auto kOfficialMlfsBookBranch = "multilib";
+constexpr auto kVoncloftMlfsBookRepositoryUrl = "https://github.com/voncloft/lfs-book-fork.git";
+constexpr auto kVoncloftMlfsBookBranch = "multilib";
 constexpr auto kMlfsProfileRevision = "systemd";
 constexpr auto kLfsPackagesArchiveName = "lfs-packages-13.0.tar";
 constexpr auto kLfsPackagesArchiveUrl = "https://ftp.osuosl.org/pub/lfs/lfs-packages/lfs-packages-13.0.tar";
+constexpr int MlfsBookRepositoryUrlRole = Qt::UserRole + 100;
+constexpr int MlfsBookBranchRole = Qt::UserRole + 101;
 
 QString humanSize(quint64 bytes)
 {
@@ -805,10 +809,20 @@ QWidget *InstallerWindow::buildDetailsPage()
         timeZoneCombo_->setCurrentIndex(zoneIndex);
     }
 
+    mlfsBookSourceCombo_ = new QComboBox(card);
+    mlfsBookSourceCombo_->addItem(QStringLiteral("Voncloft fork (multilib)"));
+    mlfsBookSourceCombo_->setItemData(0, QString::fromLatin1(kVoncloftMlfsBookRepositoryUrl), MlfsBookRepositoryUrlRole);
+    mlfsBookSourceCombo_->setItemData(0, QString::fromLatin1(kVoncloftMlfsBookBranch), MlfsBookBranchRole);
+    mlfsBookSourceCombo_->addItem(QStringLiteral("Official LFS book (multilib)"));
+    mlfsBookSourceCombo_->setItemData(1, QString::fromLatin1(kOfficialMlfsBookRepositoryUrl), MlfsBookRepositoryUrlRole);
+    mlfsBookSourceCombo_->setItemData(1, QString::fromLatin1(kOfficialMlfsBookBranch), MlfsBookBranchRole);
+    mlfsBookSourceCombo_->setCurrentIndex(0);
+
     form->addRow("PC name", hostnameEdit_);
     form->addRow("Username", usernameEdit_);
     form->addRow("Password", passwordEdit_);
     form->addRow("Time zone", timeZoneCombo_);
+    form->addRow("Book source", mlfsBookSourceCombo_);
 
     layout->addWidget(card);
 
@@ -822,6 +836,7 @@ QWidget *InstallerWindow::buildDetailsPage()
     connect(usernameEdit_, &QLineEdit::textChanged, this, &InstallerWindow::markInstallDirty);
     connect(passwordEdit_, &QLineEdit::textChanged, this, &InstallerWindow::markInstallDirty);
     connect(timeZoneCombo_, &QComboBox::currentTextChanged, this, &InstallerWindow::markInstallDirty);
+    connect(mlfsBookSourceCombo_, &QComboBox::currentTextChanged, this, &InstallerWindow::markInstallDirty);
 
     return page;
 }
@@ -1081,6 +1096,16 @@ QWidget *InstallerWindow::buildInstallPage()
         " selection-color: #ffffff;"
         " }"
     );
+    if (QScrollBar *scrollBar = installLog_->verticalScrollBar()) {
+        connect(scrollBar, &QScrollBar::valueChanged, this, [this, scrollBar](int value) {
+            installLogFollowTail_ = value >= scrollBar->maximum() - 1;
+        });
+        connect(scrollBar, &QScrollBar::rangeChanged, this, [this, scrollBar](int, int maximum) {
+            if (installLogFollowTail_) {
+                scrollBar->setValue(maximum);
+            }
+        });
+    }
     layout->addWidget(installLog_, 1);
 
     auto *buttonRow = new QHBoxLayout();
@@ -2154,6 +2179,7 @@ void InstallerWindow::startInstall()
     installSessionClosing_ = false;
     closeCurrentInstallLog();
 
+    installLogFollowTail_ = true;
     installLog_->clear();
     if (installProgressBar_) {
         if (totalInstallSteps_ > 0) {
@@ -2788,15 +2814,17 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
     }
 
     QByteArray processOutput;
+    const QString mlfsBookRepositoryUrl = currentMlfsBookRepositoryUrl();
+    const QString mlfsBookBranch = currentMlfsBookBranch();
     appendInstallLogLine(QStringLiteral("> cloning MLFS book source"));
     if (!runProcessAndCapture(gitExecutable,
                               {QStringLiteral("clone"),
                                QStringLiteral("--depth"),
                                QStringLiteral("1"),
                                QStringLiteral("--branch"),
-                               QString::fromLatin1(kMlfsBookBranch),
+                               mlfsBookBranch,
                                QStringLiteral("--single-branch"),
-                               QString::fromLatin1(kMlfsBookRepositoryUrl),
+                               mlfsBookRepositoryUrl,
                                bookSourceDirectory},
                               currentRunDirectory_,
                               &processOutput,
@@ -2807,8 +2835,8 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
         appendInstallLogLine(QString::fromLocal8Bit(processOutput).trimmed());
     }
     appendInstallLogLine(QStringLiteral("> using MLFS branch `%1` from `%2`")
-                             .arg(QString::fromLatin1(kMlfsBookBranch),
-                                  QString::fromLatin1(kMlfsBookRepositoryUrl)));
+                             .arg(mlfsBookBranch,
+                                  mlfsBookRepositoryUrl));
 
     appendInstallLogLine(QStringLiteral("> processing MLFS book scripts"));
     if (!runProcessAndCapture(bashExecutable,
@@ -3098,25 +3126,6 @@ bool InstallerWindow::prepareMlfsBookArtifacts(QString *errorMessage)
         ++chapterNumber;
         if (chapterNumber < 4 || chapterNumber > 10) {
             continue;
-        }
-
-        if (chapterNumber == 7) {
-            const QString relativePath = generatedMlfsScriptPath(chapterNumber, 0, QStringLiteral("return-to-root"));
-            const QString absolutePath = QDir(currentRuntimeScriptsDirectory_).filePath(relativePath);
-            if (!directory.mkpath(QFileInfo(absolutePath).absolutePath())) {
-                if (errorMessage) {
-                    *errorMessage = QStringLiteral("Unable to create `%1`.").arg(QFileInfo(absolutePath).absolutePath());
-                }
-                return false;
-            }
-            if (!writeGeneratedTextFile(absolutePath,
-                                        generatedMlfsScriptBody(QStringLiteral("Returning to root shell"),
-                                                                {QStringLiteral("if [ \"$(id -un)\" = \"lfs\" ]; then exit; fi")}),
-                                        true,
-                                        errorMessage)) {
-                return false;
-            }
-            mlfsToolchainScriptPaths_.append(absolutePath);
         }
 
         int sectionNumber = 0;
@@ -3612,9 +3621,8 @@ void InstallerWindow::appendInstallLogLine(const QString &line)
     }
 
     QScrollBar *scrollBar = installLog_->verticalScrollBar();
-    const bool followTail = !scrollBar || scrollBar->value() >= scrollBar->maximum() - 1;
     installLog_->appendPlainText(line);
-    if (followTail && scrollBar) {
+    if (installLogFollowTail_ && scrollBar) {
         scrollBar->setValue(scrollBar->maximum());
     }
 }
@@ -4106,6 +4114,26 @@ QString InstallerWindow::targetBuildDirectory() const
     return QStringLiteral("/mnt/lfs");
 }
 
+QString InstallerWindow::currentMlfsBookRepositoryUrl() const
+{
+    if (!mlfsBookSourceCombo_) {
+        return QString::fromLatin1(kVoncloftMlfsBookRepositoryUrl);
+    }
+
+    const QString repositoryUrl = mlfsBookSourceCombo_->currentData(MlfsBookRepositoryUrlRole).toString().trimmed();
+    return repositoryUrl.isEmpty() ? QString::fromLatin1(kVoncloftMlfsBookRepositoryUrl) : repositoryUrl;
+}
+
+QString InstallerWindow::currentMlfsBookBranch() const
+{
+    if (!mlfsBookSourceCombo_) {
+        return QString::fromLatin1(kVoncloftMlfsBookBranch);
+    }
+
+    const QString branch = mlfsBookSourceCombo_->currentData(MlfsBookBranchRole).toString().trimmed();
+    return branch.isEmpty() ? QString::fromLatin1(kVoncloftMlfsBookBranch) : branch;
+}
+
 QString InstallerWindow::buildConfigText() const
 {
     QStringList lines;
@@ -4115,6 +4143,7 @@ QString InstallerWindow::buildConfigText() const
     lines << QString("Hostname: %1").arg(hostnameEdit_->text().trimmed());
     lines << QString("Username: %1").arg(usernameEdit_->text().trimmed());
     lines << QString("Time zone: %1").arg(timeZoneCombo_->currentText());
+    lines << QString("Book source: %1 (%2)").arg(currentMlfsBookRepositoryUrl(), currentMlfsBookBranch());
     lines << "";
 
     const DriveInfo drive = currentDrive();
@@ -4169,6 +4198,8 @@ QByteArray InstallerWindow::buildConfigJson(bool pretty) const
     document.insert("username", usernameEdit_->text().trimmed());
     document.insert("password", passwordEdit_->text());
     document.insert("timeZone", timeZoneCombo_->currentText());
+    document.insert("mlfsBookRepositoryUrl", currentMlfsBookRepositoryUrl());
+    document.insert("mlfsBookBranch", currentMlfsBookBranch());
 
     const DriveInfo drive = currentDrive();
     QJsonObject driveObject;

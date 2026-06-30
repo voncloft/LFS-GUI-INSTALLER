@@ -118,6 +118,8 @@ private:
     QString buildClockFile() const;
     QString buildFstabFile() const;
     QString targetBuildDirectory() const;
+    QString currentMlfsBookRepositoryUrl() const;
+    QString currentMlfsBookBranch() const;
     QString buildConfigText() const;
     QByteArray buildConfigJson(bool pretty) const;
 
@@ -129,6 +131,7 @@ private:
     QLineEdit *usernameEdit_ = nullptr;
     QLineEdit *passwordEdit_ = nullptr;
     QComboBox *timeZoneCombo_ = nullptr;
+    QComboBox *mlfsBookSourceCombo_ = nullptr;
 
     QComboBox *driveCombo_ = nullptr;
     QLabel *driveDetailsLabel_ = nullptr;
@@ -183,6 +186,7 @@ private:
     int completedInstallSteps_ = 0;
     bool installCompleted_ = false;
     bool installInProgress_ = false;
+    bool installLogFollowTail_ = true;
     bool installShellSessionStarted_ = false;
     bool installSessionClosing_ = false;
     bool mlfsArtifactsPrepared_ = false;
